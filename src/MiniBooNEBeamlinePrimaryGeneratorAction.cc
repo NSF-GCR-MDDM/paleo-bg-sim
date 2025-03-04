@@ -22,6 +22,7 @@ MiniBooNEBeamlinePrimaryGeneratorAction::MiniBooNEBeamlinePrimaryGeneratorAction
 
 	// Initialize CDF for energy sampling
 	InitializeAngularDistribution();
+	InitializeEnergyDistributions();
 }
 
 MiniBooNEBeamlinePrimaryGeneratorAction::~MiniBooNEBeamlinePrimaryGeneratorAction() {
@@ -59,9 +60,11 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeAngularDistribution() {
 	for (size_t i = 0; i < theta_cdf.size(); ++i) {
 		theta_cdf[i] /= cumulative;
 	}
+
+	return;
 }
 
-void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeEnergyDistribution(double theta) {
+std::vector<double> MiniBooNEBeamlinePrimaryGeneratorAction::CalculateEnergyDistribution(double theta) {
 	// Constants:
 	const double h0 = 6.011;
 	const double b = 0.4;
@@ -73,15 +76,7 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeEnergyDistribution(doubl
 	double h = 6.011 * (1 / std::cos(theta));
 
 	// Clear previous energy distributions
-	e_intervals.clear();
-	e_cdf.clear();
-
-	// Define the energy range
-	double E_min = 1;
-	double E_max = 4000;
-	for (double E = E_min; E < E_max; E += dE) {
-		e_intervals.push_back(E);
-	}
+	std::vector<double> e_cdf;
 
 	// Compute the energy PDF and CDF
 	double cumulative = 0.0;
@@ -98,6 +93,27 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeEnergyDistribution(doubl
 	for (size_t i = 0; i < e_cdf.size(); ++i) {
 		e_cdf[i] /= cumulative;
 	}
+
+	return e_cdf;
+}
+
+void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeEnergyDistributions() {
+	// Define the energy range
+	const double E_min = 1;
+	const double E_max = 4000;
+	const double dE = 0.01;
+
+	for (double E = E_min; E < E_max; E += dE) {
+		e_intervals.push_back(E);
+	}
+
+	for (size_t i = 0; i < theta_intervals.size(); ++i) {
+		double theta = theta_intervals[i];
+		std::vector<double> e_cdf = CalculateEnergyDistribution(theta);
+		e_cdfs.insert({theta, e_cdf});
+	}
+
+	return;
 }
 
 double MiniBooNEBeamlinePrimaryGeneratorAction::SampleCDF(std::vector<double> cdf,
@@ -111,7 +127,7 @@ double MiniBooNEBeamlinePrimaryGeneratorAction::SampleCDF(std::vector<double> cd
 void MiniBooNEBeamlinePrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 	// Generate energy from the distribution
 	double sampled_theta = SampleCDF(theta_cdf, theta_intervals);
-	InitializeEnergyDistribution(sampled_theta);
+	std::vector<double> e_cdf = e_cdfs[sampled_theta];
 	double sampled_energy = SampleCDF(e_cdf, e_intervals);
 	fParticleGun->SetParticleEnergy(sampled_energy * GeV);
 
@@ -126,4 +142,6 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent
 	fParticleGun->SetParticleMomentumDirection(G4ThreeVector(dirX, dirY, dirZ));
 
 	fParticleGun->GeneratePrimaryVertex(anEvent);
+
+	return;
 }

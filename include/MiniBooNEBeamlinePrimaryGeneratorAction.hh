@@ -28,15 +28,16 @@ class MiniBooNEBeamlinePrimaryGeneratorAction : public G4VUserPrimaryGeneratorAc
   //ALEX_NOV_25_2024
     void InitializeAngularDistribution(); // Initializes the angular distribution
 	// Initializes energy distribution from angular distribution
-	void InitializeEnergyDistribution(double theta);
+	void InitializeEnergyDistributions();
+	std::vector<double> CalculateEnergyDistribution(double theta);
 	// Samples energy from the distribution
     double SampleCDF(std::vector<double> cdf, std::vector<double> intervals);
 
-    // Data members for energy distribution
+    // Data members for energy/angular distributions
     std::vector<double> e_intervals; // Energy intervals
     std::vector<double> theta_intervals; // Angle intervals
     std::vector<double> theta_cdf; // Cumulative distribution function for angles
-    std::vector<double> e_cdf; // Cumulative distribution function for energy
+	std::map<double, std::vector<double>> e_cdfs;
   //ALEX
 
 };
