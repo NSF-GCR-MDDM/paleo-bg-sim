@@ -96,9 +96,6 @@ int main(int argc, char** argv)
     G4String fileName = argv[1];
     //UImanager->ApplyCommand(command+fileName); //ALEXOCT_31_2024
 
-
-
-
     // Interactive session
     if (argc == 1) {
 #ifdef G4UI_USE
@@ -128,15 +125,7 @@ int main(int argc, char** argv)
       G4String macName = argv[argc-1];
       UImanager->ApplyCommand(command+macName);
     }
-
-
-
     
     delete runManager;
     return 0;
-
-
-
-
 }
-

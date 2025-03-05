@@ -32,58 +32,65 @@ MiniBooNEBeamlineConstruction::~MiniBooNEBeamlineConstruction()
 
 G4VPhysicalVolume* MiniBooNEBeamlineConstruction::Construct()
 {  
-    // Get nist material manager this allows you to find and reference materials stored in the G4NistManager.hh
-
+    // Find and reference materials stored in G4NistManager.hh
     G4NistManager* nist = G4NistManager::Instance();
     
-    G4Material* air = nist->FindOrBuildMaterial("G4_AIR"); //Makes air    
-    G4Element* Si = nist->FindOrBuildElement("Si"); // Silicon
-    G4Element* O = nist->FindOrBuildElement("O");  // Oxygen
-    G4Element* Al = nist->FindOrBuildElement("Al"); // Aluminum
-    G4Element* Fe = nist->FindOrBuildElement("Fe"); // Iron
-    G4Element* Ca = nist->FindOrBuildElement("Ca"); // Calcium
-    G4Element* Mg = nist->FindOrBuildElement("Mg"); // Magnesium
-    G4Element* Na = nist->FindOrBuildElement("Na"); // Sodium
-    G4Element* K = nist->FindOrBuildElement("K");  // Potassium
+    G4Material* air = nist->FindOrBuildMaterial("G4_AIR"); // Air    
+    G4Element* H = nist->FindOrBuildElement("H");		   // Hydrogen
+    G4Element* C = nist->FindOrBuildElement("C");		   // Carbon
+    G4Element* O = nist->FindOrBuildElement("O");		   // Oxygen
+    G4Element* Na = nist->FindOrBuildElement("Na");		   // Sodium
+    G4Element* Mg = nist->FindOrBuildElement("Mg");		   // Magnesium
+    G4Element* Al = nist->FindOrBuildElement("Al");		   // Aluminum
+    G4Element* Si = nist->FindOrBuildElement("Si");		   // Silicon
+    G4Element* K = nist->FindOrBuildElement("K");		   // Potassium
+    G4Element* Ca = nist->FindOrBuildElement("Ca");		   // Calcium
+    G4Element* Mn = nist->FindOrBuildElement("Mn");		   // Manganese
+    G4Element* Fe = nist->FindOrBuildElement("Fe");		   // Iron
+    G4Element* Ti = nist->FindOrBuildElement("Ti");		   // Titanium
     
-    G4Box* solidWorld = new G4Box("World", 50*m, 50*m, 50*m); //setting the parameters for the background where you place your geometry
+	// Set params for background
+    G4Box* solidWorld = new G4Box("World", 50*m, 50*m, 50*m);
+    G4LogicalVolume* logicWorld = new G4LogicalVolume(solidWorld, air, "World");
 
-    
-    G4LogicalVolume* logicWorld = new G4LogicalVolume(solidWorld, air, "World"); //Telling what to make the background out of i.e. we want it to be air     
-
-    G4bool checkOverlaps = true; //tells you if you have overlapping volumes
+    G4bool checkOverlaps = true; // Prints if there are overlapping volumes
   
-    //Physical volumes                              
-    G4VPhysicalVolume* physWorld = new G4PVPlacement(0, G4ThreeVector(), logicWorld, "World", 0, false, 0, checkOverlaps); //Places our background 
-    //Parameters beign 
+    //Place background                      
+    G4VPhysicalVolume* physWorld = new G4PVPlacement(0, G4ThreeVector(), logicWorld,
+													 "World", 0, false, 0, checkOverlaps);
+
+    //Parameters begin 
     G4double NoriteHalfSize=10*m;
     //Parameters end
     
-
     //Begin Norite
-    G4Material* Norite = new G4Material("Norite", 2.894*g/cm3, 8);
+    G4Material* Norite = new G4Material("Norite", 2.894*g/cm3, 12);
     
     // Add elements to the material (fractions are by mass)
-    Norite->AddElement(Si, 0.245); // 24.5% Silicon
-    Norite->AddElement(O, 0.420);  // 42.0% Oxygen
-    Norite->AddElement(Al, 0.100); // 10.0% Aluminum
-    Norite->AddElement(Fe, 0.100); // 10.0% Iron
-    Norite->AddElement(Ca, 0.050); // 5.0% Calcium
-    Norite->AddElement(Mg, 0.050); // 5.0% Magnesium
-    Norite->AddElement(Na, 0.020); // 2.0% Sodium
-    Norite->AddElement(K, 0.015);  // 1.5% Potassium
+    Norite->AddElement(H, 0.001425);  // 0.15% Silicon
+	Norite->AddElement(C, 0.000325);  // 0.04% Carbon
+	Norite->AddElement(O, 0.459925);  // 46.0% Oxygen
+	Norite->AddElement(Na, 0.021925); // 2.2% Sodium
+	Norite->AddElement(Mg, 0.032925); // 3.3% Magnesium
+	Norite->AddElement(Al, 0.089925); // 9.0% Aluminum
+	Norite->AddElement(Si, 0.261925); // 26.2% Sodium
+	Norite->AddElement(K, 0.011925);  // 1.2% Potassium
+	Norite->AddElement(Ca, 0.051925); // 5.2% Calcium
+	Norite->AddElement(Mn, 0.000925); // 0.1% Manganese
+	Norite->AddElement(Fe, 0.061925); // 6.2% Iron
+	Norite->AddElement(Ti, 0.004925); // 0.5% Titanium
+
     //End Norite
     
     //Solid and Logic Volume begin
-
-    G4Box* solidNorite = new G4Box("Norite", NoriteHalfSize, NoriteHalfSize, NoriteHalfSize);
+    G4Box* solidNorite = new G4Box("Norite", NoriteHalfSize, NoriteHalfSize,
+								   NoriteHalfSize);
     G4LogicalVolume* logicNorite = new G4LogicalVolume(solidNorite, Norite, "Norite");
-
     //Solid and Logic Volume end
-    
-    
-    //Placement begin
-    new G4PVPlacement(0, G4ThreeVector(0.0*m, 0.0*m, NoriteHalfSize), logicNorite, "Norite", logicWorld, false, 0, checkOverlaps);
+
+	// Place Norite
+    new G4PVPlacement(0, G4ThreeVector(0.0*m, 0.0*m, NoriteHalfSize), logicNorite,
+					  "Norite", logicWorld, false, 0, checkOverlaps);
     return physWorld;
 }
 
