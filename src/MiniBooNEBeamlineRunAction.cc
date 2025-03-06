@@ -59,7 +59,7 @@ MiniBooNEBeamlineRunAction::MiniBooNEBeamlineRunAction()
   analysisManager->CreateH1("protonAngle", "Proton Angle", 100, 0, 2000);
   analysisManager->CreateH1("neutronMom", "Neutron Momentum", 100, 0, 5000);
   analysisManager->CreateH1("neutronParentAngle", "Neutron Angle Relative to Parent",
-							100, 0, 2000);
+							100, -1, 1);
   analysisManager->CreateH1("neutronKin", "Neutron KE", 70, 10, 3510);
   analysisManager->CreateH1("MuonKin", "Muon KE", 1000, 1000, 3000000);
  

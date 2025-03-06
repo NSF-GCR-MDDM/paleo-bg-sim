@@ -64,9 +64,8 @@ void MiniBooNEBeamlineTrackingAction::PreUserTrackingAction(const G4Track* aTrac
                 G4ThreeVector parentMomentum = parentTrack->second->GetMomentum();
                 G4double cosTheta = (momentum.dot(parentMomentum)
 									 / (momentum.mag() * parentMomentum.mag()));
-                G4double angle = acos(cosTheta); // Angle in radians
-                analysisManager->FillH1(3, angle / rad); // Fill angle histogram (in rad)
-            }
+                analysisManager->FillH1(3, cosTheta); // Fill cos(theta) histogram
+            }	
         }
 		
 		analysisManager->FillH1(4, kinEnergy);
