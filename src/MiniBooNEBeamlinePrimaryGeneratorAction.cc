@@ -12,6 +12,7 @@
 MiniBooNEBeamlinePrimaryGeneratorAction::MiniBooNEBeamlinePrimaryGeneratorAction()
 :G4VUserPrimaryGeneratorAction(),
  fParticleGun(0) {
+	G4cout << "Constructing Particle Gun...";
 	G4int n_particle = 1; // Number of particles you shoot at a time
 	fParticleGun = new G4ParticleGun(n_particle);
 
@@ -19,10 +20,18 @@ MiniBooNEBeamlinePrimaryGeneratorAction::MiniBooNEBeamlinePrimaryGeneratorAction
 	G4String particleName;
 	G4ParticleDefinition* particle = particleTable->FindParticle(particleName="mu-");
 	fParticleGun->SetParticleDefinition(particle);
+	G4cout << "Particle Gun constructed." << G4endl;
 
-	// Initialize CDF for energy sampling
+	// Initialize angular CDF
+	G4cout << "Initializing Angular Distribution...";
 	InitializeAngularDistribution();
-	InitializeEnergyDistributions();
+	G4cout << "Angular Distribution initialized." << G4endl;
+
+	// Initialize energy intervals
+	G4cout << "Initializing Energy Intervals...";
+	InitializeEnergyIntervals();
+	G4cout << "Energy Intervals initialized." << G4endl;
+
 }
 
 MiniBooNEBeamlinePrimaryGeneratorAction::~MiniBooNEBeamlinePrimaryGeneratorAction() {
@@ -64,7 +73,17 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeAngularDistribution() {
 	return;
 }
 
-std::vector<double> MiniBooNEBeamlinePrimaryGeneratorAction::CalculateEnergyDistribution(double theta) {
+void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeEnergyIntervals() {
+	const double E_min = 1.0;
+    const double E_max = 4000.0;
+    const double dE = 0.01;
+
+	for (double E = E_min; E < E_max; E += dE) {
+		e_intervals.push_back(E);
+	}
+}
+
+std::vector<double> MiniBooNEBeamlinePrimaryGeneratorAction::GetEnergyDistribution(double theta) {
 	// Constants:
 	const double h0 = 6.011;
 	const double b = 0.4;
@@ -73,7 +92,7 @@ std::vector<double> MiniBooNEBeamlinePrimaryGeneratorAction::CalculateEnergyDist
 	const double dE = 0.01;
 
 	// Compute depth for given theta
-	double h = 6.011 * (1 / std::cos(theta));
+	double h = h0 * (1 / std::cos(theta));
 
 	// Clear previous energy distributions
 	std::vector<double> e_cdf;
@@ -97,25 +116,6 @@ std::vector<double> MiniBooNEBeamlinePrimaryGeneratorAction::CalculateEnergyDist
 	return e_cdf;
 }
 
-void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeEnergyDistributions() {
-	// Define the energy range
-	const double E_min = 1;
-	const double E_max = 4000;
-	const double dE = 0.01;
-
-	for (double E = E_min; E < E_max; E += dE) {
-		e_intervals.push_back(E);
-	}
-
-	for (size_t i = 0; i < theta_intervals.size(); ++i) {
-		double theta = theta_intervals[i];
-		std::vector<double> e_cdf = CalculateEnergyDistribution(theta);
-		e_cdfs.insert({theta, e_cdf});
-	}
-
-	return;
-}
-
 double MiniBooNEBeamlinePrimaryGeneratorAction::SampleCDF(std::vector<double> cdf,
 														  std::vector<double> intervals) {
 	double random_value = G4UniformRand(); // Generates a random value between 0 and 1
@@ -127,7 +127,7 @@ double MiniBooNEBeamlinePrimaryGeneratorAction::SampleCDF(std::vector<double> cd
 void MiniBooNEBeamlinePrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 	// Generate energy from the distribution
 	double sampled_theta = SampleCDF(theta_cdf, theta_intervals);
-	std::vector<double> e_cdf = e_cdfs[sampled_theta];
+	std::vector<double> e_cdf = GetEnergyDistribution(sampled_theta);
 	double sampled_energy = SampleCDF(e_cdf, e_intervals);
 	fParticleGun->SetParticleEnergy(sampled_energy * GeV);
 

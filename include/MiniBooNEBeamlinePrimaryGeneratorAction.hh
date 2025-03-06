@@ -6,6 +6,8 @@
 #include "G4VUserPrimaryGeneratorAction.hh"
 #include "G4ParticleGun.hh"
 #include "globals.hh"
+#include <map>
+#include <vector>
 
 class G4ParticleGun;
 class G4Event;
@@ -27,9 +29,8 @@ class MiniBooNEBeamlinePrimaryGeneratorAction : public G4VUserPrimaryGeneratorAc
 
   //ALEX_NOV_25_2024
     void InitializeAngularDistribution(); // Initializes the angular distribution
-	// Initializes energy distribution from angular distribution
-	void InitializeEnergyDistributions();
-	std::vector<double> CalculateEnergyDistribution(double theta);
+    void InitializeEnergyIntervals(); // Initializes e_intervals
+	std::vector<double> GetEnergyDistribution(double theta); // Gets energy distribution from angle
 	// Samples energy from the distribution
     double SampleCDF(std::vector<double> cdf, std::vector<double> intervals);
 
@@ -37,7 +38,7 @@ class MiniBooNEBeamlinePrimaryGeneratorAction : public G4VUserPrimaryGeneratorAc
     std::vector<double> e_intervals; // Energy intervals
     std::vector<double> theta_intervals; // Angle intervals
     std::vector<double> theta_cdf; // Cumulative distribution function for angles
-	std::map<double, std::vector<double>> e_cdfs;
+	std::map<double, std::vector<double> > e_cdfs;
   //ALEX
 
 };

@@ -39,7 +39,7 @@ MiniBooNEBeamlineRunAction::MiniBooNEBeamlineRunAction()
 
   //This n-tuple will keep track of the neutrino parent properties
   //Parent properties are saved when a neutrino parent decays
-  analysisManager->CreateNtuple("parentTree", "Neutrino Parent Variables");
+  analysisManager->CreateNtuple("MuonTree", "Parent Muon Variables Variables");
   analysisManager->CreateNtupleIColumn(1, "PDGCode");
   analysisManager->CreateNtupleDColumn(1, "kinE");
   analysisManager->CreateNtupleDColumn(1, "xMom");
@@ -55,22 +55,19 @@ MiniBooNEBeamlineRunAction::MiniBooNEBeamlineRunAction()
   //proton interactions with the target. Track the momentum magnitude in MeV/c
   //and the angle w.r.t. the beam direction in mrad
   //track length is reported in um
-  analysisManager->CreateH1("protonMom", "protonMom", 100, 0, 5000);
-  analysisManager->CreateH1("protonAngle", "protonAngle", 100, 0, 2000);
-  analysisManager->CreateH1("neutronMom", "neutronMom", 100, 0, 5000);
-  analysisManager->CreateH1("neutronAngle", "neutronAngle", 100, 0, 2000);
-  analysisManager->CreateH1("neutronKin", "neutronKin", 70, 10, 3510);
-  analysisManager->CreateH1("MuonKin", "MuonKin", 1000, 1000, 3000000);
-  // analysisManager->CreateH1("FeMom",   "FeMom", 100, 0, 10);
-  //analysisManager->CreateH1("FeAngle", "FeAngle", 100, 0, 2000);
-  //analysisManager->CreateH1("SiMom",   "SiMom", 100, 0, 10);
-  //analysisManager->CreateH1("SiAngle", "SiAngle", 100, 0, 2000);
-  //analysisManager->CreateH1("OMom",    "OMom", 100, 0, 10);
-  //analysisManager->CreateH1("OAngle",  "OAngle", 100, 0, 2000);
+  analysisManager->CreateH1("protonMom", "Proton Momentum", 100, 0, 5000);
+  analysisManager->CreateH1("protonAngle", "Proton Angle", 100, 0, 2000);
+  analysisManager->CreateH1("neutronMom", "Neutron Momentum", 100, 0, 5000);
+  analysisManager->CreateH1("neutronParentAngle", "Neutron Angle Relative to Parent",
+							100, 0, 2000);
+  analysisManager->CreateH1("neutronKin", "Neutron KE", 70, 10, 3510);
+  analysisManager->CreateH1("MuonKin", "Muon KE", 1000, 1000, 3000000);
  
   //Also plots verifying the beam properties
-  analysisManager->CreateH2("beamProfile2D", "beamProfile2D", 50, -5.0, 5.0, 50, -5.0, 5.0);
-  analysisManager->CreateH2("beamAngularDist2D", "beamAngularDist2D", 50, -2.0, 2.0, 50, -2.0, 2.0);
+  analysisManager->CreateH2("beamProfile2D", "beamProfile2D",
+							50, -5.0, 5.0, 50, -5.0, 5.0);
+  analysisManager->CreateH2("beamAngularDist2D", "beamAngularDist2D",
+							50, -2.0, 2.0, 50, -2.0, 2.0);
 }
 
 MiniBooNEBeamlineRunAction::~MiniBooNEBeamlineRunAction()

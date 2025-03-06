@@ -22,15 +22,17 @@ void MiniBooNEBeamlineActionInitialization::BuildForMaster() const
 
 void MiniBooNEBeamlineActionInitialization::Build() const
 {
-  SetUserAction(new MiniBooNEBeamlinePrimaryGeneratorAction);
+	G4cout << "Making Primary Generator Action..." << G4endl;
+	SetUserAction(new MiniBooNEBeamlinePrimaryGeneratorAction);
+	G4cout << "Making Primary Generator Action..." << G4endl;
 
-  MiniBooNEBeamlineRunAction* runAction = new MiniBooNEBeamlineRunAction;
-  SetUserAction(runAction);
-  
-  MiniBooNEBeamlineEventAction* eventAction = new MiniBooNEBeamlineEventAction(runAction);
-  SetUserAction(eventAction);
+	MiniBooNEBeamlineRunAction* runAction = new MiniBooNEBeamlineRunAction;
+	SetUserAction(runAction);
 
-  MiniBooNEBeamlineTrackingAction* trackingAction = new MiniBooNEBeamlineTrackingAction(runAction);
-  SetUserAction(trackingAction);
+	MiniBooNEBeamlineEventAction* eventAction = new MiniBooNEBeamlineEventAction(runAction);
+	SetUserAction(eventAction);
+
+	MiniBooNEBeamlineTrackingAction* trackingAction = new MiniBooNEBeamlineTrackingAction(runAction);
+	SetUserAction(trackingAction);
 }  
 

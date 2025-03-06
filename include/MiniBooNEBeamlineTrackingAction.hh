@@ -21,6 +21,7 @@ class MiniBooNEBeamlineTrackingAction : public G4UserTrackingAction
     virtual void PostUserTrackingAction(const G4Track* track);
 
   private:
+  	std::map<G4int, const G4Track*> trackMap; // Map to store track IDs -> G4Track*
     MiniBooNEBeamlineRunAction* fRunAction;
     G4ThreeVector fMgInitialPosition;
     G4ThreeVector fFeInitialPosition;
