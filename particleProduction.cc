@@ -10,6 +10,7 @@
 #include "QGSP_INCLXX.hh"
 #include "FTFP_INCLXX.hh"
 #include "QGSP_BERT.hh"
+#include "QGSP_BERT_HP.hh"
 #include "QGSP_BIC.hh"
 #include "FTFP_BERT.hh"
 #include "MiniBooNEBeamlineActionInitialization.hh"
@@ -53,11 +54,12 @@ int main(int argc, char** argv)
 
     // Physics list
     G4cout << "Loading the physics list..." << G4endl;
-    //QGSP_INCLXX* physicsList = new QGSP_INCLXX();
-    //FTFP_INCLXX* physicsList = new FTFP_INCLXX();
-    QGSP_BERT* physicsList = new QGSP_BERT();
-    //QGSP_BIC* physicsList = new QGSP_BIC();
-    //FTFP_BERT* physicsList = new FTFP_BERT();
+    // QGSP_INCLXX* physicsList = new QGSP_INCLXX();
+    // FTFP_INCLXX* physicsList = new FTFP_INCLXX();
+    // QGSP_BERT* physicsList = new QGSP_BERT();
+    QGSP_BERT_HP* physicsList = new QGSP_BERT_HP();
+    // QGSP_BIC* physicsList = new QGSP_BIC();
+    // FTFP_BERT* physicsList = new FTFP_BERT();
     runManager->SetUserInitialization(physicsList);
     G4cout << "Physics Loaded!" << G4endl;
     
