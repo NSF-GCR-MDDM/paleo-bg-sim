@@ -1,15 +1,15 @@
 #include <iostream>
 #include <TFile.h>
+#include <TF1.h>
+#include <TGraph.h>
 #include <TH1F.h>
 #include <TCanvas.h>
 #include <TAxis.h>
 
-void neutron_energydist(const char* fi) {
-    TFile *file = TFile::Open(fi); // Open the ROOT file
-    
-    if (file && !file->IsZombie()) {
+void neutron_energydist(TFile* fi) {
+    if (fi && !fi->IsZombie()) {
         // Retrieve the histogram from the ROOT file
-        TH1F *hist = (TH1F*)file->Get("neutronKin");
+        TH1F *hist = (TH1F*)fi->Get("neutronKin");
         
         if (hist) {
             // Modify the axis titles
@@ -22,15 +22,30 @@ void neutron_energydist(const char* fi) {
             TCanvas *canvas = new TCanvas("canvas", "Canvas for Plotting", 800, 600);
             hist->Draw();
 			canvas->SetLogy();
-            
-            // You can save the canvas as an image (optional)
-            canvas->SaveAs("neutron_KE.png");
+
+			int nBins = hist->GetNbinsX();
+			const TArrayD *xaxis = hist->GetXaxis()->GetXbins();
+
+			TF1 *func = new TF1("func", "(-10000/3500) * x + 10000",
+								hist->GetXaxis()->GetXmin(), hist->GetXaxis()->GetXmax());
+
+			TGraph *graph = new TGraph();
+
+			for (int i = 1; i <= nBins; ++i) {
+				double binCenter = hist->GetBinCenter(i);
+				double funcValue = func->Eval(binCenter);
+				graph->SetPoint(i - 1, binCenter, funcValue);
+			}
+
+			graph->SetMarkerStyle(20);
+			graph->SetMarkerColor(kBlue);
+			graph->Draw("P SAME");  // Overlay function values as points
+
+			canvas->Update();
+			canvas->SaveAs("neutron_KE.png");
         } else {
             std::cerr << "Histogram not found in the file." << std::endl;
         }
-
-        // Close the ROOT file
-        file->Close();
     } else {
         std::cerr << "File could not be opened." << std::endl;
     }
