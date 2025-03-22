@@ -1,6 +1,5 @@
 //Geometry specification
 #include "MiniBooNEBeamlineConstruction.hh"
-#include "HornMagneticField.hh"
 #include "G4RunManager.hh"
 #include "G4NistManager.hh"
 #include "G4FieldManager.hh"
@@ -17,8 +16,11 @@
 #include "G4Trap.hh"
 #include "G4VisAttributes.hh"
 #include "G4Sphere.hh"
-G4ThreadLocal HornMagneticField* MiniBooNEBeamlineConstruction::fMagneticField = 0;
-G4ThreadLocal G4FieldManager* MiniBooNEBeamlineConstruction::fFieldMgr = 0;
+#ifdef PALEOSIM_ENABLE_GDML
+    #include "G4GDMLParser.hh"
+#endif
+#include "G4VisAttributes.hh"
+
 
 MiniBooNEBeamlineConstruction::MiniBooNEBeamlineConstruction()
 : G4VUserDetectorConstruction(),
@@ -49,20 +51,6 @@ G4VPhysicalVolume* MiniBooNEBeamlineConstruction::Construct()
     G4Element* Fe = nist->FindOrBuildElement("Fe");		   // Iron
     G4Element* Ti = nist->FindOrBuildElement("Ti");		   // Titanium
     
-	// Set params for background
-    G4Box* solidWorld = new G4Box("World", 50*m, 50*m, 50*m);
-    G4LogicalVolume* logicWorld = new G4LogicalVolume(solidWorld, air, "World");
-
-    G4bool checkOverlaps = true; // Prints if there are overlapping volumes
-  
-    //Place background                      
-    G4VPhysicalVolume* physWorld = new G4PVPlacement(0, G4ThreeVector(), logicWorld,
-													 "World", 0, false, 0, checkOverlaps);
-
-    //Parameters begin 
-    G4double NoriteHalfSize=10*m;
-    //Parameters end
-    
     //Begin Norite
     G4Material* Norite = new G4Material("Norite", 2.894*g/cm3, 12);
     
@@ -80,24 +68,127 @@ G4VPhysicalVolume* MiniBooNEBeamlineConstruction::Construct()
 	Norite->AddElement(Fe, 0.061925); // 6.2% Iron
 	Norite->AddElement(Ti, 0.004925); // 0.5% Titanium
 
-    //End Norite
-    
-    //Solid and Logic Volume begin
-    G4Box* solidNorite = new G4Box("Norite", NoriteHalfSize, NoriteHalfSize,
-								   NoriteHalfSize);
-    G4LogicalVolume* logicNorite = new G4LogicalVolume(solidNorite, Norite, "Norite");
-    //Solid and Logic Volume end
+    //Rock overburden
+    G4double halfOverburdenLength = 0.5 * fOverburdenSideLength;
+    G4Box* rockBox = new G4Box("rockBox",halfOverburdenLength,halfOverburdenLength,halfOverburdenLength);
+    G4LogicalVolume* logicRock = new G4LogicalVolume(rockBox,Norite,"rockBox");
 
-	// Place Norite
-    new G4PVPlacement(0, G4ThreeVector(0.0*m, 0.0*m, NoriteHalfSize), logicNorite,
-					  "Norite", logicWorld, false, 0, checkOverlaps);
+    G4bool checkOverlaps = true; // Prints if there are overlapping volumes
+
+    G4VPhysicalVolume* physWorld = new G4PVPlacement(
+        nullptr,              // No rotation
+        G4ThreeVector(0,0,0),      // Centered at origin
+        logicRock,            // Logical volume
+        "RockBox",            // Name
+        nullptr,              // Mother volume (this is world)
+        false,                // No boolean operations
+        0,                    // Copy number
+        checkOverlaps         // Check for overlaps
+    );
+
+    //Air cavity
+    G4LogicalVolume* logicCavity = nullptr; //Create outside if statement so can be used in next conditional
+                                            //for target w/o creating compile errors
+    if (fAirCavitySideLength > 0.0) {
+        if (fAirCavitySideLength >= fOverburdenSideLength) {
+            G4Exception("MiniBooNEBeamlineConstruction", "GeomErr001", FatalException,
+                "Air cavity side length exceeds rock side length.");
+        } else {
+            G4double halfCavityLength = 0.5 * fAirCavitySideLength;
+            G4Box* cavityBox = new G4Box("AirCavity", halfCavityLength, halfCavityLength, halfCavityLength);
+            logicCavity = new G4LogicalVolume(cavityBox, air, "AirCavity");
+    
+            new G4PVPlacement(
+                nullptr,                // No rotation
+                G4ThreeVector(),        // Centered at origin
+                logicCavity,            // Logical volume
+                "AirCavity",            // Name
+                logicRock,              // Mother volume is the rock
+                false,                  // No boolean ops
+                0,                      // Copy number
+                true                    // Check overlaps
+            );
+        }
+    }
+
+    //Target
+    if (fTargetSideLength > 0.0) {
+
+        //Decide what the mother volume is depending on whether or not we have an air cavity
+        //Default to logicRock (world) and overwrite if an air cavity is present
+        G4LogicalVolume* motherVolume = logicRock;
+        if (fAirCavitySideLength > 0.0) {
+            motherVolume = logicCavity;
+        }
+
+        //Check for errors
+        if (fTargetSideLength >= fOverburdenSideLength) {
+            G4Exception("MiniBooNEBeamlineConstruction", "GeomErr002", FatalException,
+                "Target side length exceeds rock side length.");
+        } 
+        else if (fAirCavitySideLength > 0.0 && fTargetSideLength >= fAirCavitySideLength) {
+            G4Exception("MiniBooNEBeamlineConstruction", "GeomErr004", FatalException,
+                 "Target side length exceeds air cavity side length.");
+        } 
+        else {
+            G4Material* placeholderMaterial = G4NistManager::Instance()->FindOrBuildMaterial("G4_AIR");
+
+            G4double targetHalfSideLength = 0.5 * fTargetSideLength;
+            G4Box* targetBox = new G4Box("TargetBox", targetHalfSideLength, targetHalfSideLength, targetHalfSideLength);
+            G4LogicalVolume* logicTarget = new G4LogicalVolume(targetBox, placeholderMaterial, "Target");
+
+            new G4PVPlacement(
+                nullptr,             // no rotation
+                G4ThreeVector(),     // place at origin
+                logicTarget,
+                "Target",
+                motherVolume,
+                false,
+                0,
+                true                // check overlaps
+            );
+        }
+    }
+
+    #ifdef PALEOSIM_ENABLE_GDML
+        G4GDMLParser parser;
+
+        //Modifying visibility settings
+        G4VisAttributes* rockVis = new G4VisAttributes(G4Colour(0.5, 0.5, 0.5, 0.2));
+        rockVis->SetVisibility(true);
+        rockVis->SetForceSolid(true);
+        logicRock->SetVisAttributes(rockVis);
+
+        G4VisAttributes* airVis = new G4VisAttributes(G4Colour(0.5, 0.0, 0.0, 0.2));
+        airVis->SetVisibility(true);
+        airVis->SetForceSolid(true);
+        if (fAirCavitySideLength>0.) {
+            logicCavity->SetVisAttributes(airVis);
+        }
+
+        remove("geometry.gdml");
+
+        if (logicRock->GetVisAttributes()) {
+            G4cout << "[DEBUG] logicRock vis attributes are set." << G4endl;
+        } else {
+            G4cout << "[DEBUG] logicRock vis attributes are NULL!" << G4endl;
+        }
+        
+        parser.Write("geometry.gdml", physWorld, true);
+    #endif
+    
     return physWorld;
 }
 
-void MiniBooNEBeamlineConstruction::ConstructSDandField()
-{
-    fMagneticField = new HornMagneticField();
-    fFieldMgr = new G4FieldManager();
-    fFieldMgr->SetDetectorField(fMagneticField);
-    fFieldMgr->CreateChordFinder(fMagneticField);
+void MiniBooNEBeamlineConstruction::SetOverburdenSideLength(G4double val) {
+    fOverburdenSideLength = val;
+}
+void MiniBooNEBeamlineConstruction::SetAirCavitySideLength(G4double val) {
+    fAirCavitySideLength = val;
+}
+void MiniBooNEBeamlineConstruction::SetTargetSideLength(G4double val) {
+    fTargetSideLength = val;
+}
+void MiniBooNEBeamlineConstruction::SetTargetMaterial(const G4String& val) {
+    fTargetMaterial = val;
 }

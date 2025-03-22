@@ -11,6 +11,7 @@
 #include "G4LogicalVolume.hh"
 #include "G4UnitsTable.hh"
 #include "G4SystemOfUnits.hh"
+#include "G4AnalysisManager.hh"
 
 MiniBooNEBeamlineRunAction::MiniBooNEBeamlineRunAction()
 : G4UserRunAction()
@@ -72,7 +73,7 @@ MiniBooNEBeamlineRunAction::MiniBooNEBeamlineRunAction()
 
 MiniBooNEBeamlineRunAction::~MiniBooNEBeamlineRunAction()
 {
-  delete G4AnalysisManager::Instance();
+  //delete G4AnalysisManager::Instance();
 }
 
 void MiniBooNEBeamlineRunAction::BeginOfRunAction(const G4Run*)

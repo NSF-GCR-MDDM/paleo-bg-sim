@@ -17,6 +17,10 @@
 #include "Randomize.hh"
 #include "time.h"
 #include <unistd.h>
+#include "G4AnalysisManager.hh"
+
+#include "PaleoSimPhysicsList.hh"
+#include "PaleoSimMessenger.hh"
 
 
 #ifdef G4UI_USE
@@ -41,7 +45,7 @@ int main(int argc, char** argv)
     //G4Random::setTheSeeds(seeds, 0);
     //G4cout << "Random seeds set to: " << G4Random::getTheSeeds()[0] << " and " << G4Random::getTheSeeds()[1] << "\n";
 
-    G4cout<<"Seeds set to: "<<G4Random::getTheSeeds()[0]<<" "<<G4Random::getTheSeeds()[1]<<endl;
+    G4cout<<"Seeds set to: "<<G4Random::getTheSeeds()[0]<<" "<<G4Random::getTheSeeds()[1]<<std::endl;
     
     // Construct the default run manager
     G4RunManager* runManager = new G4RunManager;
@@ -49,19 +53,16 @@ int main(int argc, char** argv)
     // Set mandatory initialization classes
     // Detector construction
     G4cout << "Constructing the geometry..." << G4endl;
-    runManager->SetUserInitialization(new MiniBooNEBeamlineConstruction());
+    auto* detector = new MiniBooNEBeamlineConstruction();
+    runManager->SetUserInitialization(detector);
+    
+    // Now create the messenger and pass the detector to it
+    auto* messenger = new PaleoSimMessenger(detector);
     G4cout << "Geometry Constructed!" << G4endl;
-
-    // Physics list
-    G4cout << "Loading the physics list..." << G4endl;
-    // QGSP_INCLXX* physicsList = new QGSP_INCLXX();
-    // FTFP_INCLXX* physicsList = new FTFP_INCLXX();
-    // QGSP_BERT* physicsList = new QGSP_BERT();
-    QGSP_BERT_HP* physicsList = new QGSP_BERT_HP();
-    // QGSP_BIC* physicsList = new QGSP_BIC();
-    // FTFP_BERT* physicsList = new FTFP_BERT();
-    runManager->SetUserInitialization(physicsList);
-    G4cout << "Physics Loaded!" << G4endl;
+    
+    //Physics list defined in separate file
+    runManager->SetUserInitialization(new PaleoSimPhysicsList());
+    
     
     // User action initialization
     G4cout << "Setting the Action Initialization..." << G4endl;
@@ -129,5 +130,6 @@ int main(int argc, char** argv)
     }
     
     delete runManager;
+    delete messenger;
     return 0;
 }

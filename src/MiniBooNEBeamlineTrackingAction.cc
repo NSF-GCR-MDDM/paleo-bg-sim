@@ -5,6 +5,7 @@
 #include "G4RunManager.hh"
 #include "G4TrackStatus.hh"
 #include "G4SystemOfUnits.hh"
+#include "G4AnalysisManager.hh"
 #include <cmath>
 
 MiniBooNEBeamlineTrackingAction::MiniBooNEBeamlineTrackingAction(MiniBooNEBeamlineRunAction* runAction)

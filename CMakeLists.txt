@@ -23,6 +23,12 @@ include(${Geant4_USE_FILE})
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 #----------------------------------------------------------------------------
+if(TARGET Geant4::G4gdml)
+  message(STATUS "GDML support found in Geant4.")
+  set(HAVE_PALEOSIM_GDML TRUE)
+endif()
+
+#----------------------------------------------------------------------------
 # Locate sources and headers for this project
 # NB: headers are included so they will show up in IDEs
 #
@@ -35,6 +41,9 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 add_executable(particleProduction particleProduction.cc ${sources} ${headers})
 target_link_libraries(particleProduction ${Geant4_LIBRARIES})
 
+if(HAVE_PALEOSIM_GDML)
+  target_compile_definitions(particleProduction PUBLIC PALEOSIM_ENABLE_GDML)
+endif()
 
 #----------------------------------------------------------------------------
 # For internal Geant4 use - but has no effect if you build this

@@ -6,8 +6,7 @@
 #include "G4VUserDetectorConstruction.hh"
 #include "G4FieldManager.hh"
 #include "globals.hh"
-
-class HornMagneticField;
+#include "G4SystemOfUnits.hh"
 
 class G4VPhysicalVolume;
 class G4LogicalVolume;
@@ -21,14 +20,18 @@ class MiniBooNEBeamlineConstruction : public G4VUserDetectorConstruction
         virtual ~MiniBooNEBeamlineConstruction();
 
         virtual G4VPhysicalVolume* Construct();
-        virtual void ConstructSDandField();
+        void SetOverburdenSideLength(G4double val);
+        void SetAirCavitySideLength(G4double val);
+        void SetTargetSideLength(G4double val);
+        void SetTargetMaterial(const G4String& val);
         
     private:
         G4GenericMessenger* fMessenger;
-        static G4ThreadLocal HornMagneticField* fMagneticField;
-        static G4ThreadLocal G4FieldManager* fFieldMgr;
+        G4double fOverburdenSideLength = 10.0 * m;
+        G4double fAirCavitySideLength = 0.0 * m;
+        G4double fTargetSideLength = 1.0 * cm;
+        G4String fTargetMaterial = "Norite";   
     
-        G4LogicalVolume* logicAir;
 };
 
 #endif
