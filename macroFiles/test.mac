@@ -1,14 +1,20 @@
+#Geometry commands
+/geom/setOverburdenSideLength 20.0 m
+/geom/setAirCavitySideLength 6.0 m
+/geom/setTargetSideLength 1.0 cm
+/geom/setOverburdenMaterial norite
+/geom/setTargetMaterial norite
+
+#Source commands
+/generator/setSourceType muonGenerator
+/generator/setMuonEffectiveDepth 6.0 km
+
 /run/initialize
-#/random/setSeeds 55 155
+
 /control/verbose 0
 /run/verbose 0
 /event/verbose 0
 /tracking/verbose 0
 /analysis/setFileName outputFiles/test.root
+
 /run/beamOn 100
-
-/geom/setOverburdenSideLength 20.0 m
-/geom/setAirCavitySideLength 6.0 m
-/geom/setTargetSideLength 1.0 cm
-
-/vis/list

@@ -1,147 +1,147 @@
 #include "MiniBooNEBeamlinePrimaryGeneratorAction.hh"
-
-#include "G4RunManager.hh"
-#include "G4ParticleGun.hh"
+#include "MiniBooNEBeamlineConstruction.hh"
+#include "G4Event.hh"
+#include "G4GeneralParticleSource.hh"
 #include "G4ParticleTable.hh"
 #include "G4ParticleDefinition.hh"
+#include "G4RunManager.hh"
 #include "G4SystemOfUnits.hh"
 #include "Randomize.hh"
-#include <cmath>
-#include <vector>
+#include "G4Exception.hh"
+#include <algorithm>
+#include "TF1.h"
 
 MiniBooNEBeamlinePrimaryGeneratorAction::MiniBooNEBeamlinePrimaryGeneratorAction()
-:G4VUserPrimaryGeneratorAction(),
- fParticleGun(0) {
-	G4cout << "Constructing Particle Gun...";
-	G4int n_particle = 1; // Number of particles you shoot at a time
-	fParticleGun = new G4ParticleGun(n_particle);
+: G4VUserPrimaryGeneratorAction(), fGPS(new G4GeneralParticleSource())
+{
 
-	G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
-	G4String particleName;
-	G4ParticleDefinition* particle = particleTable->FindParticle(particleName="mu-");
-	fParticleGun->SetParticleDefinition(particle);
-	G4cout << "Particle Gun constructed." << G4endl;
+}
 
-	// Initialize angular CDF
-	G4cout << "Initializing Angular Distribution...";
-	InitializeAngularDistribution();
-	G4cout << "Angular Distribution initialized." << G4endl;
 
-	// Initialize energy intervals
-	G4cout << "Initializing Energy Intervals...";
-	InitializeEnergyIntervals();
-	G4cout << "Energy Intervals initialized." << G4endl;
+void MiniBooNEBeamlinePrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
+	if (fSourceType == "muonGenerator") {
 
+		GenerateMuonPrimaries(anEvent);
+	}
+}
+
+void MiniBooNEBeamlinePrimaryGeneratorAction::SetSourceType(const G4String& sourceType) {
+
+    fSourceType = sourceType;
+
+	//List of valid source types
+    fValidSourceTypes = {"muonGenerator"};
+
+	//Check if our source type is in our list
+	if (std::find(fValidSourceTypes.begin(), fValidSourceTypes.end(), fSourceType) == fValidSourceTypes.end()) {
+		G4Exception("MiniBooNEBeamlinePrimaryGeneratorAction", "InvalidSource", FatalException,
+			("Invalid source type: " + fSourceType).c_str());
+	}
+
+	//Initialization
+	if (fSourceType == "muonGenerator") {
+		InitializeMuons();
+	}
 }
 
 MiniBooNEBeamlinePrimaryGeneratorAction::~MiniBooNEBeamlinePrimaryGeneratorAction() {
-	delete fParticleGun;
+    if (fGPS) delete fGPS;
+
+	//Muon generator stuff
+	if (fMuonThetaDist) delete fMuonThetaDist;
+	if (fMuonEnergyDist) delete fMuonEnergyDist;
+	if (fMuonPhiDist) delete fMuonPhiDist;
 }
 
-void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeAngularDistribution() {
-	// Constants:
-	const double h0 = 6.011;
-	const double dtheta = 0.001;
-	const double I1 = 0.0000086;
-	const double I2 = 0.00000047;
-	const double lambda1 = 0.45;
-	const double lambda2 = 0.87;
+//Muon generator functions 
+void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeMuons() {
+	G4double h0_km = h0/km;
 
-	double theta_min = -M_PI_2 + 0.001;
-	double theta_max = M_PI_2 - 0.001;
-	for (double theta = theta_min; theta < theta_max; theta += dtheta) {
-		theta_intervals.push_back(theta);
-	}
+	//Make a function of phis to sample - uniform from 0 to 2*pi
+	fMuonPhiDist = new TF1("fMuonPhiDist","1",0,2*CLHEP::pi);
 
-	// Calculate the angle PDF and CDF
-	double cumulative = 0.0;
-	for (size_t i = 0; i < theta_intervals.size() - 1; ++i) {
-		double theta_mid = 0.5 * (theta_intervals[i] + theta_intervals[i + 1]);
-		double pdf_value = I1 * std::exp(-h0 / lambda1 / std::cos(theta_mid));
-		pdf_value += I2 * std::exp(-h0 / lambda2 / std::cos(theta_mid));
-		pdf_value /= std::cos(theta_mid);
-		double probability = pdf_value * dtheta;
-		cumulative += probability;
-		theta_cdf.push_back(cumulative);
-	}
+	//Make a function of thetas to sample - sec(theta) from 0 to pi/2
+	fMuonThetaDist = new TF1("fMuonThetaDist","([0]*exp(-[1]*[2]/cos(x))+[3]*exp(-[4]*[2]/cos(x)))*sin(x)/cos(x)",0,CLHEP::pi/2.-0.01);
+	fMuonThetaDist->SetParameter(0,0.0000086);
+	fMuonThetaDist->SetParameter(1,0.00000047); //TODO: Check
+	fMuonThetaDist->SetParameter(2,h0_km);
+	fMuonThetaDist->SetParameter(3,1./0.45);
+	fMuonThetaDist->SetParameter(4,1./0.87);
 
-	// Normalize the angle CDF
-	for (size_t i = 0; i < theta_cdf.size(); ++i) {
-		theta_cdf[i] /= cumulative;
-	}
 
-	return;
+	//Make a function of energies to sample - Energy in GeV
+	fMuonEnergyDist = new TF1("fMuonEnergyDist","exp(-[0]*[1]*([2]-1)) * (x - [3]*(1-exp(-[0]*[1])))^(-[2])",1,3000);
+	fMuonEnergyDist->SetParameter(0,0.4); 
+	//Skip 1 since we calculate it from the sampled theta
+	fMuonEnergyDist->SetParameter(2,3.77);
+	fMuonEnergyDist->SetParameter(3,693);
+
 }
 
-void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeEnergyIntervals() {
-	const double E_min = 1.0;
-    const double E_max = 4000.0;
-    const double dE = 0.01;
+void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMuonPrimaries(G4Event* anEvent) {
+	G4double h0_km = h0/km;
 
-	for (double E = E_min; E < E_max; E += dE) {
-		e_intervals.push_back(E);
-	}
+	//Calculate the normalized muon flux rate at this effective depth - Eq. 4 from Mei & Hime (2006)
+	G4double I0 = 67.97e-6 * std::exp(-h0_km/0.285) + 2.071e-6*std::exp(-h0_km/0.698);
+
+	//Set the particle (muon - Later we'll put in mu+/mu- in appropriate ratios)
+    G4ParticleDefinition* muonDef = G4ParticleTable::GetParticleTable()->FindParticle("mu-");
+    fGPS->SetParticleDefinition(muonDef);
+
+	//Sample theta
+	G4double theta = fMuonThetaDist->GetRandom();
+
+	//Sample phi
+	G4double phi = fMuonPhiDist->GetRandom();
+
+	//Calculate the h slant depth & set it
+	G4double h_km = h0_km / std::cos(theta); 
+	fMuonEnergyDist->SetParameter(1,h_km);
+
+	//Set the energy & set it - TODO: rest mass?
+	G4double E_GeV = fMuonEnergyDist->GetRandom();
+    fGPS->GetCurrentSource()->GetEneDist()->SetMonoEnergy(E_GeV);
+
+
+	//For debugging
+	G4cout 
+    << "[Sampled Muon]" << G4endl
+    << "  Theta (zenith)     = " << theta / deg << " deg" << G4endl
+    << "  Phi (azimuth)    = " << phi / deg << " deg" << G4endl
+    << "  Slant depth    = " << h_km << " km.w.e" << G4endl
+    << "  Energy         = " << E_GeV << " GeV" 
+    << G4endl;
+
+
+	//Sample the position & set it
+    G4ThreeVector position = SamplePointOnTopOfOverburden();
+
+	//Set the momentum direction
+	G4ThreeVector direction(
+        std::sin(theta) * std::cos(phi),
+        std::sin(theta) * std::sin(phi),
+        -std::cos(theta)  // downward
+    );    
+	fGPS->GetCurrentSource()->GetAngDist()->SetParticleMomentumDirection(direction);
+
+	//Generate the Primary vertex
+    fGPS->GeneratePrimaryVertex(anEvent);
 }
 
-std::vector<double> MiniBooNEBeamlinePrimaryGeneratorAction::GetEnergyDistribution(double theta) {
-	// Constants:
-	const double h0 = 6.011;
-	const double b = 0.4;
-	const double gamma = 3.77;
-	const double epsilon = 693;
-	const double dE = 0.01;
+G4ThreeVector MiniBooNEBeamlinePrimaryGeneratorAction::SamplePointOnTopOfOverburden() const {
+	auto* detector = static_cast<const MiniBooNEBeamlineConstruction*>(
+        G4RunManager::GetRunManager()->GetUserDetectorConstruction());
 
-	// Compute depth for given theta
-	double h = h0 * (1 / std::cos(theta));
+    G4double sideLength = detector->GetOverburdenSideLength();
+    G4double halfSideLength = sideLength / 2.0;
 
-	// Clear previous energy distributions
-	std::vector<double> e_cdf;
+    G4double x = (G4UniformRand() - 0.5) * sideLength;
+    G4double y = (G4UniformRand() - 0.5) * sideLength;
+    G4double z = halfSideLength;
 
-	// Compute the energy PDF and CDF
-	double cumulative = 0.0;
-	for (size_t i = 0; i < e_intervals.size() - 1; ++i) {
-		double x_mid = 0.5 * (e_intervals[i] + e_intervals[i + 1]);
-		double pdf_value = std::exp(-b * h * (gamma - 1));
-		pdf_value *= std::pow(x_mid + epsilon * (1 - std::exp(-b * h)), -gamma);
-		double probability = pdf_value * dE;
-		cumulative += probability;
-		e_cdf.push_back(cumulative);
-	}
-
-	// Normalize the energy CDF
-	for (size_t i = 0; i < e_cdf.size(); ++i) {
-		e_cdf[i] /= cumulative;
-	}
-
-	return e_cdf;
+    return G4ThreeVector(x, y, z);
 }
 
-double MiniBooNEBeamlinePrimaryGeneratorAction::SampleCDF(std::vector<double> cdf,
-														  std::vector<double> intervals) {
-	double random_value = G4UniformRand(); // Generates a random value between 0 and 1
-	std::vector<double>::iterator it = std::lower_bound(cdf.begin(), cdf.end(), random_value);
-	size_t index = std::distance(cdf.begin(), it);
-	return intervals[index];
-}
-
-void MiniBooNEBeamlinePrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
-	// Generate energy from the distribution
-	double sampled_theta = SampleCDF(theta_cdf, theta_intervals);
-	std::vector<double> e_cdf = GetEnergyDistribution(sampled_theta);
-	double sampled_energy = SampleCDF(e_cdf, e_intervals);
-	fParticleGun->SetParticleEnergy(sampled_energy * GeV);
-
-	// Set position and direction to match the desired angle.
-	fParticleGun->SetParticlePosition(G4ThreeVector(0 * m, 0 * m, 0 * m));
-
-	G4double phi = 2.0 * M_PI * G4UniformRand();
-	G4double dirZ = std::cos(sampled_theta);
-	G4double sin_theta = std::sin(sampled_theta);
-	G4double dirX = sin_theta * std::cos(phi);
-    G4double dirY = sin_theta * std::sin(phi);
-	fParticleGun->SetParticleMomentumDirection(G4ThreeVector(dirX, dirY, dirZ));
-
-	fParticleGun->GeneratePrimaryVertex(anEvent);
-
-	return;
+void MiniBooNEBeamlinePrimaryGeneratorAction::SetMuonEffectiveDepth(G4double depth) {
+    h0 = depth;
 }

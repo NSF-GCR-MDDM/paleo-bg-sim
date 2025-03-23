@@ -7,32 +7,32 @@
 #include "MiniBooNEBeamlineTrackingAction.hh"
 
 
-MiniBooNEBeamlineActionInitialization::MiniBooNEBeamlineActionInitialization()
- : G4VUserActionInitialization()
+// Constructor now accepts a pointer to the already-created generator
+MiniBooNEBeamlineActionInitialization::MiniBooNEBeamlineActionInitialization(
+    MiniBooNEBeamlinePrimaryGeneratorAction* generator)
+ : G4VUserActionInitialization(),
+   fGenerator(generator)
 {}
-
 MiniBooNEBeamlineActionInitialization::~MiniBooNEBeamlineActionInitialization()
 {}
 
 void MiniBooNEBeamlineActionInitialization::BuildForMaster() const
 {
-  MiniBooNEBeamlineRunAction* runAction = new MiniBooNEBeamlineRunAction;
+  auto* runAction = new MiniBooNEBeamlineRunAction;
   SetUserAction(runAction);
 }
 
 void MiniBooNEBeamlineActionInitialization::Build() const
 {
-	G4cout << "Making Primary Generator Action..." << G4endl;
-	SetUserAction(new MiniBooNEBeamlinePrimaryGeneratorAction);
-	G4cout << "Making Primary Generator Action..." << G4endl;
+  G4cout << "Registering Primary Generator Action..." << G4endl;
+  SetUserAction(fGenerator);  // Use the generator passed in from main()
 
-	MiniBooNEBeamlineRunAction* runAction = new MiniBooNEBeamlineRunAction;
-	SetUserAction(runAction);
+  auto* runAction = new MiniBooNEBeamlineRunAction;
+  SetUserAction(runAction);
 
-	MiniBooNEBeamlineEventAction* eventAction = new MiniBooNEBeamlineEventAction(runAction);
-	SetUserAction(eventAction);
+  auto* eventAction = new MiniBooNEBeamlineEventAction(runAction);
+  SetUserAction(eventAction);
 
-	MiniBooNEBeamlineTrackingAction* trackingAction = new MiniBooNEBeamlineTrackingAction(runAction);
-	SetUserAction(trackingAction);
-}  
-
+  auto* trackingAction = new MiniBooNEBeamlineTrackingAction(runAction);
+  SetUserAction(trackingAction);
+}

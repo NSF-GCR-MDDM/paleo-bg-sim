@@ -7,6 +7,7 @@ class PaleoSimPhysicsList : public G4VModularPhysicsList {
 public:
     PaleoSimPhysicsList();
     ~PaleoSimPhysicsList() override = default;
+    
 };
 
 #endif

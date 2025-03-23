@@ -25,53 +25,24 @@
 MiniBooNEBeamlineConstruction::MiniBooNEBeamlineConstruction()
 : G4VUserDetectorConstruction(),
   fMessenger(0)
-{ }
+{     
+    materials = new PaleoSimMaterialManager();
+}
 
 MiniBooNEBeamlineConstruction::~MiniBooNEBeamlineConstruction()
 { 
     delete fMessenger;
+    delete materials;
 }
 
 G4VPhysicalVolume* MiniBooNEBeamlineConstruction::Construct()
 {  
-    // Find and reference materials stored in G4NistManager.hh
-    G4NistManager* nist = G4NistManager::Instance();
-    
-    G4Material* air = nist->FindOrBuildMaterial("G4_AIR"); // Air    
-    G4Element* H = nist->FindOrBuildElement("H");		   // Hydrogen
-    G4Element* C = nist->FindOrBuildElement("C");		   // Carbon
-    G4Element* O = nist->FindOrBuildElement("O");		   // Oxygen
-    G4Element* Na = nist->FindOrBuildElement("Na");		   // Sodium
-    G4Element* Mg = nist->FindOrBuildElement("Mg");		   // Magnesium
-    G4Element* Al = nist->FindOrBuildElement("Al");		   // Aluminum
-    G4Element* Si = nist->FindOrBuildElement("Si");		   // Silicon
-    G4Element* K = nist->FindOrBuildElement("K");		   // Potassium
-    G4Element* Ca = nist->FindOrBuildElement("Ca");		   // Calcium
-    G4Element* Mn = nist->FindOrBuildElement("Mn");		   // Manganese
-    G4Element* Fe = nist->FindOrBuildElement("Fe");		   // Iron
-    G4Element* Ti = nist->FindOrBuildElement("Ti");		   // Titanium
-    
-    //Begin Norite
-    G4Material* Norite = new G4Material("Norite", 2.894*g/cm3, 12);
-    
-    // Add elements to the material (fractions are by mass)
-    Norite->AddElement(H, 0.001425);  // 0.15% Silicon
-	Norite->AddElement(C, 0.000325);  // 0.04% Carbon
-	Norite->AddElement(O, 0.459925);  // 46.0% Oxygen
-	Norite->AddElement(Na, 0.021925); // 2.2% Sodium
-	Norite->AddElement(Mg, 0.032925); // 3.3% Magnesium
-	Norite->AddElement(Al, 0.089925); // 9.0% Aluminum
-	Norite->AddElement(Si, 0.261925); // 26.2% Sodium
-	Norite->AddElement(K, 0.011925);  // 1.2% Potassium
-	Norite->AddElement(Ca, 0.051925); // 5.2% Calcium
-	Norite->AddElement(Mn, 0.000925); // 0.1% Manganese
-	Norite->AddElement(Fe, 0.061925); // 6.2% Iron
-	Norite->AddElement(Ti, 0.004925); // 0.5% Titanium
 
     //Rock overburden
+    G4Material* overburdenMaterial = materials->GetMaterial(fOverburdenMaterial); 
     G4double halfOverburdenLength = 0.5 * fOverburdenSideLength;
     G4Box* rockBox = new G4Box("rockBox",halfOverburdenLength,halfOverburdenLength,halfOverburdenLength);
-    G4LogicalVolume* logicRock = new G4LogicalVolume(rockBox,Norite,"rockBox");
+    G4LogicalVolume* logicRock = new G4LogicalVolume(rockBox,overburdenMaterial,"rockBox");
 
     G4bool checkOverlaps = true; // Prints if there are overlapping volumes
 
@@ -87,16 +58,18 @@ G4VPhysicalVolume* MiniBooNEBeamlineConstruction::Construct()
     );
 
     //Air cavity
+    G4Material* cavityMaterial = materials->GetMaterial("Air"); 
     G4LogicalVolume* logicCavity = nullptr; //Create outside if statement so can be used in next conditional
                                             //for target w/o creating compile errors
     if (fAirCavitySideLength > 0.0) {
+        G4cout << "You fAirCavitySideLength = " << fAirCavitySideLength << G4endl;
         if (fAirCavitySideLength >= fOverburdenSideLength) {
             G4Exception("MiniBooNEBeamlineConstruction", "GeomErr001", FatalException,
                 "Air cavity side length exceeds rock side length.");
         } else {
             G4double halfCavityLength = 0.5 * fAirCavitySideLength;
             G4Box* cavityBox = new G4Box("AirCavity", halfCavityLength, halfCavityLength, halfCavityLength);
-            logicCavity = new G4LogicalVolume(cavityBox, air, "AirCavity");
+            logicCavity = new G4LogicalVolume(cavityBox, cavityMaterial, "AirCavity");
     
             new G4PVPlacement(
                 nullptr,                // No rotation
@@ -131,11 +104,11 @@ G4VPhysicalVolume* MiniBooNEBeamlineConstruction::Construct()
                  "Target side length exceeds air cavity side length.");
         } 
         else {
-            G4Material* placeholderMaterial = G4NistManager::Instance()->FindOrBuildMaterial("G4_AIR");
+            G4Material* targetMaterial = materials->GetMaterial(fTargetMaterial);
 
             G4double targetHalfSideLength = 0.5 * fTargetSideLength;
             G4Box* targetBox = new G4Box("TargetBox", targetHalfSideLength, targetHalfSideLength, targetHalfSideLength);
-            G4LogicalVolume* logicTarget = new G4LogicalVolume(targetBox, placeholderMaterial, "Target");
+            G4LogicalVolume* logicTarget = new G4LogicalVolume(targetBox, targetMaterial, "Target");
 
             new G4PVPlacement(
                 nullptr,             // no rotation
@@ -152,28 +125,7 @@ G4VPhysicalVolume* MiniBooNEBeamlineConstruction::Construct()
 
     #ifdef PALEOSIM_ENABLE_GDML
         G4GDMLParser parser;
-
-        //Modifying visibility settings
-        G4VisAttributes* rockVis = new G4VisAttributes(G4Colour(0.5, 0.5, 0.5, 0.2));
-        rockVis->SetVisibility(true);
-        rockVis->SetForceSolid(true);
-        logicRock->SetVisAttributes(rockVis);
-
-        G4VisAttributes* airVis = new G4VisAttributes(G4Colour(0.5, 0.0, 0.0, 0.2));
-        airVis->SetVisibility(true);
-        airVis->SetForceSolid(true);
-        if (fAirCavitySideLength>0.) {
-            logicCavity->SetVisAttributes(airVis);
-        }
-
         remove("geometry.gdml");
-
-        if (logicRock->GetVisAttributes()) {
-            G4cout << "[DEBUG] logicRock vis attributes are set." << G4endl;
-        } else {
-            G4cout << "[DEBUG] logicRock vis attributes are NULL!" << G4endl;
-        }
-        
         parser.Write("geometry.gdml", physWorld, true);
     #endif
     
@@ -182,6 +134,9 @@ G4VPhysicalVolume* MiniBooNEBeamlineConstruction::Construct()
 
 void MiniBooNEBeamlineConstruction::SetOverburdenSideLength(G4double val) {
     fOverburdenSideLength = val;
+}
+void MiniBooNEBeamlineConstruction::SetOverburdenMaterial(const G4String& val) {
+    fOverburdenMaterial = val;
 }
 void MiniBooNEBeamlineConstruction::SetAirCavitySideLength(G4double val) {
     fAirCavitySideLength = val;

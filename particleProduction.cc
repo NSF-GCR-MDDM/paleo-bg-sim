@@ -1,18 +1,10 @@
 //Main Program
-
-
 #include "G4RunManager.hh"
 #include "G4UImanager.hh"
-//#include "G4GDMLParser.hh"
 #include "G4TransportationManager.hh"
 #include "MiniBooNEBeamlineAnalysis.hh"
 #include "MiniBooNEBeamlineConstruction.hh"
-#include "QGSP_INCLXX.hh"
-#include "FTFP_INCLXX.hh"
-#include "QGSP_BERT.hh"
-#include "QGSP_BERT_HP.hh"
-#include "QGSP_BIC.hh"
-#include "FTFP_BERT.hh"
+#include "MiniBooNEBeamlinePrimaryGeneratorAction.hh"
 #include "MiniBooNEBeamlineActionInitialization.hh"
 #include "Randomize.hh"
 #include "time.h"
@@ -22,114 +14,67 @@
 #include "PaleoSimPhysicsList.hh"
 #include "PaleoSimMessenger.hh"
 
-
-#ifdef G4UI_USE
-        #include "G4VisExecutive.hh"
-        #include "G4UIExecutive.hh"
-#endif
-
 int main(int argc, char** argv)
 {
-    //Set the random seed based on system time
+    //Set the random generator
     G4Random::setTheEngine(new CLHEP::RanecuEngine);
-    //Set the seed in the macro so we can vary it for different jobs
+
+    //Set the seeds for the run
     G4long pid = getpid();
-    //G4long seed = 271;
     time_t systime = time(NULL);
-    //G4long seeds[2] = (long) (systime*G4UniformRand()+pid);
     G4long seeds[2] = {systime, pid};
     G4Random::setTheSeeds(seeds, 0);
-
-    //    TRandom3 randGen(0);
-    // long seeds[2] = {randGen.Integer(INT_MAX), randGen.Integer(INT_MAX)};
-    //G4Random::setTheSeeds(seeds, 0);
-    //G4cout << "Random seeds set to: " << G4Random::getTheSeeds()[0] << " and " << G4Random::getTheSeeds()[1] << "\n";
-
     G4cout<<"Seeds set to: "<<G4Random::getTheSeeds()[0]<<" "<<G4Random::getTheSeeds()[1]<<std::endl;
     
     // Construct the default run manager
     G4RunManager* runManager = new G4RunManager;
 
-    // Set mandatory initialization classes
+    //NOTE: Ordering of these is important!
+    // Construction and PrimaryGenerators need to be created
+    // before the Messenger. The Messenger needs to be created
+    // before the initialization. The PhysicsList needs to be
+    // instantiated before the PrimaryGenerator.
+
     // Detector construction
     G4cout << "Constructing the geometry..." << G4endl;
     auto* detector = new MiniBooNEBeamlineConstruction();
     runManager->SetUserInitialization(detector);
     
-    // Now create the messenger and pass the detector to it
-    auto* messenger = new PaleoSimMessenger(detector);
-    G4cout << "Geometry Constructed!" << G4endl;
-    
-    //Physics list defined in separate file
+    //Physics list
     runManager->SetUserInitialization(new PaleoSimPhysicsList());
+
+    // Generator
+    G4cout << "Initializing the generator..." << G4endl;
+    auto* generator = new MiniBooNEBeamlinePrimaryGeneratorAction();
+
+    // Messenger
+    auto* messenger = new PaleoSimMessenger(detector,generator);
     
-    
-    // User action initialization
-    G4cout << "Setting the Action Initialization..." << G4endl;
-    runManager->SetUserInitialization(new MiniBooNEBeamlineActionInitialization());
-    G4cout << "Action Initialziation Complete!" << G4endl;
+    // Run Action
+    runManager->SetUserInitialization(new MiniBooNEBeamlineActionInitialization(generator));
+
+    //Load up our macro
+    G4UImanager* uiManager = G4UImanager::GetUIpointer();
+    if (argc == 2) {
+      G4String macroFile = argv[1];
+      G4String command = "/control/execute " + macroFile;
+      uiManager->ApplyCommand(command);
+    }
+    else {
+      G4Exception("particleProduction", "inputErr001", FatalException,
+        "Must supply a macro file!");
+    }
 
     //Initialize the run
-    G4cout << "Initializing the run..." << G4endl;
     runManager->Initialize();
-    G4cout << "Run Initialized!" << G4endl;
-
-    //Turn this code on and off to write the geometry to a gdml file
-    //For some reason it seems one cannot overwrite an old file so
-    //this should only be used when changes are made and the new
-    //geometry needs to be written. The old one must be deleted first
-    //or the code will fail
-
-    /*
-    G4cout << "Writing the geometry to a .gdml file." << G4endl;
-    G4VPhysicalVolume* pWorld = G4TransportationManager::GetTransportationManager()->GetNavigatorForTracking()->GetWorldVolume();
-    G4GDMLParser parser;
-    parser.Write("minibooneBeamline-NoHorn.gdml", pWorld);
-    */
 
     //Turn off the annoying "Track stuck" warnings. They appear harmless
     //and occur infrequently
-    G4TransportationManager::GetTransportationManager()->GetNavigatorForTracking()->SetPushVerbosity(0);
-
-    // Get the pointer to the User Interface manager
-    G4UImanager* UImanager = G4UImanager::GetUIpointer();
-
-    // Process macro
-    G4String command = "/control/execute ";
-    G4String fileName = argv[1];
-    //UImanager->ApplyCommand(command+fileName); //ALEXOCT_31_2024
-
-    // Interactive session
-    if (argc == 1) {
-#ifdef G4UI_USE
-      G4UIExecutive* ui = new G4UIExecutive(argc, argv);
-      UImanager->ApplyCommand("/control/execute init.mac");
-      ui->SessionStart();
-      delete ui;
-#endif
-    }
-
-    // Batch mode; process command line arguments + marco
-    else {
-      // Check for command line arguments (other than the macro)
-      int argsLeft = argc - 1;
-      G4cout << argsLeft << G4endl;
-      while (argsLeft > 1) {
-	G4String argFlag = argv[argc-argsLeft];
-	if (argFlag == "-o") {
-	  G4String anaFilename = argv[argc-argsLeft+1];
-	  G4AnalysisManager::Instance()->SetFileName(anaFilename);
-	  argsLeft -= 2;
-	}
-	G4cout << argsLeft << G4endl;
-      }
-      // Last argument should be the macro
-      G4String command = "/control/execute ";
-      G4String macName = argv[argc-1];
-      UImanager->ApplyCommand(command+macName);
-    }
+    //G4TransportationManager::GetTransportationManager()->GetNavigatorForTracking()->SetPushVerbosity(0);
     
     delete runManager;
     delete messenger;
+    delete generator;
+    delete detector;
     return 0;
 }

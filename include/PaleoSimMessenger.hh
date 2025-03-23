@@ -11,22 +11,34 @@
 class G4UIcmdWithADoubleAndUnit;
 class G4UIdirectory;
 class MiniBooNEBeamlineConstruction;
+class MiniBooNEBeamlinePrimaryGeneratorAction;
 
 class PaleoSimMessenger : public G4UImessenger {
 public:
-    PaleoSimMessenger(MiniBooNEBeamlineConstruction* detector);
+    PaleoSimMessenger(MiniBooNEBeamlineConstruction* detector,
+                      MiniBooNEBeamlinePrimaryGeneratorAction* generator);
     ~PaleoSimMessenger() override;
 
     void SetNewValue(G4UIcommand* command, G4String newValue) override;
 
 private:
     MiniBooNEBeamlineConstruction* fDetector;
+    MiniBooNEBeamlinePrimaryGeneratorAction* fGenerator;
 
     G4UIdirectory* fGeomDirectory;
-    G4UIcmdWithADoubleAndUnit* fOverburdenSizeCmd;    
+    G4UIcmdWithADoubleAndUnit* fOverburdenSizeCmd;  
+    G4UIcmdWithAString* fOverburdenMaterialCmd;  
     G4UIcmdWithADoubleAndUnit* fAirCavitySizeCmd;  
     G4UIcmdWithADoubleAndUnit* fTargetSizeCmd;
     G4UIcmdWithAString* fTargetMaterialCmd;
+
+
+    G4UIdirectory* fGeneratorDirectory;
+    G4UIcmdWithAString* fSourceTypeCmd;
+
+    //Muon Generator
+    G4UIcmdWithADoubleAndUnit* fMuonEffectiveDepthCmd;
+
 };
 
 #endif
