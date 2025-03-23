@@ -24,7 +24,7 @@ void MiniBooNEBeamlineActionInitialization::Build() const
 {
   G4cout << "Registering Primary Generator Action..." << G4endl;
   SetUserAction(fGenerator);  // Use the generator passed in from main()
-
+  
   auto* runAction = new MiniBooNEBeamlineRunAction;
   SetUserAction(runAction);
 

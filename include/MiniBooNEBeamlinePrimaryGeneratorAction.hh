@@ -28,6 +28,7 @@ private:
     G4GeneralParticleSource* fGPS = nullptr;
     G4String fSourceType = ""; // For choosing source via macro command
     std::vector<G4String> fValidSourceTypes;
+    G4bool initializedSource=false; //Set to true once the source is initialized
 
     // For storing output info of primaries
     std::vector<int> fPrimaryPDGIDs;
@@ -60,10 +61,9 @@ private:
     // Add private state and methods for your generator implementation here
     //
     // Mei & Hime muon generator internals
-    G4double h0 = 6000 * km;
+    G4double h0 = 6 * km;
     TF1* fMuonThetaDist = nullptr;
     TF1* fMuonEnergyDist = nullptr;
-    G4double muonEps = 0.01;
     void InitializeMuons();
     void GenerateMuonPrimaries(G4Event*);
     G4ThreeVector SamplePointOnTopOfOverburden() const;

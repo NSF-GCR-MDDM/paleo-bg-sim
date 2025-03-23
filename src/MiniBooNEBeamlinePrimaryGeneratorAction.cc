@@ -40,17 +40,19 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::SetSourceType(const G4String& sour
         G4Exception("MiniBooNEBeamlinePrimaryGeneratorAction", "InvalidSource", FatalException,
                     ("Invalid source type: " + fSourceType).c_str());
     }
+}
 
+//TODO move intialization of the source into its own function somewhere else
+void MiniBooNEBeamlinePrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
     // CUSTOM_GENERATOR_HOOK
     // Call initialization logic here if needed for new generators
 	//
 	//Mei & Hime muon generator
-    if (fSourceType == "muonGenerator") {
+    if (fSourceType == "muonGenerator" && initializedSource==false) {
         InitializeMuons();
+        initializedSource=true;
     }
-}
 
-void MiniBooNEBeamlinePrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
     ClearPrimaries();
 	
     // CUSTOM_GENERATOR_HOOK
@@ -141,18 +143,32 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::ClearPrimaries()
 void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeMuons() {
     G4double h0_km = h0 / km;
 
+    G4cout<<h0<<G4endl; 
+
+    //Total, NOT differential!
     fMuonThetaDist = new TF1("fMuonThetaDist",
-        "([0]*exp(-[1]*[2]/cos(x))+[3]*exp(-[4]*[2]/cos(x)))/cos(x)", 0, CLHEP::pi / 2. - muonEps);
-    fMuonThetaDist->SetParameter(0, 0.0000086);
-    fMuonThetaDist->SetParameter(1, 0.00000047);
+                          "( [0]*exp(-[2]/([3]*cos(x))) + [1]*exp(-[2]/([4]*cos(x))) ) / cos(x)",
+                          0, CLHEP::pi / 2. - 0.001);
+    //fMuonThetaDist = newTF1("fMuonThetaDist",
+    // ""
+    //)
+    fMuonThetaDist->SetParameter(0, 0.0000086); //I1
+    fMuonThetaDist->SetParameter(1, 0.00000044); //I2
     fMuonThetaDist->SetParameter(2, h0_km);
-    fMuonThetaDist->SetParameter(3, 1. / 0.45);
-    fMuonThetaDist->SetParameter(4, 1. / 0.87);
+    fMuonThetaDist->SetParameter(3, 0.45); //1/lambda1
+    fMuonThetaDist->SetParameter(4, 0.87); //1/lambda2
     fMuonThetaDist->SetNpx(1000);
+    for (int i=0; i < 5; i++) {
+        G4cout<<i<<","<<fMuonThetaDist->GetParameter(i)<<G4endl;
+    }
+    for (double i = 0; i < 3.1415/2.; i+=0.1) {
+        G4cout<<i<<", "<<fMuonThetaDist->Eval(i)<<G4endl;
+    }
 
     fMuonEnergyDist = new TF1("fMuonEnergyDist",
         "exp(-[0]*[1]*([2]-1)) * (x + [3]*(1-exp(-[0]*[1])))^(-[2])", 1, 3000);
     fMuonEnergyDist->SetParameter(0, 0.4);
+    //Par 1 set after sampling theta and calculating slant depth
     fMuonEnergyDist->SetParameter(2, 3.77);
     fMuonEnergyDist->SetParameter(3, 693);
     fMuonEnergyDist->SetNpx(1000);
@@ -162,7 +178,7 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMuonPrimaries(G4Event* anE
     G4double h0_km = h0 / km;
 
     // Flux normalization (Mei & Hime Eq. 4, not used directly)
-    G4double I0 = 67.97e-6 * std::exp(-h0_km / 0.285) + 2.071e-6 * std::exp(-h0_km / 0.698);
+    //G4double I0 = 67.97e-6 * std::exp(-h0_km / 0.285) + 2.071e-6 * std::exp(-h0_km / 0.698);
 
     G4ParticleDefinition* muonDef = G4ParticleTable::GetParticleTable()->FindParticle("mu-");
     fGPS->SetParticleDefinition(muonDef);
@@ -173,6 +189,7 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMuonPrimaries(G4Event* anE
     G4double h_km = h0_km / std::cos(theta);
     fMuonEnergyDist->SetParameter(1, h_km);
     G4double E_GeV = fMuonEnergyDist->GetRandom();
+    //G4double E_GeV = 1.0;
     fGPS->GetCurrentSource()->GetEneDist()->SetMonoEnergy(E_GeV);
 
     G4cout << "[Sampled Muon]" << G4endl

@@ -131,6 +131,6 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
     else if (command == fMuonEffectiveDepthCmd) {
         G4double val = fMuonEffectiveDepthCmd->GetNewDoubleValue(newValue);
         fGenerator->SetMuonEffectiveDepth(val);
-        G4cout << "Effective muon depth set to: " << newValue << G4endl;
+        G4cout << "Effective muon depth set to: " << val << G4endl;
     }
 }
