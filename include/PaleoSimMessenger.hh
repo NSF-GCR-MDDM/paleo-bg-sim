@@ -6,6 +6,7 @@
 #include "G4UImessenger.hh"
 #include "G4UIcmdWithAString.hh"
 #include "G4UIcmdWithADoubleAndUnit.hh"
+#include "G4UIcmdWithABool.hh"
 #include "globals.hh"
 
 class G4UIcmdWithADoubleAndUnit;
@@ -32,12 +33,19 @@ private:
     G4UIcmdWithADoubleAndUnit* fTargetSizeCmd;
     G4UIcmdWithAString* fTargetMaterialCmd;
 
+    // Output configuration
+    G4UIdirectory* fOutputDirectory;
+    G4UIcmdWithAString* fSetOutputFileCmd;
+    G4UIcmdWithABool* fEnablePrimariesOutputCmd;
 
+    //Generator general
     G4UIdirectory* fGeneratorDirectory;
     G4UIcmdWithAString* fSourceTypeCmd;
 
-    //Muon Generator
+    //Muon generator
     G4UIcmdWithADoubleAndUnit* fMuonEffectiveDepthCmd;
+
+    //Add your own generator commands here
 
 };
 

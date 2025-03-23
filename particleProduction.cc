@@ -2,17 +2,20 @@
 #include "G4RunManager.hh"
 #include "G4UImanager.hh"
 #include "G4TransportationManager.hh"
-#include "MiniBooNEBeamlineAnalysis.hh"
 #include "MiniBooNEBeamlineConstruction.hh"
 #include "MiniBooNEBeamlinePrimaryGeneratorAction.hh"
 #include "MiniBooNEBeamlineActionInitialization.hh"
 #include "Randomize.hh"
 #include "time.h"
 #include <unistd.h>
-#include "G4AnalysisManager.hh"
+
+// Removed unused analysis manager
+// #include "MiniBooNEBeamlineAnalysis.hh"
+// #include "G4AnalysisManager.hh"
 
 #include "PaleoSimPhysicsList.hh"
 #include "PaleoSimMessenger.hh"
+#include "PaleoSimOutputManager.hh" // Optional, depending on use
 
 int main(int argc, char** argv)
 {
@@ -48,7 +51,7 @@ int main(int argc, char** argv)
     auto* generator = new MiniBooNEBeamlinePrimaryGeneratorAction();
 
     // Messenger
-    auto* messenger = new PaleoSimMessenger(detector,generator);
+    auto* messenger = new PaleoSimMessenger(detector, generator);
     
     // Run Action
     runManager->SetUserInitialization(new MiniBooNEBeamlineActionInitialization(generator));
@@ -56,13 +59,13 @@ int main(int argc, char** argv)
     //Load up our macro
     G4UImanager* uiManager = G4UImanager::GetUIpointer();
     if (argc == 2) {
-      G4String macroFile = argv[1];
-      G4String command = "/control/execute " + macroFile;
-      uiManager->ApplyCommand(command);
+        G4String macroFile = argv[1];
+        G4String command = "/control/execute " + macroFile;
+        uiManager->ApplyCommand(command);
     }
     else {
-      G4Exception("particleProduction", "inputErr001", FatalException,
-        "Must supply a macro file!");
+        G4Exception("particleProduction", "inputErr001", FatalException,
+            "Must supply a macro file!");
     }
 
     //Initialize the run
@@ -74,7 +77,5 @@ int main(int argc, char** argv)
     
     delete runManager;
     delete messenger;
-    delete generator;
-    delete detector;
     return 0;
 }

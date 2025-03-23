@@ -9,12 +9,14 @@
 /generator/setSourceType muonGenerator
 /generator/setMuonEffectiveDepth 6.0 km
 
+#Output commands
+/output/setOutputFile outputFiles/test.root
+
 /run/initialize
 
 /control/verbose 0
 /run/verbose 0
 /event/verbose 0
 /tracking/verbose 0
-/analysis/setFileName outputFiles/test.root
 
-/run/beamOn 100
+/run/beamOn 10000

@@ -4,8 +4,6 @@
 #include "MiniBooNEBeamlinePrimaryGeneratorAction.hh"
 #include "MiniBooNEBeamlineRunAction.hh"
 #include "MiniBooNEBeamlineEventAction.hh"
-#include "MiniBooNEBeamlineTrackingAction.hh"
-
 
 // Constructor now accepts a pointer to the already-created generator
 MiniBooNEBeamlineActionInitialization::MiniBooNEBeamlineActionInitialization(
@@ -33,6 +31,4 @@ void MiniBooNEBeamlineActionInitialization::Build() const
   auto* eventAction = new MiniBooNEBeamlineEventAction(runAction);
   SetUserAction(eventAction);
 
-  auto* trackingAction = new MiniBooNEBeamlineTrackingAction(runAction);
-  SetUserAction(trackingAction);
 }
