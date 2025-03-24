@@ -52,8 +52,6 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent
         InitializeMuons();
         initializedSource=true;
     }
-
-    ClearPrimaries();
 	
     // CUSTOM_GENERATOR_HOOK
     // Add dispatch logic here for new generators
@@ -97,42 +95,6 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::AddPrimaries(int pdgID,
 	fMuonTheta.push_back(theta);
 	fMuonPhi.push_back(phi);
 	fMuonSlant.push_back(slant);
-}
-
-void MiniBooNEBeamlinePrimaryGeneratorAction::FillPrimaries(int eventID)
-{
-	PaleoSimOutputManager::Get().FillPrimaryEvent(eventID,
-		fPrimaryPDGIDs,
-		fPrimaryEnergies,
-		fPrimary_x,
-		fPrimary_y,
-		fPrimary_z,
-		fPrimary_px,
-		fPrimary_py,
-		fPrimary_pz,
-		// CUSTOM_GENERATOR_HOOK
-		// If you have custom output fields, add here
-		//
-		//Mei & Hime muon generator
-		fMuonTheta,
-		fMuonPhi,
-		fMuonSlant);
-}
-
-void MiniBooNEBeamlinePrimaryGeneratorAction::ClearPrimaries()
-{
-	fPrimaryPDGIDs.clear();
-	fPrimaryEnergies.clear();
-	fPrimary_x.clear(); fPrimary_y.clear(); fPrimary_z.clear();
-	fPrimary_px.clear(); fPrimary_py.clear(); fPrimary_pz.clear();
-
-	// CUSTOM_GENERATOR_HOOK
-	// Clear any custom output vectors here
-	//
-	//Mei & Hime muon generator
-	fMuonTheta.clear();
-	fMuonPhi.clear();
-	fMuonSlant.clear();
 }
 
 // CUSTOM_GENERATOR_HOOK - YOUR METHODS GO HERE
@@ -192,12 +154,14 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMuonPrimaries(G4Event* anE
     //G4double E_GeV = 1.0;
     fGPS->GetCurrentSource()->GetEneDist()->SetMonoEnergy(E_GeV);
 
+    /*
     G4cout << "[Sampled Muon]" << G4endl
            << "  Theta (zenith)     = " << theta / deg << " deg" << G4endl
            << "  Phi (azimuth)      = " << phi / deg << " deg" << G4endl
            << "  Slant depth        = " << h_km << " km.w.e" << G4endl
            << "  Energy             = " << E_GeV << " GeV" << G4endl;
-
+    */
+    
     G4ThreeVector position = SamplePointOnTopOfOverburden();
     G4ThreeVector direction(std::sin(theta) * std::cos(phi),
                             std::sin(theta) * std::sin(phi),
@@ -215,8 +179,7 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMuonPrimaries(G4Event* anE
     AddPrimaries(muonDef->GetPDGEncoding(), E_GeV, position, momentum,
                   theta, phi, h_km);
 
-    FillPrimaries(anEvent->GetEventID());
-    ClearPrimaries();
+    
 }
 
 G4ThreeVector MiniBooNEBeamlinePrimaryGeneratorAction::SamplePointOnTopOfOverburden() const {

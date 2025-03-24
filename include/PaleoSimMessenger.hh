@@ -37,6 +37,7 @@ private:
     G4UIdirectory* fOutputDirectory;
     G4UIcmdWithAString* fSetOutputFileCmd;
     G4UIcmdWithABool* fEnablePrimariesOutputCmd;
+    G4UIcmdWithABool* fEnableNeutronTallyTreeCmd;
 
     //Generator general
     G4UIdirectory* fGeneratorDirectory;
@@ -46,6 +47,7 @@ private:
     G4UIcmdWithADoubleAndUnit* fMuonEffectiveDepthCmd;
 
     //Add your own generator commands here
+    //CUSTOM_GENERATOR_HOOK
 
 };
 

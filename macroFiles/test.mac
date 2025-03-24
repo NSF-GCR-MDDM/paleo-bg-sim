@@ -10,6 +10,7 @@
 /generator/setMuonEffectiveDepth 6.0 km
 
 #Output commands
+/output/enableNeutronTallyOutput true
 /output/setOutputFile outputFiles/test.root
 
 /run/initialize
@@ -19,4 +20,4 @@
 /event/verbose 0
 /tracking/verbose 0
 
-/run/beamOn 10000
+/run/beamOn 1000000

@@ -54,7 +54,7 @@ int main(int argc, char** argv)
     auto* messenger = new PaleoSimMessenger(detector, generator);
     
     // Run Action
-    runManager->SetUserInitialization(new MiniBooNEBeamlineActionInitialization(generator));
+    runManager->SetUserInitialization(new MiniBooNEBeamlineActionInitialization(generator,detector));
 
     //Load up our macro
     G4UImanager* uiManager = G4UImanager::GetUIpointer();

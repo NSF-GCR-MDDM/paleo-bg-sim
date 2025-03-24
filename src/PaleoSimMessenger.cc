@@ -53,6 +53,10 @@ PaleoSimMessenger::PaleoSimMessenger(MiniBooNEBeamlineConstruction* detector,
     fEnablePrimariesOutputCmd->SetGuidance("Enable tracking of primary generation properties");
     fEnablePrimariesOutputCmd->SetParameterName("enablePrimariesOutput", true);
 
+    fEnableNeutronTallyTreeCmd = new G4UIcmdWithABool("/output/enableNeutronTallyOutput", this);
+    fEnableNeutronTallyTreeCmd->SetGuidance("Enable recording of neutrons entering air cavity");
+    fEnableNeutronTallyTreeCmd->SetParameterName("enableNeutronTallyOutput", true);
+
     //////////////////////
     //Generator commands//
     //////////////////////
@@ -80,6 +84,7 @@ PaleoSimMessenger::~PaleoSimMessenger() {
     delete fOutputDirectory;
     delete fSetOutputFileCmd;
     delete fEnablePrimariesOutputCmd;
+    delete fEnableNeutronTallyTreeCmd;
 
     delete fSourceTypeCmd;
     delete fMuonEffectiveDepthCmd;
@@ -100,12 +105,12 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
     else if (command == fAirCavitySizeCmd) {
         G4double val = fAirCavitySizeCmd->GetNewDoubleValue(newValue);
         fDetector->SetAirCavitySideLength(val);
-        G4cout << "Air cavity size set to: " << newValue << G4endl;
+        G4cout << "Air cavity size set to: " << val << G4endl;
     }
     else if (command == fTargetSizeCmd) {
         G4double val = fTargetSizeCmd->GetNewDoubleValue(newValue);
         fDetector->SetTargetSideLength(val);
-        G4cout << "Detector size set to: " << newValue << G4endl;
+        G4cout << "Detector size set to: " << val << G4endl;
     }
     else if (command == fTargetMaterialCmd) {
         fDetector->SetTargetMaterial(newValue);
@@ -121,6 +126,15 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
         G4bool val = fEnablePrimariesOutputCmd->GetNewBoolValue(newValue);
         PaleoSimOutputManager::Get().EnablePrimariesTree(val);
         G4cout << "Primary output enabled: " << (val ? "true" : "false") << G4endl;
+    }
+    else if (command == fEnableNeutronTallyTreeCmd) { //TODO Disable if no airCavityCmd
+        G4bool val = fEnableNeutronTallyTreeCmd->GetNewBoolValue(newValue);
+        if (val && !fDetector->GetAirCavitySideLength() > 0) {
+            G4Exception("PaleoSimMessenger", "InputErr001", FatalException,
+                "Air cavity not defined so cannot enable tracking!");
+        }
+        PaleoSimOutputManager::Get().EnableNeutronTallyTree(val);
+        G4cout << "Neutron tally output enabled: " << (val ? "true" : "false") << G4endl;
     }
 
     //Generator

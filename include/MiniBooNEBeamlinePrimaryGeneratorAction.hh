@@ -8,6 +8,8 @@
 #include "G4ThreeVector.hh"
 #include "TF1.h"
 
+class MiniBooNEBeamlineEventAction;
+
 class MiniBooNEBeamlinePrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction {
 public:
     MiniBooNEBeamlinePrimaryGeneratorAction();
@@ -25,6 +27,8 @@ public:
     void SetMuonEffectiveDepth(G4double depth);
 
 private:
+    friend class MiniBooNEBeamlineEventAction;
+
     G4GeneralParticleSource* fGPS = nullptr;
     G4String fSourceType = ""; // For choosing source via macro command
     std::vector<G4String> fValidSourceTypes;
@@ -53,9 +57,6 @@ private:
                        double theta = -1,
                        double phi = -1,
                        double slant = -1);
-
-    void FillPrimaries(int eventID);
-    void ClearPrimaries();
 
     //CUSTOM_GENERATOR_HOOK
     // Add private state and methods for your generator implementation here

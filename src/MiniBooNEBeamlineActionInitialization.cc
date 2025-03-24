@@ -1,18 +1,18 @@
-//Action Intialization
-
 #include "MiniBooNEBeamlineActionInitialization.hh"
 #include "MiniBooNEBeamlinePrimaryGeneratorAction.hh"
 #include "MiniBooNEBeamlineRunAction.hh"
 #include "MiniBooNEBeamlineEventAction.hh"
+#include "MiniBooNEBeamlineConstruction.hh"
 
-// Constructor now accepts a pointer to the already-created generator
+// Constructor now accepts a pointer to the already-created generator and detector
 MiniBooNEBeamlineActionInitialization::MiniBooNEBeamlineActionInitialization(
-    MiniBooNEBeamlinePrimaryGeneratorAction* generator)
+    MiniBooNEBeamlinePrimaryGeneratorAction* generator, 
+    MiniBooNEBeamlineConstruction* detector)
  : G4VUserActionInitialization(),
-   fGenerator(generator)
+   fGenerator(generator),
+   fDetector(detector) 
 {}
-MiniBooNEBeamlineActionInitialization::~MiniBooNEBeamlineActionInitialization()
-{}
+MiniBooNEBeamlineActionInitialization::~MiniBooNEBeamlineActionInitialization() {}
 
 void MiniBooNEBeamlineActionInitialization::BuildForMaster() const
 {
@@ -28,7 +28,11 @@ void MiniBooNEBeamlineActionInitialization::Build() const
   auto* runAction = new MiniBooNEBeamlineRunAction;
   SetUserAction(runAction);
 
-  auto* eventAction = new MiniBooNEBeamlineEventAction(runAction);
-  SetUserAction(eventAction);
+  // Pass SteppingAction to EventAction
+  auto* steppingAction = new PaleoSimSteppingAction(fDetector, fGenerator);  // Pass detector and generator
+  SetUserAction(steppingAction);
 
+  // Now pass the SteppingAction into EventAction
+  auto* eventAction = new MiniBooNEBeamlineEventAction(runAction, fGenerator, steppingAction);
+  SetUserAction(eventAction);
 }

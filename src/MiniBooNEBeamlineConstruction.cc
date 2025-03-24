@@ -131,19 +131,3 @@ G4VPhysicalVolume* MiniBooNEBeamlineConstruction::Construct()
     
     return physWorld;
 }
-
-void MiniBooNEBeamlineConstruction::SetOverburdenSideLength(G4double val) {
-    fOverburdenSideLength = val;
-}
-void MiniBooNEBeamlineConstruction::SetOverburdenMaterial(const G4String& val) {
-    fOverburdenMaterial = val;
-}
-void MiniBooNEBeamlineConstruction::SetAirCavitySideLength(G4double val) {
-    fAirCavitySideLength = val;
-}
-void MiniBooNEBeamlineConstruction::SetTargetSideLength(G4double val) {
-    fTargetSideLength = val;
-}
-void MiniBooNEBeamlineConstruction::SetTargetMaterial(const G4String& val) {
-    fTargetMaterial = val;
-}

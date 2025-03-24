@@ -3,7 +3,6 @@
 
 #include <vector>
 #include <string>
-#include "G4ThreeVector.hh"
 
 class TFile;
 class TTree;
@@ -12,18 +11,18 @@ class PaleoSimOutputManager {
 public:
     static PaleoSimOutputManager& Get(); // Retrieves output manager for initializing/filling/writing
 
-    void EnablePrimariesTree(bool enable); // Enabled unless disabled flag set in macro
-    // void EnableTallyTree(bool enable);     // Enabled if "air cavity" present unless disabled in macro
-    // void EnableRecoilTree(bool enable);    // Enabled if target present unless disabled in macro
+    //Setters
+    void EnablePrimariesTree(bool enable);  // Enabled unless disabled flag set in macro
+    void EnableNeutronTallyTree(bool enable); // Added for neutron tally tree
 
-    // Checks if enabled
+    //Getters
     bool IsPrimariesTreeEnabled() const { return fEnablePrimariesTree; }
-    // bool IsTallyTreeEnabled() const { return fEnableTallyTree; }
-    // bool IsRecoilTreeEnabled() const { return fEnableRecoilTree; }
+    bool IsNeutronTallyTreeEnabled() const { return fEnableNeutronTallyTree; }
 
     // Sets up our trees
     void Initialize(bool hasTallyVolume = false, bool hasRecoilVolume = false);
 
+    // Primary event filler
     void FillPrimaryEvent(int eventID,
                          const std::vector<int>& pdgIDs,
                          const std::vector<double>& primaryEnergies,
@@ -37,35 +36,22 @@ public:
                          const std::vector<double>& muonPhi,
                          const std::vector<double>& muonSlant);
 
-    /*
-    void FillTallyEvent(int eventID, 
-                        int pdgID, 
-                        const double entry_x,
-                        const double entry_y,
-                        const double entry_z,
-                        const double entry_px,
-                        const double entry_py,
-                        const double entry_pz, 
-                        const double energy,
-                        const double theta,
-                        const double phi);
-
-    void FillRecoilEvent(int eventID,
-                         const std::vector<int>& pdgIDs,
-                         const std::vector<double>& particle_energies,
-                         const std::vector<double>& dep_energy,
-                         const std::vector<double>& dep_x,
-                         const std::vector<double>& dep_y,
-                         const std::vector<double>& dep_z,
-                         const std::vector<double>& dep_dirx,
-                         const std::vector<double>& dep_diry,
-                         const std::vector<double>& dep_dirz,
-                         const std::vector<int>& intCode,
-                         double totalEdep);
-    */
+    // Neutron tally filler (this is the method you will use for tracking neutron info)
+    void FillNeutronTallyEvent(int eventID,
+                                //const std::vector<double>& neutron_genEnergy,
+                                const std::vector<double>& neutron_entryEnergy,
+                                const std::vector<double>& neutron_entryX,
+                                const std::vector<double>& neutron_entryY,
+                                const std::vector<double>& neutron_entryZ
+                                //const std::vector<double>& neutron_entryPx,
+                                //const std::vector<double>& neutron_entryPy,
+                                //const std::vector<double>& neutron_entryPz,
+                                //const std::vector<double>& neutron_thetas,
+                                //const std::vector<double>& neutron_distToMuon,
+                                //const std::vector<int>& neutron_type
+                                );
 
     void WriteAndClose();
-    
     void SetOutputPath(const std::string& path);
 
 private:
@@ -76,13 +62,11 @@ private:
     PaleoSimOutputManager& operator=(const PaleoSimOutputManager&) = delete;
 
     bool fEnablePrimariesTree = true;
-    // bool fEnableTallyTree = false;
-    // bool fEnableRecoilTree = false;
+    bool fEnableNeutronTallyTree = false; // Added for enabling neutron tally tree
 
     TFile* fFile = nullptr;
     TTree* fPrimariesTree = nullptr;
-    // TTree* fTallyTree = nullptr;
-    // TTree* fRecoilTree = nullptr;
+    TTree* fNeutronTallyTree = nullptr; // Neutron tally tree
 
     std::string fOutputPath;
 
@@ -94,25 +78,15 @@ private:
     std::vector<double> fPrimaryPx, fPrimaryPy, fPrimaryPz;
     std::vector<double> fPrimaryTheta, fPrimaryPhi, fPrimarySlant;
 
-    /*
-    // Tally Tree variables
-    int fTallyEventID;
-    int fTallyPdgID;
-    double fTallyEnergy;
-    double fTallyX, fTallyY, fTallyZ;
-    double fTallyPx, fTallyPy, fTallyPz;
-    double fTallyTheta, fTallyPhi;
-
-    // Recoil Tree variables
-    int fRecoilEventID;
-    double fRecoilTotalEdep;
-    std::vector<int> fRecoilPdgID;
-    std::vector<double> fRecoilParticleEnergy;
-    std::vector<double> fRecoilEdep;
-    std::vector<double> fRecoilX, fRecoilY, fRecoilZ;
-    std::vector<double> fRecoilDirX, fRecoilDirY, fRecoilDirZ;
-    std::vector<int> fRecoilInteractionCode;
-    */
+    // Neutron Tally Tree variables (added for neutron tracking)
+    int fNeutronTallyEventID;
+    std::vector<double> fNeutron_genEnergy;
+    std::vector<double> fNeutron_entryEnergy;
+    std::vector<double> fNeutron_entryX, fNeutron_entryY, fNeutron_entryZ;
+    std::vector<double> fNeutron_entryPx, fNeutron_entryPy, fNeutron_entryPz;
+    std::vector<double> fNeutron_thetas;
+    std::vector<double> fNeutron_distToMuon;
+    std::vector<int> fNeutron_type; // 0 for secondary, 1 for tertiary
 };
 
 #endif // PALEOSIMOUTPUTMANAGER_HH

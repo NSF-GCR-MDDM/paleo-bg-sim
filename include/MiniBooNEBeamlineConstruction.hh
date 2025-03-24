@@ -21,20 +21,28 @@ class MiniBooNEBeamlineConstruction : public G4VUserDetectorConstruction
         virtual ~MiniBooNEBeamlineConstruction();
 
         virtual G4VPhysicalVolume* Construct();
-        void SetOverburdenSideLength(G4double val);
+
+
+        // Setters 
+        inline void SetOverburdenSideLength(G4double val) { fOverburdenSideLength = val; }
+        inline void SetOverburdenMaterial(G4String material) { fOverburdenMaterial = material; }
+        inline void SetAirCavitySideLength(G4double val) { fAirCavitySideLength = val; }
+        inline void SetTargetSideLength(G4double val) { fTargetSideLength = val; }
+        inline void SetTargetMaterial(G4String material) { fTargetMaterial = material; }
+        
+        // Getter (inline)
+        inline G4double GetAirCavitySideLength() const { return fAirCavitySideLength; }
         inline G4double GetOverburdenSideLength() const {return fOverburdenSideLength;}
-        void SetOverburdenMaterial(const G4String& val);
-        void SetAirCavitySideLength(G4double val);
-        void SetTargetSideLength(G4double val);
-        void SetTargetMaterial(const G4String& val);
+        inline G4double GetTargetSideLength() const { return fTargetSideLength; }
+
         
     private:
-        PaleoSimMaterialManager* materials;  // Add this
-
+        PaleoSimMaterialManager* materials;
+        
         G4GenericMessenger* fMessenger;
         G4double fOverburdenSideLength = 10.0 * m;
         G4double fAirCavitySideLength = 0.0 * m;
-        G4double fTargetSideLength = 1.0 * cm;
+        G4double fTargetSideLength = 0.0 * cm;
         G4String fTargetMaterial = "Norite";   
         G4String fOverburdenMaterial = "Norite";   
     
