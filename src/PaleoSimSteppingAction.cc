@@ -4,43 +4,51 @@
 #include "G4ParticleDefinition.hh"
 #include "G4UnitsTable.hh"
 
-PaleoSimSteppingAction::PaleoSimSteppingAction(MiniBooNEBeamlineConstruction* detector, 
-                                              MiniBooNEBeamlinePrimaryGeneratorAction* generator)
-    : fDetector(detector), fGenerator(generator) 
+PaleoSimSteppingAction::PaleoSimSteppingAction(PaleoSimMessenger& messenger, 
+                                               PaleoSimOutputManager& manager)
+    : fMessenger(messenger), fOutputManager(manager) 
 {}
 
 PaleoSimSteppingAction::~PaleoSimSteppingAction() {}
 
-//STILL NEED TO FIX LOGIC TO ONLY TRACK FIRST NEUTRON ENTERING THE CAVITY
 void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
     // Access the track data
     G4Track* track = step->GetTrack();
     G4ParticleDefinition* particleDef = track->GetDefinition();
 
     // Check if the particle is a neutron
-    if (particleDef->GetParticleName() == "neutron") {
+    if (particleDef->GetPDGEncoding() == 2112) {
 
         //Get position
         G4ThreeVector position = track->GetPosition();
+
+        //Get air cavity side length
+        G4double airCavityHalfLength = fMessenger->GetAirCavitySideLength()/2.;
+
         //Check if it's inside the air cavity
-        G4double airCavityLength = fDetector->GetAirCavitySideLength();
-        if ((position.x() >= -airCavityLength / 2.) && (position.x() <= airCavityLength / 2.) &&
-            (position.y() >= -airCavityLength / 2.) && (position.y() <= airCavityLength / 2.) &&
-            (position.z() >= -airCavityLength / 2.) && (position.z() <= airCavityLength / 2.)) {
+        if ((position.x() >= -airCavityHalfLengt.) && (position.x() <= airCavityHalfLength) &&
+            (position.y() >= -airCavityHalfLength) && (position.y() <= airCavityHalfLength) &&
+            (position.z() >= -airCavityHalfLength) && (position.z() <= airCavityHalfLength)) {
                         
             G4cout<<"PEOPLE, WE FOUND A NEUTRON IN THE CAVITY"<<G4endl;
-            G4ThreeVector momentum = track->GetMomentum();
-            double energy = track->GetKineticEnergy();
+            auto* event = G4EventManager::GetEventManager()->GetConstCurrentEvent();
+            if (event) {
+                G4int eventID = event->GetEventID();
+                fOutputManager->PushNeutronTallyEventID(eventID);
+            }
 
-            fNeutronEnergies.push_back(energy);
-            fNeutronPositionsX.push_back(position.x());
-            fNeutronPositionsY.push_back(position.y());
-            fNeutronPositionsZ.push_back(position.z());
+            double energy = track->GetKineticEnergy();
+            fOutputManager->PushNeutronTallyEventEntryEnergy(energy);
+
+            fOutputManager->PushNeutronTallyEventEntryX(position.x());
+            fOutputManager->PushNeutronTallyEventEntryY(position.y());
+            fOutputManager->PushNeutronTallyEventEntryZ(position.z());
 
             //TODO:
+            //G4ThreeVector momentum = track->GetMomentum();
             //fNeutronMomenta.push_back(momentum);
             //Distance to muon
-            //Zenoth
+            //Zenith
         }
     }
 }

@@ -9,11 +9,6 @@
 PaleoSimOutputManager::PaleoSimOutputManager(PaleoSimMessenger& messenger)
     : fMessenger(messenger) {}
 
-//Set output path
-void PaleoSimOutputManager::SetOutputPath(const std::string& path) {
-    fOutputPath = path;
-}
-
 //Write and close
 void PaleoSimOutputManager::WriteAndClose() {
   if (fFile) {
@@ -57,11 +52,11 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
 
   //Create files
   G4String outputPath = fMessenger.GetOutputPath();
-  if (fOutputPath.empty()) {
+  if (outputPath.empty()) {
       //TODO--create folders automatically if needed
       fFile = new TFile("outputFiles/paleosim_output.root", "RECREATE");  // Default filename if no path set
   } else {
-      fFile = new TFile(fOutputPath.c_str(), "RECREATE");
+      fFile = new TFile(outputPath.c_str(), "RECREATE");
   }
 
   if (!fFile || fFile->IsZombie()) {

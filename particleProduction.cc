@@ -9,72 +9,50 @@
 #include "time.h"
 #include <unistd.h>
 
-// Removed unused analysis manager
-// #include "MiniBooNEBeamlineAnalysis.hh"
-// #include "G4AnalysisManager.hh"
-
 #include "PaleoSimPhysicsList.hh"
 #include "PaleoSimMessenger.hh"
-#include "PaleoSimOutputManager.hh" // Optional, depending on use
+#include "PaleoSimOutputManager.hh"
 
-int main(int argc, char** argv)
-{
-    //Set the random generator
+int main(int argc, char** argv) {
+    // 1. RNG seeding
     G4Random::setTheEngine(new CLHEP::RanecuEngine);
-
-    //Set the seeds for the run
     G4long pid = getpid();
-    time_t systime = time(NULL);
+    time_t systime = time(nullptr);
     G4long seeds[2] = {systime, pid};
     G4Random::setTheSeeds(seeds, 0);
-    G4cout<<"Seeds set to: "<<G4Random::getTheSeeds()[0]<<" "<<G4Random::getTheSeeds()[1]<<std::endl;
-    
-    // Construct the default run manager
-    G4RunManager* runManager = new G4RunManager;
 
-    //NOTE: Ordering of these is important!
-    // Construction and PrimaryGenerators need to be created
-    // before the Messenger. The Messenger needs to be created
-    // before the initialization. The PhysicsList needs to be
-    // instantiated before the PrimaryGenerator.
+    // 2. Construct run manager
+    auto* runManager = new G4RunManager();
 
-    // Detector construction
-    G4cout << "Constructing the geometry..." << G4endl;
-    auto* detector = new MiniBooNEBeamlineConstruction();
-    runManager->SetUserInitialization(detector);
-    
-    //Physics list
+    // 3. Messenger FIRST — must exist before reading macro
+    auto* messenger = new PaleoSimMessenger();
+
+    // 4. Load macro BEFORE creating detector, output manager
+    G4UImanager* ui = G4UImanager::GetUIpointer();
+    if (argc != 2) {
+      G4Exception("main", "NoMacro", FatalException, "Macro file is required.");
+    }    
+    G4UImanager::GetUIpointer()->ApplyCommand("/control/execute " + G4String(argv[1]));
+
+    // 5. Create detector, generator, output manager
+    auto* detector       = new MiniBooNEBeamlineConstruction(*messenger);
+    auto* outputManager  = new PaleoSimOutputManager(*messenger);
+    auto* generator      = new MiniBooNEBeamlinePrimaryGeneratorAction(*messenger, *outputManager);
+
+    // 6. Physics list
     runManager->SetUserInitialization(new PaleoSimPhysicsList());
 
-    // Generator
-    G4cout << "Initializing the generator..." << G4endl;
-    auto* generator = new MiniBooNEBeamlinePrimaryGeneratorAction();
+    // 7. Register actions (via ActionInitialization)
+    runManager->SetUserInitialization(new MiniBooNEBeamlineActionInitialization(*messenger, *outputManager, *generator));
 
-    // Messenger
-    auto* messenger = new PaleoSimMessenger(detector, generator);
-    
-    // Run Action
-    runManager->SetUserInitialization(new MiniBooNEBeamlineActionInitialization(generator,detector));
-
-    //Load up our macro
-    G4UImanager* uiManager = G4UImanager::GetUIpointer();
-    if (argc == 2) {
-        G4String macroFile = argv[1];
-        G4String command = "/control/execute " + macroFile;
-        uiManager->ApplyCommand(command);
-    }
-    else {
-        G4Exception("particleProduction", "inputErr001", FatalException,
-            "Must supply a macro file!");
-    }
-
-    //Initialize the run
+    // 8. Initialize run manager AFTER all setup is complete
     runManager->Initialize();
 
-    //Turn off the annoying "Track stuck" warnings. They appear harmless
-    //and occur infrequently
-    //G4TransportationManager::GetTransportationManager()->GetNavigatorForTracking()->SetPushVerbosity(0);
-    
+    // 9. BeamOn loop (manual, from messenger)
+    G4int nps = messenger->GetNPS();
+    runManager->BeamOn(nps);
+
+    // 10. Clean up
     delete runManager;
     delete messenger;
     return 0;

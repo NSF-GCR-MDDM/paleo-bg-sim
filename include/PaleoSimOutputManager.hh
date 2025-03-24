@@ -16,9 +16,9 @@ public:
     PaleoSimOutputManager(PaleoSimMessenger& messenger);
     ~PaleoSimOutputManager() = default;
 
-    //Writing, closing, saving
+    //Tree generation/destruction
+    void CreateOutputFileAndTrees();
     void WriteAndClose();
-    void SetOutputPath(const std::string& path);
 
     //Setters for tree status
     void DeterminePrimariesTreeOutputStatus();         //Checks macro, sets the fPrimaryTreeStatus bool accordingly
@@ -26,10 +26,7 @@ public:
 
     //Getters for tree status
     bool GetPrimariesTreeOutputStatus() const { return fPrimariesTreeStatus; }
-    bool GetNeutronTallyTreeOutputStatus() const { return fNeutronTallyTreeStatus; }
-
-    //CreateTrees function
-    void CreateOutputFileAndTrees();
+    bool GetNeutronTallyTreeOutputStatus() const { return fNeutronTallyTreeStatus; 
 
     // Primary event filler/clearer
     void FillPrimariesTreeEvent();
@@ -69,8 +66,6 @@ private:
     TFile* fFile = nullptr;
     TTree* fPrimariesTree = nullptr;
     TTree* fNeutronTallyTree = nullptr; // Neutron tally tree
-
-    std::string fOutputPath;
 
     // Primary Tree variables
     int fPrimaryEventID = -1;

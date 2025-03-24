@@ -7,30 +7,20 @@
 #include "G4ParticleDefinition.hh"
 #include "G4ParticleDefinition.hh"
 
-#include "MiniBooNEBeamlineConstruction.hh" 
-#include "MiniBooNEBeamlinePrimaryGeneratorAction.hh" 
-
-class MiniBooNEBeamlineEventAction;
+#include "PaleoSimMessenger.hh" 
+#include "PaleoSimOutputManager.hh" 
 
 class PaleoSimSteppingAction : public G4UserSteppingAction {
 public:
-    PaleoSimSteppingAction(MiniBooNEBeamlineConstruction* detector, 
-                           MiniBooNEBeamlinePrimaryGeneratorAction* generator);
+    PaleoSimSteppingAction(PaleoSimMessenger& messenger, 
+                           PaleoSimOutputManager& manager);
     virtual ~PaleoSimSteppingAction();
 
     virtual void UserSteppingAction(const G4Step* step) override;
 
 private:
-    friend class MiniBooNEBeamlineEventAction;  //For giving access to these in the EventAction class for filling/clearing
-
-    MiniBooNEBeamlineConstruction* fDetector;
-    MiniBooNEBeamlinePrimaryGeneratorAction* fGenerator;
-
-    //For tracking neutrons entering the air cavity
-    std::vector<double> fNeutronEnergies;
-    std::vector<double> fNeutronPositionsX;
-    std::vector<double> fNeutronPositionsY;
-    std::vector<double> fNeutronPositionsZ;
+    PaleoSimMessenger& fMessenger;
+    PaleoSimOutputManager& fOutputManager;
 };
 
 #endif
