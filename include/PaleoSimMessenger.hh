@@ -11,21 +11,36 @@
 
 class G4UIcmdWithADoubleAndUnit;
 class G4UIdirectory;
-class MiniBooNEBeamlineConstruction;
-class MiniBooNEBeamlinePrimaryGeneratorAction;
 
 class PaleoSimMessenger : public G4UImessenger {
 public:
-    PaleoSimMessenger(MiniBooNEBeamlineConstruction* detector,
-                      MiniBooNEBeamlinePrimaryGeneratorAction* generator);
-    ~PaleoSimMessenger() override;
+    PaleoSimMessenger() override;
+    ~PaleoSimMessenger() = default;
 
     void SetNewValue(G4UIcommand* command, G4String newValue) override;
 
-private:
-    MiniBooNEBeamlineConstruction* fDetector;
-    MiniBooNEBeamlinePrimaryGeneratorAction* fGenerator;
+    //Getters for the macro commands
+    G4double GetUserOverburdenSideLength() const { return fOverburdenSideLength; };
+    G4String GetUserOverburdenMaterial() const { return fOverburdenMaterial; };
+    G4double GetAirCavitySideLength() const { return fAirCavitySideLength; };
+    G4double GetTargetSideLength() const { return fTargetSideLength; };
+    G4String GetTargetMaterial() const { return fTargetMaterial; };
+    
+    //Output
+    G4bool GetUserPrimariesTreeOutputStatus() const { return fUserPrimariesTreeOutputStatus; };
+    G4bool GetUserNeutronTallyTreeOutputStatus() const { return fUserNeutronTallyTreeOutputStatus; };
 
+    //Generator
+    G4String GetSourceType() const {return fSourceType;};
+    G4int GetNPS() const { return fNPS; };
+
+    //Add your own generator commands here
+    //CUSTOM_GENERATOR_HOOK
+    //
+    //Mei & Hime muon generator
+    G4double GetMuonEffectiveDepth() const { return fMuonEffectiveDepth;};
+
+private:
     G4UIdirectory* fGeomDirectory;
     G4UIcmdWithADoubleAndUnit* fOverburdenSizeCmd;  
     G4UIcmdWithAString* fOverburdenMaterialCmd;  
@@ -33,21 +48,38 @@ private:
     G4UIcmdWithADoubleAndUnit* fTargetSizeCmd;
     G4UIcmdWithAString* fTargetMaterialCmd;
 
+    //
+    G4double fOverburdenSideLength = 20 * m;
+    G4String fOverburdenMaterial = "Norite";
+    G4double fAirCavitySideLength = 0 * m;
+    G4double fTargetSideLength = 1 * cm;
+    G4String fTargetMaterial = "Norite";
+
     // Output configuration
     G4UIdirectory* fOutputDirectory;
     G4UIcmdWithAString* fSetOutputFileCmd;
-    G4UIcmdWithABool* fEnablePrimariesOutputCmd;
-    G4UIcmdWithABool* fEnableNeutronTallyTreeCmd;
+    G4UIcmdWithABool* fUserPrimariesTreeStatusCmd;
+    G4UIcmdWithABool* fUserNeutronTallyTreeStatusCmd;
+
+    G4String fOutputFile = "outputFiles/output.root";
+    G4bool fUserPrimariesTreeOutputStatus = true;
+    G4bool fUserNeutronTallyTreeOutputStatus = false;
 
     //Generator general
     G4UIdirectory* fGeneratorDirectory;
     G4UIcmdWithAString* fSourceTypeCmd;
+    G4UIcmdWithAnInteger* fNPSCmd;
 
-    //Muon generator
-    G4UIcmdWithADoubleAndUnit* fMuonEffectiveDepthCmd;
+    G4String fSourceType = "muonGenerator";
+    int fNPS = 100;
 
     //Add your own generator commands here
     //CUSTOM_GENERATOR_HOOK
+    //
+    //Mei & Hime muon generator
+    G4UIcmdWithADoubleAndUnit* fMuonEffectiveDepthCmd;
+    G4double fMuonEffectiveDepth = 6 * km;
+
 
 };
 

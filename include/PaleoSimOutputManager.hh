@@ -3,66 +3,68 @@
 
 #include <vector>
 #include <string>
+#include <unordered_map>
+#include "PaleoSimMessenger.hh" //Pass messenger in to read arguments for cavities/recoil volume, to determine what outputs to enable
 
 class TFile;
 class TTree;
+class PaleoSimMessenger;
 
 class PaleoSimOutputManager {
 public:
-    static PaleoSimOutputManager& Get(); // Retrieves output manager for initializing/filling/writing
+    //Constructor/destructor
+    PaleoSimOutputManager(PaleoSimMessenger& messenger);
+    ~PaleoSimOutputManager() = default;
 
-    //Setters
-    void EnablePrimariesTree(bool enable);  // Enabled unless disabled flag set in macro
-    void EnableNeutronTallyTree(bool enable); // Added for neutron tally tree
-
-    //Getters
-    bool IsPrimariesTreeEnabled() const { return fEnablePrimariesTree; }
-    bool IsNeutronTallyTreeEnabled() const { return fEnableNeutronTallyTree; }
-
-    // Sets up our trees
-    void Initialize(bool hasTallyVolume = false, bool hasRecoilVolume = false);
-
-    // Primary event filler
-    void FillPrimaryEvent(int eventID,
-                         const std::vector<int>& pdgIDs,
-                         const std::vector<double>& primaryEnergies,
-                         const std::vector<double>& primary_x,
-                         const std::vector<double>& primary_y,
-                         const std::vector<double>& primary_z,
-                         const std::vector<double>& primary_px,
-                         const std::vector<double>& primary_py,
-                         const std::vector<double>& primary_pz,
-                         const std::vector<double>& muonTheta,
-                         const std::vector<double>& muonPhi,
-                         const std::vector<double>& muonSlant);
-
-    // Neutron tally filler (this is the method you will use for tracking neutron info)
-    void FillNeutronTallyEvent(int eventID,
-                                //const std::vector<double>& neutron_genEnergy,
-                                const std::vector<double>& neutron_entryEnergy,
-                                const std::vector<double>& neutron_entryX,
-                                const std::vector<double>& neutron_entryY,
-                                const std::vector<double>& neutron_entryZ
-                                //const std::vector<double>& neutron_entryPx,
-                                //const std::vector<double>& neutron_entryPy,
-                                //const std::vector<double>& neutron_entryPz,
-                                //const std::vector<double>& neutron_thetas,
-                                //const std::vector<double>& neutron_distToMuon,
-                                //const std::vector<int>& neutron_type
-                                );
-
+    //Writing, closing, saving
     void WriteAndClose();
     void SetOutputPath(const std::string& path);
 
+    //Setters for tree status
+    void DeterminePrimariesTreeOutputStatus();         //Checks macro, sets the fPrimaryTreeStatus bool accordingly
+    void DetermineNeutronTallyTreeOutputStatus();      //Checks macro, sets the fNeutronTallyTreeStatus bool accordingly
+
+    //Getters for tree status
+    bool GetPrimariesTreeOutputStatus() const { return fPrimariesTreeStatus; }
+    bool GetNeutronTallyTreeOutputStatus() const { return fNeutronTallyTreeStatus; }
+
+    //CreateTrees function
+    void CreateOutputFileAndTrees();
+
+    // Primary event filler/clearer
+    void FillPrimariesTreeEvent();
+    void ClearPrimariesTreeEvent();
+    void PushPrimaryEventID(int val) { fPrimaryEventID = val; };
+    void PushPrimaryEventPDG(int val) { fPrimaryPdgID = val };
+    void PushPrimaryEventEnergy(double val) { fPrimaryEnergy.push_back(val); };
+    void PushPrimaryEventX(double val) { fPrimaryX.push_back(val); };
+    void PushPrimaryEventY(double val) { fPrimaryY.push_back(val); };
+    void PushPrimaryEventZ(double val) { fPrimaryZ.push_back(val); };
+    void PushPrimaryEventPX(double val) { fPrimaryPX.push_back(val); };
+    void PushPrimaryEventPY(double val) { fPrimaryPY.push_back(val); };
+    void PushPrimaryEventPZ(double val) { fPrimaryPZ.push_back(val); };
+    // CUSTOM_GENERATOR_HOOK
+    // If you want to add more branches to the primaries tree, write setters here
+    //
+    // Mei & Hime muon generator
+    void PushPrimaryMuonTheta(double val) { fPrimaryMuonTheta.push_back(val); };
+    void PushPrimaryMuonPhi(double val) { fPrimaryMuonPhi.push_back(val); };
+    void PushPrimaryMuonSlant(double val) { fPrimaryMuonSlant.push_back(val); };
+
+    // Neutron tally event filler/clearer
+    void FillNeutronTallyTreeEvent();
+    void ClearNeutronTallyTreeEvent();
+    void PushNeutronTallyEventID(int val) { fNeutronTallyEventID = val; };
+    void PushNeutronTallyEventEntryEnergy(double val) { fNeutron_entryEnergy.push_back(val); };
+    void PushNeutronTallyEventEntryX(double val) { fNeutron_entryX.push_back(val); };
+    void PushNeutronTallyEventEntryY(double val) { fNeutron_entryY.push_back(val); };
+    void PushNeutronTallyEventEntryZ(double val) { fNeutron_entryZ.push_back(val); };
+
 private:
-    PaleoSimOutputManager() = default;
-    ~PaleoSimOutputManager() = default;
+    PaleoSimMessenger& fMessenger; 
 
-    PaleoSimOutputManager(const PaleoSimOutputManager&) = delete;
-    PaleoSimOutputManager& operator=(const PaleoSimOutputManager&) = delete;
-
-    bool fEnablePrimariesTree = true;
-    bool fEnableNeutronTallyTree = false; // Added for enabling neutron tally tree
+    bool fPrimariesTreeStatus = true;
+    bool fNeutronTallyTreeStatus = false;
 
     TFile* fFile = nullptr;
     TTree* fPrimariesTree = nullptr;
@@ -71,22 +73,21 @@ private:
     std::string fOutputPath;
 
     // Primary Tree variables
-    int fEventID;
+    int fPrimaryEventID = -1;
     std::vector<int> fPrimaryPdgID;
     std::vector<double> fPrimaryEnergy;
     std::vector<double> fPrimaryX, fPrimaryY, fPrimaryZ;
     std::vector<double> fPrimaryPx, fPrimaryPy, fPrimaryPz;
-    std::vector<double> fPrimaryTheta, fPrimaryPhi, fPrimarySlant;
+    // CUSTOM_GENERATOR_HOOK
+    // Create vectors to be stored as branches in the primaries tree for your custom generator here
+    //
+    //Mei & Hime Muon generator
+    std::vector<double> fPrimaryMuonTheta, fPrimaryMuonPhi, fPrimaryMuonSlant;
 
     // Neutron Tally Tree variables (added for neutron tracking)
-    int fNeutronTallyEventID;
-    std::vector<double> fNeutron_genEnergy;
+    int fNeutronTallyEventID = -1;
     std::vector<double> fNeutron_entryEnergy;
     std::vector<double> fNeutron_entryX, fNeutron_entryY, fNeutron_entryZ;
-    std::vector<double> fNeutron_entryPx, fNeutron_entryPy, fNeutron_entryPz;
-    std::vector<double> fNeutron_thetas;
-    std::vector<double> fNeutron_distToMuon;
-    std::vector<int> fNeutron_type; // 0 for secondary, 1 for tertiary
 };
 
-#endif // PALEOSIMOUTPUTMANAGER_HH
+#endif

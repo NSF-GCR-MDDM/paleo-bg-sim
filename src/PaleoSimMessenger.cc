@@ -1,11 +1,6 @@
 #include "PaleoSimMessenger.hh"
-#include "MiniBooNEBeamlineConstruction.hh"
-#include "MiniBooNEBeamlinePrimaryGeneratorAction.hh"
-#include "PaleoSimOutputManager.hh"
 
-PaleoSimMessenger::PaleoSimMessenger(MiniBooNEBeamlineConstruction* detector,
-                                     MiniBooNEBeamlinePrimaryGeneratorAction* generator)
-: fDetector(detector), fGenerator(generator)
+PaleoSimMessenger::PaleoSimMessenger()
 {
     /////////////////////
     //Geometry commands//
@@ -49,13 +44,13 @@ PaleoSimMessenger::PaleoSimMessenger(MiniBooNEBeamlineConstruction* detector,
     fSetOutputFileCmd->SetGuidance("Set the output name for TTrees file");
     fSetOutputFileCmd->SetParameterName("outputFile", true);
 
-    fEnablePrimariesOutputCmd = new G4UIcmdWithABool("/output/enablePrimariesOutput", this);
-    fEnablePrimariesOutputCmd->SetGuidance("Enable tracking of primary generation properties");
-    fEnablePrimariesOutputCmd->SetParameterName("enablePrimariesOutput", true);
+    fUserPrimariesTreeStatusCmd = new G4UIcmdWithABool("/output/setPrimariesTreeStatus", this);
+    fUserPrimariesTreeStatusCmd->SetGuidance("Enable tracking of primary generation properties");
+    fUserPrimariesTreeStatusCmd->SetParameterName("setPrimariesTreeStatus", true);
 
-    fEnableNeutronTallyTreeCmd = new G4UIcmdWithABool("/output/enableNeutronTallyOutput", this);
-    fEnableNeutronTallyTreeCmd->SetGuidance("Enable recording of neutrons entering air cavity");
-    fEnableNeutronTallyTreeCmd->SetParameterName("enableNeutronTallyOutput", true);
+    fUserNeutronTallyTreeStatusCmd = new G4UIcmdWithABool("/output/setNeutronTallyTreeStatus", this);
+    fUserNeutronTallyTreeStatusCmd->SetGuidance("Enable recording of neutrons entering air cavity");
+    fUserNeutronTallyTreeStatusCmd->SetParameterName("setNeutronTallyTreeStatus", true);
 
     //////////////////////
     //Generator commands//
@@ -67,6 +62,14 @@ PaleoSimMessenger::PaleoSimMessenger(MiniBooNEBeamlineConstruction* detector,
     fSourceTypeCmd->SetGuidance("Set the source type");
     fSourceTypeCmd->SetParameterName("sourceType", true);
 
+    fNPSCmd = new G4UIcmdWithAnInteger("/generator/setNPS", this);    
+    fNPSCmd->SetGuidance("Set number of events to throw");
+    fNPSCmd->SetParameterName("setNPS", true);
+
+    //Add your own generator commands here
+    //CUSTOM_GENERATOR_HOOK
+    //
+    //Mei & Hime muon generator
     fMuonEffectiveDepthCmd = new G4UIcmdWithADoubleAndUnit("/generator/setMuonEffectiveDepth", this);
     fMuonEffectiveDepthCmd->SetGuidance("Set the effective muon depth for generation");
     fMuonEffectiveDepthCmd->SetParameterName("muonEffectiveDepth", true);
@@ -83,68 +86,72 @@ PaleoSimMessenger::~PaleoSimMessenger() {
 
     delete fOutputDirectory;
     delete fSetOutputFileCmd;
-    delete fEnablePrimariesOutputCmd;
-    delete fEnableNeutronTallyTreeCmd;
+    delete fUserPrimariesTreeStatusCmd;
+    delete fUserNeutronTallyTreeStatusCmd;
 
-    delete fSourceTypeCmd;
-    delete fMuonEffectiveDepthCmd;
     delete fGeneratorDirectory;
+    delete fSourceTypeCmd;
+    delete fNPSCmd;
+
+    //CUSTOM_GENERATOR_HOOK
+    //Delete custom generator commands here
+    //
+    //Mei & Hime 2006
+    delete fMuonEffectiveDepthCmd;
 }
 
 void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
     //Geometry
     if (command == fOverburdenSizeCmd) {
-        G4double val = fOverburdenSizeCmd->GetNewDoubleValue(newValue);
-        fDetector->SetOverburdenSideLength(val);
-        G4cout << "Overburden size set to: " << newValue << G4endl;
+        fOverburdenSideLength = fOverburdenSizeCmd->GetNewDoubleValue(newValue);
+        G4cout << "Overburden size set in macro to: " << newValue << G4endl;
     } 
     else if (command == fOverburdenMaterialCmd) {
-        fDetector->SetOverburdenMaterial(newValue);
-        G4cout << "Overburden material set to: " << newValue << G4endl;
+        fOverburdenMaterial = newValue;
+        G4cout << "Overburden material set in macro to: " << newValue << G4endl;
     }
     else if (command == fAirCavitySizeCmd) {
-        G4double val = fAirCavitySizeCmd->GetNewDoubleValue(newValue);
-        fDetector->SetAirCavitySideLength(val);
-        G4cout << "Air cavity size set to: " << val << G4endl;
+        fAirCavitySideLength = fAirCavitySizeCmd->GetNewDoubleValue(newValue);
+        G4cout << "Air cavity size set in macro to: " << newValue << G4endl;
     }
     else if (command == fTargetSizeCmd) {
-        G4double val = fTargetSizeCmd->GetNewDoubleValue(newValue);
-        fDetector->SetTargetSideLength(val);
-        G4cout << "Detector size set to: " << val << G4endl;
+        fTargetSideLength = fTargetSizeCmd->GetNewDoubleValue(newValue);
+        G4cout << "Detector size set in macro to: " << newValue << G4endl;
     }
     else if (command == fTargetMaterialCmd) {
-        fDetector->SetTargetMaterial(newValue);
-        G4cout << "Detector material set to: " << newValue << G4endl;
+        fTargetMaterial = newValue;
+        G4cout << "Detector material set in macro to: " << newValue << G4endl;
     }
 
     // Output
     else if (command == fSetOutputFileCmd) {
-        PaleoSimOutputManager::Get().SetOutputPath(newValue);
-        G4cout << "Output file set to: " << newValue << G4endl;
+        fOutputFile = newValue;
+        G4cout << "Output file set in macro to: " << newValue << G4endl;
     }
-    else if (command == fEnablePrimariesOutputCmd) {
-        G4bool val = fEnablePrimariesOutputCmd->GetNewBoolValue(newValue);
-        PaleoSimOutputManager::Get().EnablePrimariesTree(val);
-        G4cout << "Primary output enabled: " << (val ? "true" : "false") << G4endl;
+    else if (command == fUserPrimariesTreeStatusCmd) {
+        fUserPrimariesTreeOutputStatus = newValue;
+        G4cout << "Primaries tree output set in macro to: " << newValue << G4endl;
     }
-    else if (command == fEnableNeutronTallyTreeCmd) { //TODO Disable if no airCavityCmd
-        G4bool val = fEnableNeutronTallyTreeCmd->GetNewBoolValue(newValue);
-        if (val && !fDetector->GetAirCavitySideLength() > 0) {
-            G4Exception("PaleoSimMessenger", "InputErr001", FatalException,
-                "Air cavity not defined so cannot enable tracking!");
-        }
-        PaleoSimOutputManager::Get().EnableNeutronTallyTree(val);
-        G4cout << "Neutron tally output enabled: " << (val ? "true" : "false") << G4endl;
+    else if (command == fUserNeutronTallyTreeStatusCmd) {
+      fUserNeutronTallyTreeOutputStatus = newValue;
+        G4cout << "Neutron tally tree output set in macro to: " << newValue << G4endl;
+    }
+    else if (command == fNPSCmd) {
+        fNPS = fNPSCmd->GetNewIntegerValue(newValue);
+        G4cout << "NPS set in macro to: " << newValue << G4endl;
     }
 
     //Generator
     else if (command == fSourceTypeCmd) {
-        fGenerator->SetSourceType(newValue);
-        G4cout << "Generator set to: " << newValue << G4endl;
+        fSourceType = newValue;
+        G4cout << "Generator set in macro to: " << newValue << G4endl;
     }
+    //CUSTOM_GENERATOR_HOOK
+    //Set custom parameters for generators from messenger here
+    //
+    //Mei & Hime 2006
     else if (command == fMuonEffectiveDepthCmd) {
-        G4double val = fMuonEffectiveDepthCmd->GetNewDoubleValue(newValue);
-        fGenerator->SetMuonEffectiveDepth(val);
-        G4cout << "Effective muon depth set to: " << val << G4endl;
+        fMuonEffectiveDepth = fMuonEffectiveDepthCmd->GetNewDoubleValue(newValue);
+        G4cout << "Effective muon depth set in macro to: " << newValue << G4endl;
     }
 }

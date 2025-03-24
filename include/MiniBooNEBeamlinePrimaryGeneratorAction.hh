@@ -7,18 +7,16 @@
 #include "G4SystemOfUnits.hh"
 #include "G4ThreeVector.hh"
 #include "TF1.h"
-
-class MiniBooNEBeamlineEventAction;
+#include "PaleoSimMessenger.hh"
+#include "PaleoSimOutputManager.hh"
 
 class MiniBooNEBeamlinePrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction {
 public:
-    MiniBooNEBeamlinePrimaryGeneratorAction();
-    virtual ~MiniBooNEBeamlinePrimaryGeneratorAction();
+    MiniBooNEBeamlinePrimaryGeneratorAction(PaleoSimMessenger& messenger,
+                                            PaleoSimOutputManager& manager);
+    virtual ~MiniBooNEBeamlinePrimaryGeneratorAction() override;
 
     virtual void GeneratePrimaries(G4Event*);
-
-    // Method to set source type from macro
-    void SetSourceType(const G4String& sourceType);
 
     //CUSTOM_GENERATOR_HOOK
     //Add public setter methods for your generator parameters here
@@ -27,42 +25,16 @@ public:
     void SetMuonEffectiveDepth(G4double depth);
 
 private:
-    friend class MiniBooNEBeamlineEventAction;
-
-    G4GeneralParticleSource* fGPS = nullptr;
-    G4String fSourceType = ""; // For choosing source via macro command
+    G4GeneralParticleSource* fGPS;
+    PaleoSimMessenger& fMessenger;
+    PaleoSimOutputManager& fManager;
+    
     std::vector<G4String> fValidSourceTypes;
-    G4bool initializedSource=false; //Set to true once the source is initialized
-
-    // For storing output info of primaries
-    std::vector<int> fPrimaryPDGIDs;
-    std::vector<double> fPrimaryEnergies;
-    std::vector<double> fPrimary_x, fPrimary_y, fPrimary_z;
-    std::vector<double> fPrimary_px, fPrimary_py, fPrimary_pz;
-    //CUSTOM_GENERATOR_HOOK
-    //If you want custom primary properties stored to the output tree, put them here
-    //
-    // Mei & Hime muon generator variables written to tree, set to -1 for others
-    std::vector<double> fMuonTheta, fMuonPhi, fMuonSlant;
-
-    // Primary info helpers
-    void AddPrimaries(int pdgID,
-                       double energy,
-                       const G4ThreeVector& position,
-                       const G4ThreeVector& momentum,
-                       //CUSTOM_GENERATOR_HOOK
-                       //If you want custom primary properties stored to the output tree, put them here (w/-1 as default)
-                       //
-                       // Mei & Hime muon generator vars written
-                       double theta = -1,
-                       double phi = -1,
-                       double slant = -1);
 
     //CUSTOM_GENERATOR_HOOK
     // Add private state and methods for your generator implementation here
     //
     // Mei & Hime muon generator internals
-    G4double h0 = 6 * km;
     TF1* fMuonThetaDist = nullptr;
     TF1* fMuonEnergyDist = nullptr;
     void InitializeMuons();
