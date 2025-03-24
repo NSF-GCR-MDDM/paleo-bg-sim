@@ -4,11 +4,9 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
-#include "PaleoSimMessenger.hh" //Pass messenger in to read arguments for cavities/recoil volume, to determine what outputs to enable
-
-class TFile;
-class TTree;
-class PaleoSimMessenger;
+#include "PaleoSimMessenger.hh" 
+#include "TFile.h" 
+#include "TTree.h"
 
 class PaleoSimOutputManager {
 public:
@@ -26,20 +24,22 @@ public:
 
     //Getters for tree status
     bool GetPrimariesTreeOutputStatus() const { return fPrimariesTreeStatus; }
-    bool GetNeutronTallyTreeOutputStatus() const { return fNeutronTallyTreeStatus; 
+    bool GetNeutronTallyTreeOutputStatus() const { return fNeutronTallyTreeStatus; }; 
 
+    int GetPrimaryEvtID() const {return fPrimaryEventID;};
+    
     // Primary event filler/clearer
     void FillPrimariesTreeEvent();
     void ClearPrimariesTreeEvent();
     void PushPrimaryEventID(int val) { fPrimaryEventID = val; };
-    void PushPrimaryEventPDG(int val) { fPrimaryPdgID = val };
+    void PushPrimaryEventPDG(int val) { fPrimaryPdgID.push_back(val); };
     void PushPrimaryEventEnergy(double val) { fPrimaryEnergy.push_back(val); };
     void PushPrimaryEventX(double val) { fPrimaryX.push_back(val); };
     void PushPrimaryEventY(double val) { fPrimaryY.push_back(val); };
     void PushPrimaryEventZ(double val) { fPrimaryZ.push_back(val); };
-    void PushPrimaryEventPX(double val) { fPrimaryPX.push_back(val); };
-    void PushPrimaryEventPY(double val) { fPrimaryPY.push_back(val); };
-    void PushPrimaryEventPZ(double val) { fPrimaryPZ.push_back(val); };
+    void PushPrimaryEventPX(double val) { fPrimaryPx.push_back(val); };
+    void PushPrimaryEventPY(double val) { fPrimaryPy.push_back(val); };
+    void PushPrimaryEventPZ(double val) { fPrimaryPz.push_back(val); };
     // CUSTOM_GENERATOR_HOOK
     // If you want to add more branches to the primaries tree, write setters here
     //

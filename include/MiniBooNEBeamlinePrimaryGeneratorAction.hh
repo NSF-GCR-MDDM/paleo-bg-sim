@@ -39,7 +39,7 @@ private:
     TF1* fMuonEnergyDist = nullptr;
     void InitializeMuons();
     void GenerateMuonPrimaries(G4Event*);
-    G4ThreeVector SamplePointOnTopOfOverburden() const;
+    G4ThreeVector SamplePointOnTopOfOverburden();
 };
 
 #endif

@@ -2,17 +2,14 @@
 #define MiniBooNEBeamlineActionInitialization_h 1
 
 #include "G4VUserActionInitialization.hh"
-
-class PaleoSimMessenger;
-class PaleoSimOutputManager;
-class MiniBooNEBeamlinePrimaryGeneratorAction;
+#include "PaleoSimMessenger.hh"
+#include "PaleoSimOutputManager.hh"
+#include "MiniBooNEBeamlinePrimaryGeneratorAction.hh"
 
 class MiniBooNEBeamlineActionInitialization : public G4VUserActionInitialization
 {
   public:
-    MiniBooNEBeamlineActionInitialization(PaleoSimMessenger& messenger,
-                                          PaleoSimOutputManager& manager,
-                                          MiniBooNEBeamlinePrimaryGeneratorAction& generator);
+    MiniBooNEBeamlineActionInitialization(PaleoSimMessenger& messenger,PaleoSimOutputManager& manager);
     virtual ~MiniBooNEBeamlineActionInitialization() = default;
 
     virtual void BuildForMaster() const;
@@ -20,7 +17,6 @@ class MiniBooNEBeamlineActionInitialization : public G4VUserActionInitialization
   private:
     PaleoSimMessenger& fMessenger;
     PaleoSimOutputManager& fOutputManager;
-    MiniBooNEBeamlinePrimaryGeneratorAction& fGenerator;
 };
 
 #endif

@@ -8,14 +8,14 @@
 #include "G4UIcmdWithADoubleAndUnit.hh"
 #include "G4UIcmdWithABool.hh"
 #include "globals.hh"
-
-class G4UIcmdWithADoubleAndUnit;
-class G4UIdirectory;
+#include "G4UIcmdWithADoubleAndUnit.hh"
+#include "G4UIcmdWithADoubleAndUnit.hh"
+#include "G4UIcmdWithAnInteger.hh"
 
 class PaleoSimMessenger : public G4UImessenger {
 public:
-    PaleoSimMessenger() override;
-    ~PaleoSimMessenger() = default;
+    PaleoSimMessenger();
+    ~PaleoSimMessenger();
 
     void SetNewValue(G4UIcommand* command, G4String newValue) override;
 
@@ -27,6 +27,7 @@ public:
     G4String GetTargetMaterial() const { return fTargetMaterial; };
     
     //Output
+    G4String GetOutputPath() const { return fOutputFile; };
     G4bool GetUserPrimariesTreeOutputStatus() const { return fUserPrimariesTreeOutputStatus; };
     G4bool GetUserNeutronTallyTreeOutputStatus() const { return fUserNeutronTallyTreeOutputStatus; };
 

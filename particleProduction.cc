@@ -34,16 +34,16 @@ int main(int argc, char** argv) {
     }    
     G4UImanager::GetUIpointer()->ApplyCommand("/control/execute " + G4String(argv[1]));
 
-    // 5. Create detector, generator, output manager
+    // 5. Create detector, register, create output manager
     auto* detector       = new MiniBooNEBeamlineConstruction(*messenger);
+    runManager->SetUserInitialization(detector);
     auto* outputManager  = new PaleoSimOutputManager(*messenger);
-    auto* generator      = new MiniBooNEBeamlinePrimaryGeneratorAction(*messenger, *outputManager);
 
     // 6. Physics list
     runManager->SetUserInitialization(new PaleoSimPhysicsList());
 
     // 7. Register actions (via ActionInitialization)
-    runManager->SetUserInitialization(new MiniBooNEBeamlineActionInitialization(*messenger, *outputManager, *generator));
+    runManager->SetUserInitialization(new MiniBooNEBeamlineActionInitialization(*messenger, *outputManager));
 
     // 8. Initialize run manager AFTER all setup is complete
     runManager->Initialize();

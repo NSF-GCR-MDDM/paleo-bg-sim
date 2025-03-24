@@ -8,11 +8,8 @@
 #include "G4SystemOfUnits.hh"
 #include "PaleoSimMaterialManager.hh"
 #include "PaleoSimMessenger.hh"
-
-class G4VPhysicalVolume;
-class G4LogicalVolume;
-
-class PaleoSimMessenger;
+#include "G4VPhysicalVolume.hh"
+#include "G4LogicalVolume.hh"
 
 /// Detector construction class to define materials and geometry.
 class MiniBooNEBeamlineConstruction : public G4VUserDetectorConstruction
