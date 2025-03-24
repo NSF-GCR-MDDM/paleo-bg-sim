@@ -14,10 +14,10 @@ void PaleoSimOutputManager::WriteAndClose() {
   if (fFile) {
       fFile->cd();
       if (fPrimariesTreeStatus && fPrimariesTree) {
-          fPrimariesTree->Write("", TFile::kOverwrite); 
+          fPrimariesTree->Write("primariesTree", TFile::kOverwrite); 
       }
       if (fNeutronTallyTreeStatus && fNeutronTallyTree) {
-          fNeutronTallyTree->Write("", TFile::kOverwrite); 
+          fNeutronTallyTree->Write("neutronTallyTree", TFile::kOverwrite); 
       }
       fFile->Close();
       delete fFile;
@@ -29,7 +29,7 @@ void PaleoSimOutputManager::WriteAndClose() {
 
 //Determine status of primaries tree
 void PaleoSimOutputManager::DeterminePrimariesTreeOutputStatus() {
-  fPrimariesTreeStatus = fMessenger.GetUserPrimaryTreeOutputStatus();
+  fPrimariesTreeStatus = fMessenger.GetUserPrimariesTreeOutputStatus();
 }
 
 //Determine status of neutron tally tree

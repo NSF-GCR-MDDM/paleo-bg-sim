@@ -7,25 +7,24 @@
 // Constructor now accepts a pointer to the already-created generator and detector
 MiniBooNEBeamlineActionInitialization::MiniBooNEBeamlineActionInitialization(
     PaleoSimMessenger& messenger,
-    PaleoSimOutputManager* manager, 
-    MiniBooNEBeamlinePrimaryGeneratorAction& generator)
+    PaleoSimOutputManager& manager)
  : G4VUserActionInitialization(),
    fMessenger(messenger),
-   fOutputManager(manager),
-   fGenerator(generator) 
+   fOutputManager(manager)
 {}
-MiniBooNEBeamlineActionInitialization::~MiniBooNEBeamlineActionInitialization() {}
 
 void MiniBooNEBeamlineActionInitialization::BuildForMaster() const
 {
-  auto* runAction = new MiniBooNEBeamlineRunAction;
+  auto* runAction = new MiniBooNEBeamlineRunAction(fOutputManager);
   SetUserAction(runAction);
 }
 
 void MiniBooNEBeamlineActionInitialization::Build() const
 {
   G4cout << "Registering Primary Generator Action..." << G4endl;
-  SetUserAction(fGenerator);  // Use the generator passed in from main()
+
+  auto* generator = new MiniBooNEBeamlinePrimaryGeneratorAction(fMessenger, fOutputManager);
+  SetUserAction(generator);  // Use the generator passed in from main()
   
   auto* runAction = new MiniBooNEBeamlineRunAction(fOutputManager);
   SetUserAction(runAction);

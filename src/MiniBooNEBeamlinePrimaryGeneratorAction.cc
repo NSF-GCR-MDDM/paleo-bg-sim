@@ -20,7 +20,6 @@ MiniBooNEBeamlinePrimaryGeneratorAction::MiniBooNEBeamlinePrimaryGeneratorAction
   fGPS(new G4GeneralParticleSource()), 
   fMessenger(messenger),
   fManager(manager)
-)
 {
   // List of valid sources
   fValidSourceTypes = {
@@ -32,7 +31,7 @@ MiniBooNEBeamlinePrimaryGeneratorAction::MiniBooNEBeamlinePrimaryGeneratorAction
   };
 
   //Check whether we were passed a valid source type
-  G4String sourceType = fMessenger->GetSourceType();
+  G4String sourceType = fMessenger.GetSourceType();
   if (std::find(fValidSourceTypes.begin(), fValidSourceTypes.end(), sourceType) == fValidSourceTypes.end()) {
       G4Exception("MiniBooNEBeamlinePrimaryGeneratorAction", "InvalidSource", FatalException,
                   ("Invalid source type: " + sourceType).c_str());
@@ -61,7 +60,7 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent
   // Add dispatch logic here for new generators
 	//
 	//Mei & Hime muon generator
-  G4String sourceType = fMessenger->GetSourceType();
+  G4String sourceType = fMessenger.GetSourceType();
   if (sourceType == "muonGenerator") {
       GenerateMuonPrimaries(anEvent);
   }
@@ -74,7 +73,7 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent
 //
 // Mei & Hime Muon Generator
 void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeMuons() {
-  G4double h0 = fMessenger->GetMuonEffectiveDepth();
+  G4double h0 = fMessenger.GetMuonEffectiveDepth();
   G4double h0_km = h0 / km;
 
   fMuonThetaDist = new TF1("fMuonThetaDist",
@@ -102,7 +101,7 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeMuons() {
 //
 // Mei & Hime Muon Generator
 void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMuonPrimaries(G4Event* anEvent) {
-  G4double h0 = fMessenger->GetMuonEffectiveDepth();
+  G4double h0 = fMessenger.GetMuonEffectiveDepth();
   G4double h0_km = h0 / km;
 
   //TODO: mu+ vs mu- at appropriate ratios--does it really even matter?
@@ -135,23 +134,23 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMuonPrimaries(G4Event* anE
     fGPS->GeneratePrimaryVertex(anEvent);
 
     // Record for output tree
-    if (fManager->GetPrimariesTreeOutputStatus()) {
+    if (fManager.GetPrimariesTreeOutputStatus()) {
       G4double mass = muonDef->GetPDGMass();
       G4double momentumMag = std::sqrt(E_GeV * E_GeV - mass * mass);
       G4ThreeVector momentum = direction * momentumMag;
-
-      fManager->PushPrimaryEventID(anEvent->GetEventID());
-      fManager->PushPrimaryEventPDG(muonDef->GetPDGEncoding());
-      fManager->PushPrimaryEventEnergy(E_GeV);
-      fManager->PushPrimaryEventX(position.x());
-      fManager->PushPrimaryEventY(position.y());
-      fManager->PushPrimaryEventZ(position.z());
-      fManager->PushPrimaryEventPX(momentum.x());
-      fManager->PushPrimaryEventPY(momentum.y());
-      fManager->PushPrimaryEventPZ(momentum.z());
-      fManager->PushPrimaryMuonTheta(theta);
-      fManager->PushPrimaryMuonPhi(phi);
-      fManager->PushPrimaryMuonSlant(h_km);
+      fManager.PushPrimaryEventID(anEvent->GetEventID());
+      G4cout<<fManager.GetPrimaryEvtID()<<G4endl;
+      fManager.PushPrimaryEventPDG(muonDef->GetPDGEncoding());
+      fManager.PushPrimaryEventEnergy(E_GeV);
+      fManager.PushPrimaryEventX(position.x());
+      fManager.PushPrimaryEventY(position.y());
+      fManager.PushPrimaryEventZ(position.z());
+      fManager.PushPrimaryEventPX(momentum.x());
+      fManager.PushPrimaryEventPY(momentum.y());
+      fManager.PushPrimaryEventPZ(momentum.z());
+      fManager.PushPrimaryMuonTheta(theta);
+      fManager.PushPrimaryMuonPhi(phi);
+      fManager.PushPrimaryMuonSlant(h_km);
     }
 }
 
@@ -161,7 +160,7 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMuonPrimaries(G4Event* anE
 // Mei & Hime Muon Generator
 G4ThreeVector MiniBooNEBeamlinePrimaryGeneratorAction::SamplePointOnTopOfOverburden() {
 
-    G4double sideLength = fMessenger->GetUserOverburdenSideLength();
+    G4double sideLength = fMessenger.GetUserOverburdenSideLength();
     G4double halfSideLength = sideLength / 2.0;
 
     G4double x = (G4UniformRand() - 0.5) * sideLength;

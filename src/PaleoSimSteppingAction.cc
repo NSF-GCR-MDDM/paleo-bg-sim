@@ -3,6 +3,7 @@
 #include "G4Track.hh"
 #include "G4ParticleDefinition.hh"
 #include "G4UnitsTable.hh"
+#include "G4EventManager.hh"
 
 PaleoSimSteppingAction::PaleoSimSteppingAction(PaleoSimMessenger& messenger, 
                                                PaleoSimOutputManager& manager)
@@ -23,10 +24,10 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
         G4ThreeVector position = track->GetPosition();
 
         //Get air cavity side length
-        G4double airCavityHalfLength = fMessenger->GetAirCavitySideLength()/2.;
+        G4double airCavityHalfLength = fMessenger.GetAirCavitySideLength()/2.;
 
         //Check if it's inside the air cavity
-        if ((position.x() >= -airCavityHalfLengt.) && (position.x() <= airCavityHalfLength) &&
+        if ((position.x() >= -airCavityHalfLength) && (position.x() <= airCavityHalfLength) &&
             (position.y() >= -airCavityHalfLength) && (position.y() <= airCavityHalfLength) &&
             (position.z() >= -airCavityHalfLength) && (position.z() <= airCavityHalfLength)) {
                         
@@ -34,15 +35,15 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
             auto* event = G4EventManager::GetEventManager()->GetConstCurrentEvent();
             if (event) {
                 G4int eventID = event->GetEventID();
-                fOutputManager->PushNeutronTallyEventID(eventID);
+                fOutputManager.PushNeutronTallyEventID(eventID);
             }
 
             double energy = track->GetKineticEnergy();
-            fOutputManager->PushNeutronTallyEventEntryEnergy(energy);
+            fOutputManager.PushNeutronTallyEventEntryEnergy(energy);
 
-            fOutputManager->PushNeutronTallyEventEntryX(position.x());
-            fOutputManager->PushNeutronTallyEventEntryY(position.y());
-            fOutputManager->PushNeutronTallyEventEntryZ(position.z());
+            fOutputManager.PushNeutronTallyEventEntryX(position.x());
+            fOutputManager.PushNeutronTallyEventEntryY(position.y());
+            fOutputManager.PushNeutronTallyEventEntryZ(position.z());
 
             //TODO:
             //G4ThreeVector momentum = track->GetMomentum();

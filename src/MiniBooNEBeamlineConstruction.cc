@@ -34,10 +34,10 @@ G4VPhysicalVolume* MiniBooNEBeamlineConstruction::Construct()
     G4bool checkOverlaps = true; // Prints if there are overlapping volumes
 
     //Rock overburden
-    G4String overburdenMaterialName = fMessenger->GetUserOverburdenMaterial();
+    G4String overburdenMaterialName = fMessenger.GetUserOverburdenMaterial();
     G4cout << "Overburden material is = " << overburdenMaterialName << G4endl;
     G4Material* overburdenMaterial = fMaterialManager->GetMaterial(overburdenMaterialName); 
-    G4double overburdenSideLength = fMessenger->GetUserOverburdenSideLength();
+    G4double overburdenSideLength = fMessenger.GetUserOverburdenSideLength();
     G4cout << "Overburden side length = " << overburdenSideLength << G4endl;
     G4double halfOverburdenLength = 0.5 * overburdenSideLength;
     G4Box* rockBox = new G4Box("rockBox",halfOverburdenLength,halfOverburdenLength,halfOverburdenLength);
@@ -57,9 +57,9 @@ G4VPhysicalVolume* MiniBooNEBeamlineConstruction::Construct()
     //Air cavity
     G4LogicalVolume* logicCavity = nullptr; //Create outside if statement so can be used in next conditional
     //for target w/o creating compile errors
-    if (fMessenger->GetAirCavitySideLength() > 0.0) {
+    if (fMessenger.GetAirCavitySideLength() > 0.0) {
       G4Material* cavityMaterial = fMaterialManager->GetMaterial("Air"); 
-      G4double airCavitySideLength = fMessenger->GetAirCavitySideLength();
+      G4double airCavitySideLength = fMessenger.GetAirCavitySideLength();
       G4cout << "Air cavity side length = " << airCavitySideLength << G4endl;
 
       G4double halfCavityLength = 0.5 * airCavitySideLength;
@@ -79,20 +79,20 @@ G4VPhysicalVolume* MiniBooNEBeamlineConstruction::Construct()
     }
 
     //Target
-    if (fMessenger->GetTargetSideLength() > 0.0) {
+    if (fMessenger.GetTargetSideLength() > 0.0) {
 
         //Decide what the mother volume is depending on whether or not we have an air cavity
         //Default to logicRock (world) and overwrite if an air cavity is present
         G4LogicalVolume* motherVolume = logicRock;
-        if (fMessenger->GetAirCavitySideLength() > 0.0) {
+        if (fMessenger.GetAirCavitySideLength() > 0.0) {
             motherVolume = logicCavity;
         }
 
-        G4String targetMaterialName = fMessenger->GetTargetMaterial();
+        G4String targetMaterialName = fMessenger.GetTargetMaterial();
         G4cout << "Target material is = " << targetMaterialName << G4endl;
         G4Material* targetMaterial = fMaterialManager->GetMaterial(targetMaterialName);
 
-        G4double targetSideLength = fMessenger->GetTargetSideLength();
+        G4double targetSideLength = fMessenger.GetTargetSideLength();
         G4cout << "Target side length is = " << targetSideLength << G4endl;
 
         G4double targetHalfSideLength = 0.5 * targetSideLength;

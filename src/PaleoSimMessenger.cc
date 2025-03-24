@@ -137,7 +137,7 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
         G4cout << "Neutron tally tree output set in macro to: " << newValue << G4endl;
     }
     else if (command == fNPSCmd) {
-        fNPS = fNPSCmd->GetNewIntegerValue(newValue);
+        fNPS = fNPSCmd->GetNewIntValue(newValue);
         G4cout << "NPS set in macro to: " << newValue << G4endl;
     }
 
