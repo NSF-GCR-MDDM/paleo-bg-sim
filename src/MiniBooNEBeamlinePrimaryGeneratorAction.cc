@@ -139,7 +139,6 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMuonPrimaries(G4Event* anE
       G4double momentumMag = std::sqrt(E_GeV * E_GeV - mass * mass);
       G4ThreeVector momentum = direction * momentumMag;
       fManager.PushPrimaryEventID(anEvent->GetEventID());
-      G4cout<<fManager.GetPrimaryEvtID()<<G4endl;
       fManager.PushPrimaryEventPDG(muonDef->GetPDGEncoding());
       fManager.PushPrimaryEventEnergy(E_GeV);
       fManager.PushPrimaryEventX(position.x());

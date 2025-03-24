@@ -25,8 +25,6 @@ public:
     //Getters for tree status
     bool GetPrimariesTreeOutputStatus() const { return fPrimariesTreeStatus; }
     bool GetNeutronTallyTreeOutputStatus() const { return fNeutronTallyTreeStatus; }; 
-
-    int GetPrimaryEvtID() const {return fPrimaryEventID;};
     
     // Primary event filler/clearer
     void FillPrimariesTreeEvent();

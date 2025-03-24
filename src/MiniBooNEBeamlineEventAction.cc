@@ -12,14 +12,7 @@ void MiniBooNEBeamlineEventAction::BeginOfEventAction(const G4Event* event) {
         G4cout << "Event # " << event->GetEventID() << G4endl;
     }
 
-    //Clear vectors at start of event
-    if (fOutputManager.GetPrimariesTreeOutputStatus()) {
-      fOutputManager.ClearPrimariesTreeEvent();
-    }
 
-    if (fOutputManager.GetNeutronTallyTreeOutputStatus()) {
-      fOutputManager.ClearNeutronTallyTreeEvent();
-    }
 }
 
 void MiniBooNEBeamlineEventAction::EndOfEventAction(const G4Event* event) {
@@ -33,5 +26,14 @@ void MiniBooNEBeamlineEventAction::EndOfEventAction(const G4Event* event) {
   //Data loaded into NeutronTallyTree variables in stepping action
   if (fOutputManager.GetNeutronTallyTreeOutputStatus()) {
     fOutputManager.FillNeutronTallyTreeEvent();
+  }    
+  
+  //Now clear before the next event
+  if (fOutputManager.GetPrimariesTreeOutputStatus()) {
+    fOutputManager.ClearPrimariesTreeEvent();
+  }
+
+  if (fOutputManager.GetNeutronTallyTreeOutputStatus()) {
+    fOutputManager.ClearNeutronTallyTreeEvent();
   }
 }
