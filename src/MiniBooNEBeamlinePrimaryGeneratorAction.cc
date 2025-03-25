@@ -113,44 +113,45 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMuonPrimaries(G4Event* anE
 
   G4double h_km = h0_km / std::cos(theta);
   fMuonEnergyDist->SetParameter(1, h_km);
+
   G4double E_GeV = fMuonEnergyDist->GetRandom();
-  fGPS->GetCurrentSource()->GetEneDist()->SetMonoEnergy(E_GeV);
+  fGPS->GetCurrentSource()->GetEneDist()->SetMonoEnergy(E_GeV*GeV);
 
-    /*
-    G4cout << "[Sampled Muon]" << G4endl
-           << "  Theta (zenith)     = " << theta / deg << " deg" << G4endl
-           << "  Phi (azimuth)      = " << phi / deg << " deg" << G4endl
-           << "  Slant depth        = " << h_km << " km.w.e" << G4endl
-           << "  Energy             = " << E_GeV << " GeV" << G4endl;
-    */
+  /*
+  G4cout << "[Sampled Muon]" << G4endl
+          << "  Theta (zenith)     = " << theta / deg << " deg" << G4endl
+          << "  Phi (azimuth)      = " << phi / deg << " deg" << G4endl
+          << "  Slant depth        = " << h_km << " km.w.e" << G4endl
+          << "  Energy             = " << E_GeV << " GeV" << G4endl;
+  */
     
-    G4ThreeVector position = SamplePointOnTopOfOverburden();
-    G4ThreeVector direction(std::sin(theta) * std::cos(phi),
-                            std::sin(theta) * std::sin(phi),
-                            -std::cos(theta)); // downward
-    fGPS->GetCurrentSource()->GetAngDist()->SetParticleMomentumDirection(direction);
-    fGPS->GetCurrentSource()->GetPosDist()->SetCentreCoords(position);
+  G4ThreeVector position = SamplePointOnTopOfOverburden();
+  G4ThreeVector direction(std::sin(theta) * std::cos(phi),
+                          std::sin(theta) * std::sin(phi),
+                          -std::cos(theta)); // downward
+  fGPS->GetCurrentSource()->GetAngDist()->SetParticleMomentumDirection(direction);
+  fGPS->GetCurrentSource()->GetPosDist()->SetCentreCoords(position);
 
-    fGPS->GeneratePrimaryVertex(anEvent);
+  fGPS->GeneratePrimaryVertex(anEvent);
 
-    // Record for output tree
-    if (fManager.GetPrimariesTreeOutputStatus()) {
-      G4double mass = muonDef->GetPDGMass();
-      G4double momentumMag = std::sqrt(E_GeV * E_GeV - mass * mass);
-      G4ThreeVector momentum = direction * momentumMag;
-      fManager.PushPrimaryEventID(anEvent->GetEventID());
-      fManager.PushPrimaryEventPDG(muonDef->GetPDGEncoding());
-      fManager.PushPrimaryEventEnergy(E_GeV);
-      fManager.PushPrimaryEventX(position.x());
-      fManager.PushPrimaryEventY(position.y());
-      fManager.PushPrimaryEventZ(position.z());
-      fManager.PushPrimaryEventPX(momentum.x());
-      fManager.PushPrimaryEventPY(momentum.y());
-      fManager.PushPrimaryEventPZ(momentum.z());
-      fManager.PushPrimaryMuonTheta(theta);
-      fManager.PushPrimaryMuonPhi(phi);
-      fManager.PushPrimaryMuonSlant(h_km);
-    }
+  // Record for output tree
+  if (fManager.GetPrimariesTreeOutputStatus()) {
+    G4double mass = muonDef->GetPDGMass();
+    G4double momentumMag = std::sqrt(E_GeV * E_GeV - mass * mass);
+    G4ThreeVector momentum = direction * momentumMag;
+    fManager.PushPrimaryEventID(anEvent->GetEventID());
+    fManager.PushPrimaryEventPDG(muonDef->GetPDGEncoding());
+    fManager.PushPrimaryEventEnergy(E_GeV);
+    fManager.PushPrimaryEventX(position.x());
+    fManager.PushPrimaryEventY(position.y());
+    fManager.PushPrimaryEventZ(position.z());
+    fManager.PushPrimaryEventPx(momentum.x());
+    fManager.PushPrimaryEventPy(momentum.y());
+    fManager.PushPrimaryEventPz(momentum.z());
+    fManager.PushPrimaryMuonTheta(theta);
+    fManager.PushPrimaryMuonPhi(phi);
+    fManager.PushPrimaryMuonSlant(h_km);
+  }
 }
 
 // CUSTOM_GENERATOR_HOOK
@@ -164,7 +165,7 @@ G4ThreeVector MiniBooNEBeamlinePrimaryGeneratorAction::SamplePointOnTopOfOverbur
 
     G4double x = (G4UniformRand() - 0.5) * sideLength;
     G4double y = (G4UniformRand() - 0.5) * sideLength;
-    G4double z = halfSideLength;
+    G4double z = halfSideLength-0.0001;
 
     return G4ThreeVector(x, y, z);
 }

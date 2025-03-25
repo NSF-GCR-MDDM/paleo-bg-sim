@@ -89,9 +89,15 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
 
     fNeutronTallyTree->Branch("eventID", &fNeutronTallyEventID);
     fNeutronTallyTree->Branch("entry_energy", &fNeutron_entryEnergy);
+    fNeutronTallyTree->Branch("creation_energy", &fNeutron_creationEnergy);
     fNeutronTallyTree->Branch("entry_x", &fNeutron_entryX);
     fNeutronTallyTree->Branch("entry_y", &fNeutron_entryY);
     fNeutronTallyTree->Branch("entry_z", &fNeutron_entryZ);
+    fNeutronTallyTree->Branch("entry_Px", &fNeutron_entryPx);
+    fNeutronTallyTree->Branch("entry_Py", &fNeutron_entryPy);
+    fNeutronTallyTree->Branch("entry_Pz", &fNeutron_entryPz);
+    fNeutronTallyTree->Branch("distToVertex", &fNeutron_distToVertex);
+    fNeutronTallyTree->Branch("entryTheta", &fNeutron_entryTheta);
   }
 }
 
@@ -129,7 +135,13 @@ void PaleoSimOutputManager::ClearPrimariesTreeEvent() {
 void PaleoSimOutputManager::ClearNeutronTallyTreeEvent() {
   fNeutronTallyEventID = -1;
   fNeutron_entryEnergy.clear();
+  fNeutron_creationEnergy.clear();
   fNeutron_entryX.clear();
   fNeutron_entryY.clear();
   fNeutron_entryZ.clear();
+  fNeutron_entryPx.clear();
+  fNeutron_entryPy.clear();
+  fNeutron_entryPz.clear();
+  fNeutron_distToVertex.clear();
+  fNeutron_entryTheta.clear();
 }

@@ -8,7 +8,7 @@
 #Source commands
 /generator/setSourceType muonGenerator
 /generator/setMuonEffectiveDepth 6.0 km
-/generator/setNPS 1000
+/generator/setNPS 100000
 
 #Output commands
 /output/setNeutronTallyTreeStatus true

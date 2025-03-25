@@ -13,43 +13,54 @@ PaleoSimSteppingAction::PaleoSimSteppingAction(PaleoSimMessenger& messenger,
 PaleoSimSteppingAction::~PaleoSimSteppingAction() {}
 
 void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
+
     // Access the track data
     G4Track* track = step->GetTrack();
     G4ParticleDefinition* particleDef = track->GetDefinition();
 
     // Check if the particle is a neutron
     if (particleDef->GetPDGEncoding() == 2112) {
+        G4StepPoint* preStepPoint = step->GetPreStepPoint();
+        G4StepPoint* postStepPoint = step->GetPostStepPoint();
 
-        //Get position
-        G4ThreeVector position = track->GetPosition();
+        G4VPhysicalVolume* preVol = preStepPoint->GetPhysicalVolume();
+        G4VPhysicalVolume* postVol = postStepPoint->GetPhysicalVolume();
+    
+        if (!preVol || !postVol) return;  // Safety check for particles leaving the world volume
 
-        //Get air cavity side length
-        G4double airCavityHalfLength = fMessenger.GetAirCavitySideLength()/2.;
-
-        //Check if it's inside the air cavity
-        if ((position.x() >= -airCavityHalfLength) && (position.x() <= airCavityHalfLength) &&
-            (position.y() >= -airCavityHalfLength) && (position.y() <= airCavityHalfLength) &&
-            (position.z() >= -airCavityHalfLength) && (position.z() <= airCavityHalfLength)) {
-                        
-            G4cout<<"PEOPLE, WE FOUND A NEUTRON IN THE CAVITY"<<G4endl;
+        if ((preVol != postVol) && (postVol->GetName() == "AirCavity")) {  // Use the actual name you gave the cavity
             auto* event = G4EventManager::GetEventManager()->GetConstCurrentEvent();
-            if (event) {
-                G4int eventID = event->GetEventID();
-                fOutputManager.PushNeutronTallyEventID(eventID);
-            }
+
+            G4int eventID = event->GetEventID();
+            fOutputManager.PushNeutronTallyEventID(eventID);
 
             double energy = track->GetKineticEnergy();
             fOutputManager.PushNeutronTallyEventEntryEnergy(energy);
 
+            G4ThreeVector position = track->GetPosition();
             fOutputManager.PushNeutronTallyEventEntryX(position.x());
             fOutputManager.PushNeutronTallyEventEntryY(position.y());
             fOutputManager.PushNeutronTallyEventEntryZ(position.z());
 
-            //TODO:
-            //G4ThreeVector momentum = track->GetMomentum();
-            //fNeutronMomenta.push_back(momentum);
-            //Distance to muon
-            //Zenith
+            G4ThreeVector momentum = track->GetMomentum();
+            fOutputManager.PushNeutronTallyEventEntryPx(momentum.x());
+            fOutputManager.PushNeutronTallyEventEntryPy(momentum.y());
+            fOutputManager.PushNeutronTallyEventEntryPz(momentum.z());
+
+            //Creation energy
+            fOutputManager.PushNeutronTallyEventCreationEnergy(track->GetVertexKineticEnergy());
+            
+            //Distance to generation point
+            G4ThreeVector creationPos = track->GetVertexPosition();
+            double distance = (position - creationPos).mag();
+            fOutputManager.PushNeutronTallyEventDistanceToVertex(distance);
+
+            //Zenith angle
+            double zenithAngle = momentum.angle(G4ThreeVector(0, 0, 1));
+            fOutputManager.PushNeutronTallyEventEntryTheta(zenithAngle);
+
+            //Secondary (parent is a muon) or tertiary (parent is not a muon)
+            //TODO
         }
     }
 }

@@ -35,9 +35,9 @@ public:
     void PushPrimaryEventX(double val) { fPrimaryX.push_back(val); };
     void PushPrimaryEventY(double val) { fPrimaryY.push_back(val); };
     void PushPrimaryEventZ(double val) { fPrimaryZ.push_back(val); };
-    void PushPrimaryEventPX(double val) { fPrimaryPx.push_back(val); };
-    void PushPrimaryEventPY(double val) { fPrimaryPy.push_back(val); };
-    void PushPrimaryEventPZ(double val) { fPrimaryPz.push_back(val); };
+    void PushPrimaryEventPx(double val) { fPrimaryPx.push_back(val); };
+    void PushPrimaryEventPy(double val) { fPrimaryPy.push_back(val); };
+    void PushPrimaryEventPz(double val) { fPrimaryPz.push_back(val); };
     // CUSTOM_GENERATOR_HOOK
     // If you want to add more branches to the primaries tree, write setters here
     //
@@ -51,9 +51,16 @@ public:
     void ClearNeutronTallyTreeEvent();
     void PushNeutronTallyEventID(int val) { fNeutronTallyEventID = val; };
     void PushNeutronTallyEventEntryEnergy(double val) { fNeutron_entryEnergy.push_back(val); };
+    void PushNeutronTallyEventCreationEnergy(double val) { fNeutron_creationEnergy.push_back(val); };
     void PushNeutronTallyEventEntryX(double val) { fNeutron_entryX.push_back(val); };
     void PushNeutronTallyEventEntryY(double val) { fNeutron_entryY.push_back(val); };
     void PushNeutronTallyEventEntryZ(double val) { fNeutron_entryZ.push_back(val); };
+    void PushNeutronTallyEventEntryPx(double val) { fNeutron_entryPx.push_back(val); };
+    void PushNeutronTallyEventEntryPy(double val) { fNeutron_entryPy.push_back(val); };
+    void PushNeutronTallyEventEntryPz(double val) { fNeutron_entryPz.push_back(val); };
+    void PushNeutronTallyEventDistanceToVertex(double val) { fNeutron_distToVertex.push_back(val); };
+    void PushNeutronTallyEventEntryTheta(double val) { fNeutron_entryTheta.push_back(val); };
+
 
 private:
     PaleoSimMessenger& fMessenger; 
@@ -79,8 +86,11 @@ private:
 
     // Neutron Tally Tree variables (added for neutron tracking)
     int fNeutronTallyEventID = -1;
-    std::vector<double> fNeutron_entryEnergy;
+    std::vector<double> fNeutron_entryEnergy, fNeutron_creationEnergy;
     std::vector<double> fNeutron_entryX, fNeutron_entryY, fNeutron_entryZ;
+    std::vector<double> fNeutron_entryPx, fNeutron_entryPy, fNeutron_entryPz;
+    std::vector<double> fNeutron_distToVertex;
+    std::vector<double> fNeutron_entryTheta;
 };
 
 #endif
