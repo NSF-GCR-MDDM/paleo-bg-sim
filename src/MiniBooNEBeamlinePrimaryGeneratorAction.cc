@@ -1,7 +1,6 @@
 #include "MiniBooNEBeamlinePrimaryGeneratorAction.hh"
 #include "MiniBooNEBeamlineConstruction.hh"
 #include "PaleoSimOutputManager.hh"
-#include "PaleoSimEventInfo.hh"
 
 #include "G4Event.hh"
 #include "G4EventManager.hh"
@@ -12,9 +11,11 @@
 #include "G4SystemOfUnits.hh"
 #include "Randomize.hh"
 #include "G4Exception.hh"
+#include "PaleoSimUserEventInformation.hh"
 
 #include "TF1.h"
 #include <algorithm>
+#include <vector>
 
 MiniBooNEBeamlinePrimaryGeneratorAction::MiniBooNEBeamlinePrimaryGeneratorAction(PaleoSimMessenger& messenger,
                                                                                  PaleoSimOutputManager& manager)
@@ -26,7 +27,7 @@ MiniBooNEBeamlinePrimaryGeneratorAction::MiniBooNEBeamlinePrimaryGeneratorAction
 
   //Check whether we were passed a valid source type
   G4String sourceType = fMessenger.GetSourceType();
-  vector<G4String> validSourceTypes = fMessenger.GetValidSourceTypes();
+  std::vector<G4String> validSourceTypes = fMessenger.GetValidSourceTypes();
   if (std::find(validSourceTypes.begin(), validSourceTypes.end(), sourceType) == validSourceTypes.end()) {
       G4Exception("MiniBooNEBeamlinePrimaryGeneratorAction", "InvalidSource", FatalException,
                   ("Invalid source type: " + sourceType).c_str());
@@ -39,7 +40,7 @@ MiniBooNEBeamlinePrimaryGeneratorAction::MiniBooNEBeamlinePrimaryGeneratorAction
   if (sourceType == "muonGenerator") {
     InitializeMuons();
   }
-  elif (sourceType == "muonGeneratorC++") {
+  else if (sourceType == "muonGeneratorC++") {
     InitializeAngularDistribution(); // Initializes the angular distribution
     InitializeEnergyIntervals();
   }
@@ -61,7 +62,10 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent
 	//Mei & Hime muon generator
   G4String sourceType = fMessenger.GetSourceType();
   if (sourceType == "muonGenerator") {
-      GenerateMuonPrimaries(anEvent);
+    GenerateMuonPrimaries(anEvent);
+  }
+  else if (sourceType == "muonGeneratorC++") {
+    GenerateMuonPrimariesCPP(anEvent);
   }
 }
 
@@ -134,7 +138,7 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMuonPrimaries(G4Event* anE
   fGPS->GeneratePrimaryVertex(anEvent);
 
   //We store custom variables in a UserEventInfo to pass them to beginningOfEventAction to load into trees
-  auto* info = new PaleoSimEventInfo();
+  auto* info = new PaleoSimUserEventInformation();
   info->muonTheta.push_back(theta);
   info->muonPhi.push_back(phi);
   info->muonSlantDepth.push_back(h_km*km);
@@ -251,7 +255,8 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMuonPrimariesCPP(G4Event* 
 	double sampled_theta = SampleCDF(theta_cdf, theta_intervals);
 	std::vector<double> e_cdf = GetEnergyDistribution(sampled_theta);
 	double sampled_energy = SampleCDF(e_cdf, e_intervals);
-	fGPS->SetParticleEnergy(sampled_energy * GeV);
+  fGPS->GetCurrentSource()->GetEneDist()->SetMonoEnergy(sampled_energy*GeV);
+
 
 	// Set position and direction to match the desired angle.
 	fGPS->SetParticlePosition(G4ThreeVector(0 * m, 0 * m, 0 * m));
@@ -261,15 +266,15 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMuonPrimariesCPP(G4Event* 
 	G4double sin_theta = std::sin(sampled_theta);
 	G4double dirX = sin_theta * std::cos(phi);
   G4double dirY = sin_theta * std::sin(phi);
-	fGPS->SetParticleMomentumDirection(G4ThreeVector(dirX, dirY, dirZ));
+  fGPS->GetCurrentSource()->GetAngDist()->SetParticleMomentumDirection(G4ThreeVector(dirX, dirY, dirZ));
 
 	fGPS->GeneratePrimaryVertex(anEvent);
 
   //We store custom variables in a UserEventInfo to pass them to beginningOfEventAction to load into trees
-  auto* info = new PaleoSimEventInfo();
+  auto* info = new PaleoSimUserEventInformation();
   info->muonTheta.push_back(sampled_theta);
   info->muonPhi.push_back(phi);
-  info->muonSlantDepth.push_back(fMessenger.h0/std::cos(sampled_theta));
+  info->muonSlantDepth.push_back(fMessenger.GetMuonEffectiveDepth()/std::cos(sampled_theta));
   G4EventManager::GetEventManager()->GetNonconstCurrentEvent()->SetUserInformation(info); //G4 takes ownership, no need to delete
 
 	return;

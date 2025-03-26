@@ -1,7 +1,7 @@
 #include "PaleoSimOutputManager.hh"
 #include "G4Event.hh" 
 #include "MiniBooNEBeamlineEventAction.hh"
-#include "PaleoSimEventInfo.hh"
+#include "PaleoSimUserEventInformation.hh"
 
 MiniBooNEBeamlineEventAction::MiniBooNEBeamlineEventAction(PaleoSimMessenger &messenger,PaleoSimOutputManager& manager)
 : G4UserEventAction(), fMessenger(messenger), fOutputManager(manager) {}
@@ -15,7 +15,7 @@ void MiniBooNEBeamlineEventAction::BeginOfEventAction(const G4Event* event) {
 
     //Fill primaries tree
     G4int eventID = event->GetEventID();
-    fOutputManager->PushPrimaryEventID(eventID);
+    fOutputManager.PushPrimaryEventID(eventID);
 
     //For now, we assume 1 primary vertex, but can contain multiple particles
     G4PrimaryVertex* vertex = event->GetPrimaryVertex(0); //1 particle
@@ -28,30 +28,31 @@ void MiniBooNEBeamlineEventAction::BeginOfEventAction(const G4Event* event) {
       G4double energy = particle->GetTotalEnergy();
       G4ThreeVector momentum(particle->GetPx(), particle->GetPy(), particle->GetPz());
 
-      fOutputManager->PushPrimaryEventPDG(pdg);
-      fOutputManager->PushPrimaryEventEnergy(energy);
-      fOutputManager->PushPrimaryEventX(position.x());
-      fOutputManager->PushPrimaryEventY(position.y());
-      fOutputManager->PushPrimaryEventZ(position.z());
-      fOutputManager->PushPrimaryEventPx(momentum.x());
-      fOutputManager->PushPrimaryEventPy(momentum.y());
-      fOutputManager->PushPrimaryEventPz(momentum.z());
+      fOutputManager.PushPrimaryEventPDG(pdg);
+      fOutputManager.PushPrimaryEventEnergy(energy);
+      fOutputManager.PushPrimaryEventX(position.x());
+      fOutputManager.PushPrimaryEventY(position.y());
+      fOutputManager.PushPrimaryEventZ(position.z());
+      fOutputManager.PushPrimaryEventPx(momentum.x());
+      fOutputManager.PushPrimaryEventPy(momentum.y());
+      fOutputManager.PushPrimaryEventPz(momentum.z());
 
       //CUSTOM_GENERATOR_HOOK
       //If you've set up the user information object to store quantities for each particle, load them now.
       //
+      auto* info = dynamic_cast<PaleoSimUserEventInformation*>(event->GetUserInformation());
       //Mei & Hime muon generator
-      if ((info) && ((fMessenger->GetSourceType() == "muonGenerator") || (fMessenger->GetSourceType() == "muonGeneratorC++"))) {
+      if ((info) && ((fMessenger.GetSourceType() == "muonGenerator") || (fMessenger.GetSourceType() == "muonGeneratorC++"))) {
         if (!info->muonTheta.empty()) {
-            fOutputManager->PushPrimaryMuonTheta(info->muonTheta.front());
+            fOutputManager.PushPrimaryMuonTheta(info->muonTheta.front());
             info->muonTheta.pop_front();
         }
         if (!info->muonPhi.empty()) {
-            fOutputManager->PushPrimaryMuonPhi(info->muonPhi.front());
+            fOutputManager.PushPrimaryMuonPhi(info->muonPhi.front());
             info->muonPhi.pop_front();
         }
         if (!info->muonSlantDepth.empty()) {
-            fOutputManager->PushPrimaryMuonSlant(info->muonSlantDepth.front());
+            fOutputManager.PushPrimaryMuonSlant(info->muonSlantDepth.front());
             info->muonSlantDepth.pop_front();
         }
       }
@@ -69,7 +70,7 @@ void MiniBooNEBeamlineEventAction::EndOfEventAction(const G4Event* event) {
   }
 
   //Data loaded into NeutronTallyTree variables in stepping action
-  if ( fOutputManager.GetNeutronTallyTreeOutputStatus() && fOutputManager->GetNeutronTallyEventVectorSize > 0) {
+  if ( fOutputManager.GetNeutronTallyTreeOutputStatus() && fOutputManager.GetNeutronTallyEventVectorSize ()> 0) {
     fOutputManager.FillNeutronTallyTreeEvent();
   }    
   

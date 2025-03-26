@@ -51,6 +51,14 @@ private:
     std::vector<double> theta_intervals; // Angle intervals
     std::vector<double> theta_cdf; // Cumulative distribution function for angles
 	  std::map<double, std::vector<double> > e_cdfs;
+	  void GenerateMuonPrimariesCPP(G4Event*);
 };
 
 #endif
+
+
+
+
+
+
+

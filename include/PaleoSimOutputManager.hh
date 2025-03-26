@@ -23,13 +23,13 @@ public:
     void DetermineNeutronTallyTreeOutputStatus();      //Checks macro, sets the fNeutronTallyTreeStatus bool accordingly
 
     //Getters for tree status
-    bool GetPrimariesTreeOutputStatus() const { return fPrimariesTreeStatus; }
+    bool GetPrimariesTreeOutputStatus() const { return fPrimariesTreeStatus; };
     bool GetNeutronTallyTreeOutputStatus() const { return fNeutronTallyTreeStatus; }; 
     
     // Primary event filler/clearer
     void FillPrimariesTreeEvent();
     void ClearPrimariesTreeEvent();
-    void GetPrimaryEventVectorSize() const { return fPrimaryPdgID.size(); };
+    int GetPrimaryEventVectorSize() const { return fPrimaryPdgID.size(); };
     void PushPrimaryEventID(int val) { fPrimaryEventID = val; };
     void PushPrimaryEventPDG(int val) { fPrimaryPdgID.push_back(val); };
     void PushPrimaryEventEnergy(double val) { fPrimaryEnergy.push_back(val); };
@@ -50,7 +50,7 @@ public:
     // Neutron tally event filler/clearer
     void FillNeutronTallyTreeEvent();
     void ClearNeutronTallyTreeEvent();
-    void GetNeutronTallyEventVectorSize() const { return fNeutron_entryEnergy.size(); };
+    int GetNeutronTallyEventVectorSize() const { return fNeutron_entryEnergy.size(); };
     void PushNeutronTallyEventID(int val) { fNeutronTallyEventID = val; };
     void PushNeutronTallyEventEntryEnergy(double val) { fNeutron_entryEnergy.push_back(val); };
     void PushNeutronTallyEventCreationEnergy(double val) { fNeutron_creationEnergy.push_back(val); };

@@ -11,6 +11,7 @@
 #include "G4UIcmdWithADoubleAndUnit.hh"
 #include "G4UIcmdWithADoubleAndUnit.hh"
 #include "G4UIcmdWithAnInteger.hh"
+#include <vector>
 
 class PaleoSimMessenger : public G4UImessenger {
 public:
@@ -32,7 +33,7 @@ public:
     G4bool GetUserNeutronTallyTreeOutputStatus() const { return fUserNeutronTallyTreeOutputStatus; };
 
     //Generator
-    vector<G4StrinG> GetValidSourceTypes() const { return fValidSourceTypes; };
+    std::vector<G4String> GetValidSourceTypes() const { return fValidSourceTypes; };
     G4String GetSourceType() const {return fSourceType;};
     G4int GetNPS() const { return fNPS; };
 
@@ -75,10 +76,10 @@ private:
     //Source types:
     // CUSTOM_GENERATOR_HOOK
     // Add new generator names to the list below
-    vector<G4String> fValidSourceTypes = {
+    std::vector<G4String> fValidSourceTypes = {
           "muonGenerator", //Mei & Hime muon generator, with TF1s
           "muonGeneratorC++" //Equivalent generator but with C++ instead of TF1s (from Alex)
-      };}
+      };
     
     // CUSTOM_GENERATOR_HOOK
     // Implement your own generator variables/functions here
