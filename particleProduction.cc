@@ -22,9 +22,11 @@ General to-do:
   - Get external geometry viewer working
   - MiniBooNE -> PaleoSim naming
   - General testing, general clean up if we have includes that are no longer needed
+  - Meta data stored output?
 */
 
 int main(int argc, char** argv) {
+  
     // 1. RNG seeding
     // TODO: Check is this is the approach we want vs. seeds set in macro
     G4Random::setTheEngine(new CLHEP::RanecuEngine);
@@ -59,18 +61,18 @@ int main(int argc, char** argv) {
     //       ~4 volumes we might want (1. world, which could be rock or air, 2. a cavity, which 
     //       is probably air but maybe we want flexibility, 3. a shielding volume, and 4. a target
     //       or crystal cell.
+    // TODO: Add 4th volume--shielding
     // TODO: We might want to be able to position the target/shielding rather than generate at the origin
-    // TODO: Add relevant materials definitions to MaterialsManager.
+    // TODO: Add relevant materials definitions to MaterialsManager. "Standard rock" for example
     // TODO: Output geometry as VRML, as it doesn't require GEANT4 to be built with any visualization flags
     auto* detector       = new MiniBooNEBeamlineConstruction(*messenger);
-    runManager->SetUserInitialization(detector);
+    runManager->SetUserInitialization(detector);  
 
     // 6. Create output manager
     // TODO: Maybe we don't need the tree status flags here if we move them to messenger?
     // TODO: Do we want to add tracking of secondaries in the rock volume--bring back in code from main branch?
     // TODO: We should decide on standard units for all branches and stick to them
     // TODO: Fix neutron branches entering cavity (theta, multiplicity, origin, distance)
-    // TODO: Fix neutron evtID -> Tree should not be filled if length of vectors are 0
     auto* outputManager  = new PaleoSimOutputManager(*messenger);
 
     // 7. Physics list
@@ -80,15 +82,8 @@ int main(int argc, char** argv) {
     runManager->SetUserInitialization(new PaleoSimPhysicsList());
 
     // 8. Register actions (via ActionInitialization). Generator is built in here.
-    // TODO: Add back in c++ generation of muons--it's probably faster than ROOT's built in functions?
+    // TODO: Test cosmic muon sources speed
     // TODO: Document how to add in a custom source
-    // TODO: Right now I'm filling primaries tree branches in the generators. This could potentially be
-    //       moved into the beginning of event action (the way it's handled in the main branch) which
-    //       is a lot cleaner. However, if we do so we should create a GeneratorUserInformation class or
-    //       something like that which brings in additional information about the generated primaries (e.g.
-    //       theta, phi, slant depth) which get filled if the generator type is set properly. We also should
-    //       loop over all primaries in the BeginningOfEvent action when loading properties in case multiple
-    //       were added to the vertex
     // TODO: MUTE generator
     runManager->SetUserInitialization(new MiniBooNEBeamlineActionInitialization(*messenger, *outputManager));
 

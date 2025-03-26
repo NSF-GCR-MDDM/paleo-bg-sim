@@ -34,6 +34,6 @@ void MiniBooNEBeamlineActionInitialization::Build() const
   SetUserAction(steppingAction);
 
   // Now pass the SteppingAction into EventAction
-  auto* eventAction = new MiniBooNEBeamlineEventAction(fOutputManager);
+  auto* eventAction = new MiniBooNEBeamlineEventAction(fMessenger, fOutputManager);
   SetUserAction(eventAction);
 }

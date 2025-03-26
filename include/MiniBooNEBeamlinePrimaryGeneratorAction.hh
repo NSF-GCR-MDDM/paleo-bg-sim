@@ -34,12 +34,23 @@ private:
     //CUSTOM_GENERATOR_HOOK
     // Add private state and methods for your generator implementation here
     //
-    // Mei & Hime muon generator internals
+    // TF1 version of Mei & Hime muon generator internals
     TF1* fMuonThetaDist = nullptr;
     TF1* fMuonEnergyDist = nullptr;
     void InitializeMuons();
     void GenerateMuonPrimaries(G4Event*);
     G4ThreeVector SamplePointOnTopOfOverburden();
+    //
+    // C++ version of Mei & Hime muon generator internals (from Alex)
+    void InitializeAngularDistribution(); // Initializes the angular distribution
+    void InitializeEnergyIntervals(); // Initializes e_intervals
+	  std::vector<double> GetEnergyDistribution(double theta); // Gets energy distribution from angle
+    double SampleCDF(std::vector<double> cdf, std::vector<double> intervals); // Samples energy from the distribution
+    // Data members for energy/angular distributions
+    std::vector<double> e_intervals; // Energy intervals
+    std::vector<double> theta_intervals; // Angle intervals
+    std::vector<double> theta_cdf; // Cumulative distribution function for angles
+	  std::map<double, std::vector<double> > e_cdfs;
 };
 
 #endif

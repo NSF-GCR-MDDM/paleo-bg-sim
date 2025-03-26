@@ -32,6 +32,7 @@ public:
     G4bool GetUserNeutronTallyTreeOutputStatus() const { return fUserNeutronTallyTreeOutputStatus; };
 
     //Generator
+    vector<G4StrinG> GetValidSourceTypes() const { return fValidSourceTypes; };
     G4String GetSourceType() const {return fSourceType;};
     G4int GetNPS() const { return fNPS; };
 
@@ -71,15 +72,34 @@ private:
     G4UIcmdWithAString* fSourceTypeCmd;
     G4UIcmdWithAnInteger* fNPSCmd;
 
+    //Source types:
+    // CUSTOM_GENERATOR_HOOK
+    // Add new generator names to the list below
+    vector<G4String> fValidSourceTypes = {
+          "muonGenerator", //Mei & Hime muon generator, with TF1s
+          "muonGeneratorC++" //Equivalent generator but with C++ instead of TF1s (from Alex)
+      };}
+    
+    // CUSTOM_GENERATOR_HOOK
+    // Implement your own generator variables/functions here
+    //
+    // "muonGenerator"
     G4String fSourceType = "muonGenerator";
     int fNPS = 100;
-
-    //Add your own generator commands here
-    //CUSTOM_GENERATOR_HOOK
-    //
-    //Mei & Hime muon generator
     G4UIcmdWithADoubleAndUnit* fMuonEffectiveDepthCmd;
     G4double fMuonEffectiveDepth = 6 * km;
+    //
+    // "muonGeneratorC++" (from Alex)
+    void InitializeAngularDistribution(); // Initializes the angular distribution
+    void InitializeEnergyIntervals(); // Initializes e_intervals
+	  std::vector<double> GetEnergyDistribution(double theta); // Gets energy distribution from angle
+	  // Samples energy from the distribution
+    double SampleCDF(std::vector<double> cdf, std::vector<double> intervals);
+    // Data members for energy/angular distributions
+    std::vector<double> e_intervals; // Energy intervals
+    std::vector<double> theta_intervals; // Angle intervals
+    std::vector<double> theta_cdf; // Cumulative distribution function for angles
+	  std::map<double, std::vector<double> > e_cdfs;
 
 
 };
