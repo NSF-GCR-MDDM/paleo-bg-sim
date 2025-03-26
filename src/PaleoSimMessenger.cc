@@ -77,29 +77,6 @@ PaleoSimMessenger::PaleoSimMessenger()
     fMuonEffectiveDepthCmd->SetDefaultUnit("km");
 }
 
-PaleoSimMessenger::~PaleoSimMessenger() {
-    delete fOverburdenSizeCmd;
-    delete fAirCavitySizeCmd;
-    delete fTargetSizeCmd;
-    delete fTargetMaterialCmd;
-    delete fGeomDirectory;
-
-    delete fOutputDirectory;
-    delete fSetOutputFileCmd;
-    delete fUserPrimariesTreeStatusCmd;
-    delete fUserNeutronTallyTreeStatusCmd;
-
-    delete fGeneratorDirectory;
-    delete fSourceTypeCmd;
-    delete fNPSCmd;
-
-    //CUSTOM_GENERATOR_HOOK
-    //Delete custom generator commands here
-    //
-    //Mei & Hime 2006
-    delete fMuonEffectiveDepthCmd;
-}
-
 void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
     //Geometry
     if (command == fOverburdenSizeCmd) {

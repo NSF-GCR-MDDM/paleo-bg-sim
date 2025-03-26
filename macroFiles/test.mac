@@ -8,11 +8,11 @@
 #Source commands
 /generator/setSourceType muonGenerator
 /generator/setMuonEffectiveDepth 6.0 km
-/generator/setNPS 100000
+/generator/setNPS 1000
 
 #Output commands
 /output/setNeutronTallyTreeStatus true
-/output/setOutputFile outputFiles/test.root
+/output/setOutputFile outputFiles/test_new2.root
 
 #Verbosity settings
 /control/verbose 0

@@ -16,7 +16,7 @@
 class PaleoSimMessenger : public G4UImessenger {
 public:
     PaleoSimMessenger();
-    ~PaleoSimMessenger();
+    ~PaleoSimMessenger() = default;
 
     void SetNewValue(G4UIcommand* command, G4String newValue) override;
 

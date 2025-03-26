@@ -142,7 +142,7 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMuonPrimaries(G4Event* anE
   info->muonTheta.push_back(theta);
   info->muonPhi.push_back(phi);
   info->muonSlantDepth.push_back(h_km*km);
-  G4EventManager::GetEventManager()->GetNonconstCurrentEvent()->SetUserInformation(info); //G4 takes ownership, no need to delete
+  anEvent->SetUserInformation(info); //G4 takes ownership, no need to delete
 }
 
 // Mei & Hime Muon Generator
@@ -275,7 +275,7 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMuonPrimariesCPP(G4Event* 
   info->muonTheta.push_back(sampled_theta);
   info->muonPhi.push_back(phi);
   info->muonSlantDepth.push_back(fMessenger.GetMuonEffectiveDepth()/std::cos(sampled_theta));
-  G4EventManager::GetEventManager()->GetNonconstCurrentEvent()->SetUserInformation(info); //G4 takes ownership, no need to delete
+  anEvent->SetUserInformation(info); //G4 takes ownership, no need to delete
 
 	return;
 }
