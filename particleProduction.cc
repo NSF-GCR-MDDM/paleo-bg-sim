@@ -26,6 +26,23 @@ General to-do:
 */
 
 int main(int argc, char** argv) {
+
+	std::vector<std::string> vars = {
+			"G4ENSDFSTATEDATA",
+			"G4LEVELGAMMADATA",
+			"G4RADIOACTIVEDATA",
+			"G4NEUTRONHPDATA",
+			"G4LEDATA",
+			"G4PARTICLEXSDATA",
+			"G4PIIDATA",
+			"G4SAIDXSDATA",
+			"G4ABLADATA",
+			"G4REALSURFACEDATA",
+		};
+		for (const auto& var : vars) {
+		const char* val = std::getenv(var.c_str());
+		std::cout << var << ": " << (val ? val : "NOT SET") << std::endl;
+	}
   
     // 1. RNG seeding
     // TODO: Check is this is the approach we want vs. seeds set in macro
