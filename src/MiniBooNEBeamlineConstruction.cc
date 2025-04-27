@@ -12,10 +12,6 @@
 #include "G4SystemOfUnits.hh"
 #include "G4VisAttributes.hh"
 
-#ifdef PALEOSIM_ENABLE_GDML
-    #include "G4GDMLParser.hh"
-#endif
-
 
 MiniBooNEBeamlineConstruction::MiniBooNEBeamlineConstruction(PaleoSimMessenger& messenger)
 : G4VUserDetectorConstruction(),
@@ -110,12 +106,6 @@ G4VPhysicalVolume* MiniBooNEBeamlineConstruction::Construct()
             true                // check overlaps
         );
     }
-
-    #ifdef PALEOSIM_ENABLE_GDML
-        G4GDMLParser parser;
-        remove("geometry.gdml");
-        parser.Write("geometry.gdml", physWorld, true);
-    #endif
     
     return physWorld;
 }

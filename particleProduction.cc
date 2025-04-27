@@ -15,8 +15,6 @@
 
 /*
 General to-do:
-  - Check compatibility with geant4
-  - Update CMakeLists - I added some flags for GDML but I don't think those are needed any more
   - We should comment in the macro some commands which should NOT be included (beamOn, initialize)
   - I removed the commands allowing this to run in interactive mode, we should decide if we want to re-add 
   - Get external geometry viewer working
@@ -45,7 +43,7 @@ int main(int argc, char** argv) {
 	}
   
     // 1. RNG seeding
-    // TODO: Check is this is the approach we want vs. seeds set in macro
+    // TODO: Check is this is the approach we want vs. seeds set in macro or cmd line
     G4Random::setTheEngine(new CLHEP::RanecuEngine);
     G4long pid = getpid();
     time_t systime = time(nullptr);
@@ -64,6 +62,8 @@ int main(int argc, char** argv) {
     //       which should already exist in the .hh
     // TODO: I'm not sure the optional/required flag for the commands is set right for every argument
     // TODO: Maybe we want a flag for exporting the geometry
+    // TODO: Long-term goal would be to have geometry defined in separate files, read in and checked for errors
+    // TODO: Commands specific to generators should be in their own "directory" to avoid confusion i.e. /generator/meiHime/depth etc.
     auto* messenger = new PaleoSimMessenger();
 
     // 4. Load macro BEFORE creating detector, output manager
@@ -81,6 +81,7 @@ int main(int argc, char** argv) {
     // TODO: Add 4th volume--shielding
     // TODO: We might want to be able to position the target/shielding rather than generate at the origin
     // TODO: Add relevant materials definitions to MaterialsManager. "Standard rock" for example
+    // TODO: Long term goal would be to have separate folder of materials so it's not all in one long file
     // TODO: Output geometry as VRML, as it doesn't require GEANT4 to be built with any visualization flags
     auto* detector       = new MiniBooNEBeamlineConstruction(*messenger);
     runManager->SetUserInitialization(detector);  
@@ -90,6 +91,7 @@ int main(int argc, char** argv) {
     // TODO: Do we want to add tracking of secondaries in the rock volume--bring back in code from main branch?
     // TODO: We should decide on standard units for all branches and stick to them
     // TODO: Fix neutron branches entering cavity (theta, multiplicity, origin, distance)
+    // TODO: "recoilTree"
     auto* outputManager  = new PaleoSimOutputManager(*messenger);
 
     // 7. Physics list
@@ -102,6 +104,8 @@ int main(int argc, char** argv) {
     // TODO: Test cosmic muon sources speed
     // TODO: Document how to add in a custom source
     // TODO: MUTE generator
+    // TODO: Remove old C++ generator
+    // TODO: Long-term goal: Generators defined in individual pieces of code in separate folder
     runManager->SetUserInitialization(new MiniBooNEBeamlineActionInitialization(*messenger, *outputManager));
 
     // 8. Initialize run manager AFTER all setup is complete
