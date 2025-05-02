@@ -1,103 +1,111 @@
 //Geometry specification
 #include "MiniBooNEBeamlineConstruction.hh"
-#include "HornMagneticField.hh"
-#include "G4RunManager.hh"
-#include "G4NistManager.hh"
-#include "G4FieldManager.hh"
-#include "G4TransportationManager.hh"
-#include "G4Mag_UsualEqRhs.hh"
-#include "G4Box.hh"
-#include "G4Tubs.hh"
-#include "G4Cons.hh"
-#include "G4Polycone.hh"
-#include "G4LogicalVolume.hh"
-#include "G4PVPlacement.hh"
-#include "G4SystemOfUnits.hh"
-#include "G4GenericMessenger.hh"
-#include "G4Trap.hh"
-#include "G4VisAttributes.hh"
-#include "G4Sphere.hh"
-G4ThreadLocal HornMagneticField* MiniBooNEBeamlineConstruction::fMagneticField = 0;
-G4ThreadLocal G4FieldManager* MiniBooNEBeamlineConstruction::fFieldMgr = 0;
+#include "PaleoSimMaterialManager.hh"
+#include "PaleoSimMessenger.hh"
 
-MiniBooNEBeamlineConstruction::MiniBooNEBeamlineConstruction()
+#include "G4Box.hh"
+#include "G4LogicalVolume.hh"
+#include "G4Material.hh"
+#include "G4PVPlacement.hh"
+#include "G4VPhysicalVolume.hh"
+#include "G4ThreeVector.hh"
+#include "G4SystemOfUnits.hh"
+#include "G4VisAttributes.hh"
+
+
+MiniBooNEBeamlineConstruction::MiniBooNEBeamlineConstruction(PaleoSimMessenger& messenger)
 : G4VUserDetectorConstruction(),
-  fMessenger(0)
-{ }
+  fMessenger(messenger)
+{
+    fMaterialManager = new PaleoSimMaterialManager();
+}
 
 MiniBooNEBeamlineConstruction::~MiniBooNEBeamlineConstruction()
 { 
-    delete fMessenger;
+    delete fMaterialManager;
 }
 
 G4VPhysicalVolume* MiniBooNEBeamlineConstruction::Construct()
 {  
-    // Find and reference materials stored in G4NistManager.hh
-    G4NistManager* nist = G4NistManager::Instance();
-    
-    G4Material* air = nist->FindOrBuildMaterial("G4_AIR"); // Air    
-    G4Element* H = nist->FindOrBuildElement("H");		   // Hydrogen
-    G4Element* C = nist->FindOrBuildElement("C");		   // Carbon
-    G4Element* O = nist->FindOrBuildElement("O");		   // Oxygen
-    G4Element* Na = nist->FindOrBuildElement("Na");		   // Sodium
-    G4Element* Mg = nist->FindOrBuildElement("Mg");		   // Magnesium
-    G4Element* Al = nist->FindOrBuildElement("Al");		   // Aluminum
-    G4Element* Si = nist->FindOrBuildElement("Si");		   // Silicon
-    G4Element* K = nist->FindOrBuildElement("K");		   // Potassium
-    G4Element* Ca = nist->FindOrBuildElement("Ca");		   // Calcium
-    G4Element* Mn = nist->FindOrBuildElement("Mn");		   // Manganese
-    G4Element* Fe = nist->FindOrBuildElement("Fe");		   // Iron
-    G4Element* Ti = nist->FindOrBuildElement("Ti");		   // Titanium
-    
-	// Set params for background
-    G4Box* solidWorld = new G4Box("World", 50*m, 50*m, 50*m);
-    G4LogicalVolume* logicWorld = new G4LogicalVolume(solidWorld, air, "World");
-
     G4bool checkOverlaps = true; // Prints if there are overlapping volumes
-  
-    //Place background                      
-    G4VPhysicalVolume* physWorld = new G4PVPlacement(0, G4ThreeVector(), logicWorld,
-													 "World", 0, false, 0, checkOverlaps);
 
-    //Parameters begin 
-    G4double NoriteHalfSize=10*m;
-    //Parameters end
-    
-    //Begin Norite
-    G4Material* Norite = new G4Material("Norite", 2.894*g/cm3, 12);
-    
-    // Add elements to the material (fractions are by mass)
-    Norite->AddElement(H, 0.001425);  // 0.15% Silicon
-	Norite->AddElement(C, 0.000325);  // 0.04% Carbon
-	Norite->AddElement(O, 0.459925);  // 46.0% Oxygen
-	Norite->AddElement(Na, 0.021925); // 2.2% Sodium
-	Norite->AddElement(Mg, 0.032925); // 3.3% Magnesium
-	Norite->AddElement(Al, 0.089925); // 9.0% Aluminum
-	Norite->AddElement(Si, 0.261925); // 26.2% Sodium
-	Norite->AddElement(K, 0.011925);  // 1.2% Potassium
-	Norite->AddElement(Ca, 0.051925); // 5.2% Calcium
-	Norite->AddElement(Mn, 0.000925); // 0.1% Manganese
-	Norite->AddElement(Fe, 0.061925); // 6.2% Iron
-	Norite->AddElement(Ti, 0.004925); // 0.5% Titanium
+    //Rock overburden
+    G4String overburdenMaterialName = fMessenger.GetUserOverburdenMaterial();
+    G4cout << "Overburden material is = " << overburdenMaterialName << G4endl;
+    G4Material* overburdenMaterial = fMaterialManager->GetMaterial(overburdenMaterialName); 
+    G4double overburdenSideLength = fMessenger.GetUserOverburdenSideLength();
+    G4cout << "Overburden side length = " << overburdenSideLength << G4endl;
+    G4double halfOverburdenLength = 0.5 * overburdenSideLength;
+    G4Box* rockBox = new G4Box("rockBox",halfOverburdenLength,halfOverburdenLength,halfOverburdenLength);
+    G4LogicalVolume* logicRock = new G4LogicalVolume(rockBox,overburdenMaterial,"rockBox");
 
-    //End Norite
-    
-    //Solid and Logic Volume begin
-    G4Box* solidNorite = new G4Box("Norite", NoriteHalfSize, NoriteHalfSize,
-								   NoriteHalfSize);
-    G4LogicalVolume* logicNorite = new G4LogicalVolume(solidNorite, Norite, "Norite");
-    //Solid and Logic Volume end
+    G4VPhysicalVolume* physWorld = new G4PVPlacement(
+        nullptr,              // No rotation
+        G4ThreeVector(0,0,0),      // Centered at origin
+        logicRock,            // Logical volume
+        "RockBox",            // Name
+        nullptr,              // Mother volume (this is world)
+        false,                // No boolean operations
+        0,                    // Copy number
+        checkOverlaps         // Check for overlaps
+    );
 
-	// Place Norite
-    new G4PVPlacement(0, G4ThreeVector(0.0*m, 0.0*m, NoriteHalfSize), logicNorite,
-					  "Norite", logicWorld, false, 0, checkOverlaps);
+    //Air cavity
+    G4LogicalVolume* logicCavity = nullptr; //Create outside if statement so can be used in next conditional
+    //for target w/o creating compile errors
+    if (fMessenger.GetAirCavitySideLength() > 0.0) {
+      G4Material* cavityMaterial = fMaterialManager->GetMaterial("Air"); 
+      G4double airCavitySideLength = fMessenger.GetAirCavitySideLength();
+      G4cout << "Air cavity side length = " << airCavitySideLength << G4endl;
+
+      G4double halfCavityLength = 0.5 * airCavitySideLength;
+      G4Box* cavityBox = new G4Box("AirCavity", halfCavityLength, halfCavityLength, halfCavityLength);
+      logicCavity = new G4LogicalVolume(cavityBox, cavityMaterial, "AirCavity");
+
+      new G4PVPlacement(
+          nullptr,                // No rotation
+          G4ThreeVector(),        // Centered at origin
+          logicCavity,            // Logical volume
+          "AirCavity",            // Name
+          logicRock,              // Mother volume is the rock
+          false,                  // No boolean ops
+          0,                      // Copy number
+          true                    // Check overlaps
+      );
+    }
+
+    //Target
+    if (fMessenger.GetTargetSideLength() > 0.0) {
+
+        //Decide what the mother volume is depending on whether or not we have an air cavity
+        //Default to logicRock (world) and overwrite if an air cavity is present
+        G4LogicalVolume* motherVolume = logicRock;
+        if (fMessenger.GetAirCavitySideLength() > 0.0) {
+            motherVolume = logicCavity;
+        }
+
+        G4String targetMaterialName = fMessenger.GetTargetMaterial();
+        G4cout << "Target material is = " << targetMaterialName << G4endl;
+        G4Material* targetMaterial = fMaterialManager->GetMaterial(targetMaterialName);
+
+        G4double targetSideLength = fMessenger.GetTargetSideLength();
+        G4cout << "Target side length is = " << targetSideLength << G4endl;
+
+        G4double targetHalfSideLength = 0.5 * targetSideLength;
+        G4Box* targetBox = new G4Box("TargetBox", targetHalfSideLength, targetHalfSideLength, targetHalfSideLength);
+        G4LogicalVolume* logicTarget = new G4LogicalVolume(targetBox, targetMaterial, "Target");
+
+        new G4PVPlacement(
+            nullptr,             // no rotation
+            G4ThreeVector(),     // place at origin
+            logicTarget,
+            "Target",
+            motherVolume,
+            false,
+            0,
+            true                // check overlaps
+        );
+    }
+    
     return physWorld;
-}
-
-void MiniBooNEBeamlineConstruction::ConstructSDandField()
-{
-    fMagneticField = new HornMagneticField();
-    fFieldMgr = new G4FieldManager();
-    fFieldMgr->SetDetectorField(fMagneticField);
-    fFieldMgr->CreateChordFinder(fMagneticField);
 }

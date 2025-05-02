@@ -1,133 +1,122 @@
 //Main Program
-
-
 #include "G4RunManager.hh"
 #include "G4UImanager.hh"
-//#include "G4GDMLParser.hh"
 #include "G4TransportationManager.hh"
-#include "MiniBooNEBeamlineAnalysis.hh"
 #include "MiniBooNEBeamlineConstruction.hh"
-#include "QGSP_INCLXX.hh"
-#include "FTFP_INCLXX.hh"
-#include "QGSP_BERT.hh"
-#include "QGSP_BERT_HP.hh"
-#include "QGSP_BIC.hh"
-#include "FTFP_BERT.hh"
+#include "MiniBooNEBeamlinePrimaryGeneratorAction.hh"
 #include "MiniBooNEBeamlineActionInitialization.hh"
 #include "Randomize.hh"
 #include "time.h"
 #include <unistd.h>
 
+#include "PaleoSimPhysicsList.hh"
+#include "PaleoSimMessenger.hh"
+#include "PaleoSimOutputManager.hh"
 
-#ifdef G4UI_USE
-        #include "G4VisExecutive.hh"
-        #include "G4UIExecutive.hh"
-#endif
+/*
+General to-do:
+  - We should comment in the macro some commands which should NOT be included (beamOn, initialize)
+  - I removed the commands allowing this to run in interactive mode, we should decide if we want to re-add 
+  - Get external geometry viewer working
+  - MiniBooNE -> PaleoSim naming
+  - General testing, general clean up if we have includes that are no longer needed
+  - Meta data stored output?
+*/
 
-int main(int argc, char** argv)
-{
-    //Set the random seed based on system time
+int main(int argc, char** argv) {
+
+	std::vector<std::string> vars = {
+			"G4ENSDFSTATEDATA",
+			"G4LEVELGAMMADATA",
+			"G4RADIOACTIVEDATA",
+			"G4NEUTRONHPDATA",
+			"G4LEDATA",
+			"G4PARTICLEXSDATA",
+			"G4PIIDATA",
+			"G4SAIDXSDATA",
+			"G4ABLADATA",
+			"G4REALSURFACEDATA",
+		};
+		for (const auto& var : vars) {
+		const char* val = std::getenv(var.c_str());
+		std::cout << var << ": " << (val ? val : "NOT SET") << std::endl;
+	}
+  
+    // 1. RNG seeding
+    // TODO: Check is this is the approach we want vs. seeds set in macro or cmd line
     G4Random::setTheEngine(new CLHEP::RanecuEngine);
-    //Set the seed in the macro so we can vary it for different jobs
     G4long pid = getpid();
-    //G4long seed = 271;
-    time_t systime = time(NULL);
-    //G4long seeds[2] = (long) (systime*G4UniformRand()+pid);
+    time_t systime = time(nullptr);
     G4long seeds[2] = {systime, pid};
     G4Random::setTheSeeds(seeds, 0);
 
-    //    TRandom3 randGen(0);
-    // long seeds[2] = {randGen.Integer(INT_MAX), randGen.Integer(INT_MAX)};
-    //G4Random::setTheSeeds(seeds, 0);
-    //G4cout << "Random seeds set to: " << G4Random::getTheSeeds()[0] << " and " << G4Random::getTheSeeds()[1] << "\n";
+    // 2. Construct run manager
+    auto* runManager = new G4RunManager();
 
-    G4cout<<"Seeds set to: "<<G4Random::getTheSeeds()[0]<<" "<<G4Random::getTheSeeds()[1]<<endl;
-    
-    // Construct the default run manager
-    G4RunManager* runManager = new G4RunManager;
+    // 3. Messenger FIRST — must exist before reading macro
+    // TODO: Add error checking function that runs after reading the macro
+    // TODO: Consistency with variable names?
+    // TODO: Do we want to generate outputTree enabled flags here (right now they're in the OutputManager)
+    // TODO: Figure out how to automatically document maco based on the PaleoSimMessenger .cc and .hh. We 
+    //       may need to add default arguments to the command objects in the .cc for this to work properly,
+    //       which should already exist in the .hh
+    // TODO: I'm not sure the optional/required flag for the commands is set right for every argument
+    // TODO: Maybe we want a flag for exporting the geometry
+    // TODO: Long-term goal would be to have geometry defined in separate files, read in and checked for errors
+    // TODO: Commands specific to generators should be in their own "directory" to avoid confusion i.e. /generator/meiHime/depth etc.
+    auto* messenger = new PaleoSimMessenger();
 
-    // Set mandatory initialization classes
-    // Detector construction
-    G4cout << "Constructing the geometry..." << G4endl;
-    runManager->SetUserInitialization(new MiniBooNEBeamlineConstruction());
-    G4cout << "Geometry Constructed!" << G4endl;
+    // 4. Load macro BEFORE creating detector, output manager
+    G4UImanager* ui = G4UImanager::GetUIpointer();
+    if (argc != 2) {
+      G4Exception("main", "NoMacro", FatalException, "Macro file is required.");
+    }    
+    G4UImanager::GetUIpointer()->ApplyCommand("/control/execute " + G4String(argv[1]));
 
-    // Physics list
-    G4cout << "Loading the physics list..." << G4endl;
-    // QGSP_INCLXX* physicsList = new QGSP_INCLXX();
-    // FTFP_INCLXX* physicsList = new FTFP_INCLXX();
-    // QGSP_BERT* physicsList = new QGSP_BERT();
-    QGSP_BERT_HP* physicsList = new QGSP_BERT_HP();
-    // QGSP_BIC* physicsList = new QGSP_BIC();
-    // FTFP_BERT* physicsList = new FTFP_BERT();
-    runManager->SetUserInitialization(physicsList);
-    G4cout << "Physics Loaded!" << G4endl;
-    
-    // User action initialization
-    G4cout << "Setting the Action Initialization..." << G4endl;
-    runManager->SetUserInitialization(new MiniBooNEBeamlineActionInitialization());
-    G4cout << "Action Initialziation Complete!" << G4endl;
+    // 5. Create detector, register, create output manager
+    // TODO: Change some names to make this more general. I still think there are generally only
+    //       ~4 volumes we might want (1. world, which could be rock or air, 2. a cavity, which 
+    //       is probably air but maybe we want flexibility, 3. a shielding volume, and 4. a target
+    //       or crystal cell.
+    // TODO: Add 4th volume--shielding
+    // TODO: We might want to be able to position the target/shielding rather than generate at the origin
+    // TODO: Add relevant materials definitions to MaterialsManager. "Standard rock" for example
+    // TODO: Long term goal would be to have separate folder of materials so it's not all in one long file
+    // TODO: Output geometry as VRML, as it doesn't require GEANT4 to be built with any visualization flags
+    auto* detector       = new MiniBooNEBeamlineConstruction(*messenger);
+    runManager->SetUserInitialization(detector);  
 
-    //Initialize the run
-    G4cout << "Initializing the run..." << G4endl;
+    // 6. Create output manager
+    // TODO: Maybe we don't need the tree status flags here if we move them to messenger?
+    // TODO: Do we want to add tracking of secondaries in the rock volume--bring back in code from main branch?
+    // TODO: We should decide on standard units for all branches and stick to them
+    // TODO: Fix neutron branches entering cavity (theta, multiplicity, origin, distance)
+    // TODO: "recoilTree"
+    auto* outputManager  = new PaleoSimOutputManager(*messenger);
+
+    // 7. Physics list
+    // TODO: Try different lists.
+    // TODO: Set volume-specific tracking cuts (higher-grained tracking in the crystal/target). Determine
+    //       where we hand off to SRIM
+    runManager->SetUserInitialization(new PaleoSimPhysicsList());
+
+    // 8. Register actions (via ActionInitialization). Generator is built in here.
+    // TODO: Test cosmic muon sources speed
+    // TODO: Document how to add in a custom source
+    // TODO: MUTE generator
+    // TODO: Remove old C++ generator
+    // TODO: Long-term goal: Generators defined in individual pieces of code in separate folder
+    runManager->SetUserInitialization(new MiniBooNEBeamlineActionInitialization(*messenger, *outputManager));
+
+    // 8. Initialize run manager AFTER all setup is complete
     runManager->Initialize();
-    G4cout << "Run Initialized!" << G4endl;
 
-    //Turn this code on and off to write the geometry to a gdml file
-    //For some reason it seems one cannot overwrite an old file so
-    //this should only be used when changes are made and the new
-    //geometry needs to be written. The old one must be deleted first
-    //or the code will fail
+    // 9. BeamOn loop (manual, from messenger)
+    G4int nps = messenger->GetNPS();
+    runManager->BeamOn(nps);
 
-    /*
-    G4cout << "Writing the geometry to a .gdml file." << G4endl;
-    G4VPhysicalVolume* pWorld = G4TransportationManager::GetTransportationManager()->GetNavigatorForTracking()->GetWorldVolume();
-    G4GDMLParser parser;
-    parser.Write("minibooneBeamline-NoHorn.gdml", pWorld);
-    */
-
-    //Turn off the annoying "Track stuck" warnings. They appear harmless
-    //and occur infrequently
-    G4TransportationManager::GetTransportationManager()->GetNavigatorForTracking()->SetPushVerbosity(0);
-
-    // Get the pointer to the User Interface manager
-    G4UImanager* UImanager = G4UImanager::GetUIpointer();
-
-    // Process macro
-    G4String command = "/control/execute ";
-    G4String fileName = argv[1];
-    //UImanager->ApplyCommand(command+fileName); //ALEXOCT_31_2024
-
-    // Interactive session
-    if (argc == 1) {
-#ifdef G4UI_USE
-      G4UIExecutive* ui = new G4UIExecutive(argc, argv);
-      UImanager->ApplyCommand("/control/execute init.mac");
-      ui->SessionStart();
-      delete ui;
-#endif
-    }
-
-    // Batch mode; process command line arguments + marco
-    else {
-      // Check for command line arguments (other than the macro)
-      int argsLeft = argc - 1;
-      G4cout << argsLeft << G4endl;
-      while (argsLeft > 1) {
-	G4String argFlag = argv[argc-argsLeft];
-	if (argFlag == "-o") {
-	  G4String anaFilename = argv[argc-argsLeft+1];
-	  G4AnalysisManager::Instance()->SetFileName(anaFilename);
-	  argsLeft -= 2;
-	}
-	G4cout << argsLeft << G4endl;
-      }
-      // Last argument should be the macro
-      G4String command = "/control/execute ";
-      G4String macName = argv[argc-1];
-      UImanager->ApplyCommand(command+macName);
-    }
-    
+    // 10. Clean up
     delete runManager;
+    delete messenger;
     return 0;
 }

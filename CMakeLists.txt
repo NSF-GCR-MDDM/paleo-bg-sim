@@ -8,12 +8,27 @@ project(particleProduction)
 # You can set WITH_GEANT4_UIVIS to OFF via the command line or ccmake/cmake-gui
 # to build a batch mode only executable
 #
-option(WITH_GEANT4_UIVIS "Build with Geant4 UI and Vis drivers" OFF)
-if(WITH_GEANT4_UIVIS)
-  find_package(Geant4 REQUIRED ui_all vis_all)
-else()
-  find_package(Geant4 REQUIRED)
+find_package(Geant4 REQUIRED)
+
+# Optional: detect vis support and enable a macro
+if(TARGET Geant4::G4vis_management)
+  message(STATUS "Visualization support found in Geant4.")
+  set(G4UI_USE TRUE)
 endif()
+
+#----------------------------------------------------------------------------
+# Find ROOT
+#
+find_package(ROOT REQUIRED COMPONENTS Core Hist MathCore)
+
+if(ROOT_FOUND)
+  message(STATUS "ROOT found!")
+  message(STATUS "ROOT version: ${ROOT_VERSION}")
+  message(STATUS "ROOT include dirs: ${ROOT_INCLUDE_DIRS}")
+endif()
+
+# Include ROOT headers
+include_directories(${ROOT_INCLUDE_DIRS})
 
 #----------------------------------------------------------------------------
 # Setup Geant4 include directories and compile definitions
@@ -33,8 +48,7 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 # Add the executable, and link it to the Geant4 libraries
 #
 add_executable(particleProduction particleProduction.cc ${sources} ${headers})
-target_link_libraries(particleProduction ${Geant4_LIBRARIES})
-
+target_link_libraries(particleProduction ${Geant4_LIBRARIES} ${ROOT_LIBRARIES})
 
 #----------------------------------------------------------------------------
 # For internal Geant4 use - but has no effect if you build this
