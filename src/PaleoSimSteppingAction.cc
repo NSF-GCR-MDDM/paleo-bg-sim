@@ -4,6 +4,11 @@
 #include "G4ParticleDefinition.hh"
 #include "G4UnitsTable.hh"
 #include "G4EventManager.hh"
+#include "G4RunManager.hh"
+#include "MiniBooNEBeamlineEventAction.hh"
+#include "G4Neutron.hh"
+#include "G4MuonMinus.hh"
+#include "G4MuonPlus.hh"
 
 PaleoSimSteppingAction::PaleoSimSteppingAction(PaleoSimMessenger& messenger, 
                                                PaleoSimOutputManager& manager)
@@ -16,7 +21,19 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
 
     // Access the track data
     G4Track* track = step->GetTrack();
+	G4int trackID = track->GetTrackID();
+  	G4int parentID = track->GetParentID();
     G4ParticleDefinition* particleDef = track->GetDefinition();
+
+	MiniBooNEBeamlineEventAction* eventAction =
+		static_cast<MiniBooNEBeamlineEventAction*>(
+			const_cast<G4UserEventAction*>(
+				G4RunManager::GetRunManager()->GetUserEventAction()));
+	
+	if (track->GetDefinition() == G4MuonMinus::Definition()
+		|| track->GetDefinition() == G4MuonPlus::Definition()) {
+    	eventAction->AddMuon(trackID, track->GetMomentumDirection());
+  	}
 
     // Check if the particle is a neutron
     if (particleDef->GetPDGEncoding() == 2112) {
@@ -59,8 +76,15 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
             double zenithAngle = momentum.angle(G4ThreeVector(0, 0, 1));
             fOutputManager.PushNeutronTallyEventEntryTheta(zenithAngle);
 
-            //Secondary (parent is a muon) or tertiary (parent is not a muon)
-            //TODO
+            if (track->GetDefinition() == G4Neutron::Definition() && parentID > 0) {
+				if (eventAction->IsMuon(parentID)) {
+				  G4ThreeVector muonDir = eventAction->GetMuonDirection(parentID);
+				  G4ThreeVector neutronDir = track->GetMomentumDirection();
+			
+				  G4double angle = neutronDir.angle(muonDir); // in radians
+				  fOutputManager.PushNeutronTallyAngleRelMuon(angle);
+				}
+			}
         }
     }
 }

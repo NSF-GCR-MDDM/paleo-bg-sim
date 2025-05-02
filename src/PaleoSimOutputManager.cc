@@ -98,6 +98,7 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     fNeutronTallyTree->Branch("entry_Pz", &fNeutron_entryPz);
     fNeutronTallyTree->Branch("distToVertex", &fNeutron_distToVertex);
     fNeutronTallyTree->Branch("entryTheta", &fNeutron_entryTheta);
+    fNeutronTallyTree->Branch("parentTheta", &fNeutron_parentTheta);
   }
 }
 

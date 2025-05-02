@@ -62,6 +62,7 @@ public:
     void PushNeutronTallyEventEntryPz(double val) { fNeutron_entryPz.push_back(val); };
     void PushNeutronTallyEventDistanceToVertex(double val) { fNeutron_distToVertex.push_back(val); };
     void PushNeutronTallyEventEntryTheta(double val) { fNeutron_entryTheta.push_back(val); };
+	void PushNeutronTallyAngleRelMuon(double val) { fNeutron_parentTheta.push_back(val); };
 
 
 private:
@@ -92,7 +93,7 @@ private:
     std::vector<double> fNeutron_entryX, fNeutron_entryY, fNeutron_entryZ;
     std::vector<double> fNeutron_entryPx, fNeutron_entryPy, fNeutron_entryPz;
     std::vector<double> fNeutron_distToVertex;
-    std::vector<double> fNeutron_entryTheta;
+    std::vector<double> fNeutron_entryTheta, fNeutron_parentTheta;
 };
 
 #endif
