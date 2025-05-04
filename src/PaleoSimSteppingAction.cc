@@ -6,9 +6,6 @@
 #include "G4EventManager.hh"
 #include "G4RunManager.hh"
 #include "MiniBooNEBeamlineEventAction.hh"
-#include "G4Neutron.hh"
-#include "G4MuonMinus.hh"
-#include "G4MuonPlus.hh"
 
 PaleoSimSteppingAction::PaleoSimSteppingAction(PaleoSimMessenger& messenger, 
                                                PaleoSimOutputManager& manager)
@@ -18,7 +15,6 @@ PaleoSimSteppingAction::PaleoSimSteppingAction(PaleoSimMessenger& messenger,
 PaleoSimSteppingAction::~PaleoSimSteppingAction() {}
 
 void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
-
     // Access the track data
     G4Track* track = step->GetTrack();
 	G4int trackID = track->GetTrackID();
@@ -30,12 +26,21 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
 			const_cast<G4UserEventAction*>(
 				G4RunManager::GetRunManager()->GetUserEventAction()));
 	
-	if (track->GetDefinition() == G4MuonMinus::Definition()
-		|| track->GetDefinition() == G4MuonPlus::Definition()) {
-    	eventAction->AddMuon(trackID, track->GetMomentumDirection());
-  	}
-
-    // Check if the particle is a neutron
+	// For primary muons
+	if (particleDef->GetPDGEncoding() == 13 or particleDef->GetPDGEncoding() == -13) {
+		// Check for secondary neutrons and tally zenith angle (in radians)
+		auto secondaries = step->GetSecondaryInCurrentStep();
+		for (const auto& sec : *secondaries) {
+			G4int secPDGCode = sec->GetParticleDefinition()->GetPDGEncoding();
+			if (secPDGCode == 2112) {
+				G4ThreeVector muDir = track->GetMomentumDirection();
+				G4ThreeVector neutronDir = sec->GetMomentumDirection();
+				fOutputManager.PushNeutronTallyAngleRelMuon(neutronDir.angle(muDir));
+			}
+		}
+	}
+	
+    // Check if the primary is a neutron
     if (particleDef->GetPDGEncoding() == 2112) {
         G4StepPoint* preStepPoint = step->GetPreStepPoint();
         G4StepPoint* postStepPoint = step->GetPostStepPoint();
@@ -71,20 +76,6 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
             G4ThreeVector creationPos = track->GetVertexPosition();
             double distance = (position - creationPos).mag();
             fOutputManager.PushNeutronTallyEventDistanceToVertex(distance);
-
-            //Zenith angle
-            double zenithAngle = momentum.angle(G4ThreeVector(0, 0, 1));
-            fOutputManager.PushNeutronTallyEventEntryTheta(zenithAngle);
-
-            if (track->GetDefinition() == G4Neutron::Definition() && parentID > 0) {
-				if (eventAction->IsMuon(parentID)) {
-				  G4ThreeVector muonDir = eventAction->GetMuonDirection(parentID);
-				  G4ThreeVector neutronDir = track->GetMomentumDirection();
-			
-				  G4double angle = neutronDir.angle(muonDir); // in radians
-				  fOutputManager.PushNeutronTallyAngleRelMuon(angle);
-				}
-			}
         }
     }
 }

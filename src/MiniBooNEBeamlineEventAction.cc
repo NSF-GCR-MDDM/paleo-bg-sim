@@ -83,20 +83,3 @@ void MiniBooNEBeamlineEventAction::EndOfEventAction(const G4Event* event) {
     fOutputManager.ClearNeutronTallyTreeEvent();
   }
 }
-
-void MiniBooNEBeamlineEventAction::AddMuon(G4int trackID, const G4ThreeVector& dir) {
-	fMuonMap[trackID] = dir;
-}
-  
-bool MiniBooNEBeamlineEventAction::IsMuon(G4int trackID) const {
-  return fMuonMap.find(trackID) != fMuonMap.end();
-}
-  
-G4ThreeVector MiniBooNEBeamlineEventAction::GetMuonDirection(G4int trackID) const {
-  auto it = fMuonMap.find(trackID);
-  return (it != fMuonMap.end()) ? it->second : G4ThreeVector();
-}
-  
-void MiniBooNEBeamlineEventAction::ClearMuonMap() {
-  fMuonMap.clear();
-}
