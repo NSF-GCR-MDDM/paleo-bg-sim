@@ -13,24 +13,27 @@
 #include "G4UIcmdWithAnInteger.hh"
 #include <vector>
 
+#include "PaleoSimVolumeDefinition.hh"
+
 class PaleoSimMessenger : public G4UImessenger {
 public:
-    PaleoSimMessenger();
-    ~PaleoSimMessenger() = default;
+    PaleoSimMessenger();    
+    virtual ~PaleoSimMessenger();
+    void CheckForMacroErrors();
 
     void SetNewValue(G4UIcommand* command, G4String newValue) override;
 
-    //Getters for the macro commands
-    G4double GetUserOverburdenSideLength() const { return fOverburdenSideLength; };
-    G4String GetUserOverburdenMaterial() const { return fOverburdenMaterial; };
-    G4double GetAirCavitySideLength() const { return fAirCavitySideLength; };
-    G4double GetTargetSideLength() const { return fTargetSideLength; };
-    G4String GetTargetMaterial() const { return fTargetMaterial; };
-    
     //Output
+    void SetOutputPath(G4String path) { fOutputFile=path; };
     G4String GetOutputPath() const { return fOutputFile; };
-    G4bool GetUserPrimariesTreeOutputStatus() const { return fUserPrimariesTreeOutputStatus; };
-    G4bool GetUserNeutronTallyTreeOutputStatus() const { return fUserNeutronTallyTreeOutputStatus; };
+    //Trees can be enabled/disabled from macro. These flags track those
+    bool GetPrimariesTreeStatus() const { return fPrimariesTreeStatus; };
+    bool GetNeutronTallyTreeStatus() const { return fNeutronTallyTreeStatus; };
+    bool GetMINTreeStatus() const { return fMINTreeStatus; };
+    G4String GetNeutronTallyTreeVolume() const { return fNeutronTallyTreeVolume; };
+    bool GetRecoilTreeStatus() const { return fRecoilTreeStatus; };
+    G4String GetRecoilTreeVolume() const { return fRecoilTreeVolume; };
+    bool GetVRMLStatus() const { return fVRMLStatus; };
 
     //Generator
     std::vector<G4String> GetValidSourceTypes() const { return fValidSourceTypes; };
@@ -41,32 +44,63 @@ public:
     //CUSTOM_GENERATOR_HOOK
     //
     //Mei & Hime muon generator
-    G4double GetMuonEffectiveDepth() const { return fMuonEffectiveDepth;};
+    G4double GetMeiHimeMuonEffectiveDepth() const { return fMeiHimeMuonDepth;};
+    //
+    //Mute generator
+    G4String GetMuteHistFilename() const { return fMuteHistFilename;};
+
+    //Geometric calculations
+    void ComputeCoordinates();
+    void ComputeAbsoluteCoordinatesRecursive(VolumeDefinition* vol);
+    void ComputeRelativeCoordinatesRecursive(VolumeDefinition* vol);
+    void ComputeCumulativeRotationsRecursive(VolumeDefinition* vol);
+
+    //New geometry helper functions
+    G4String GetGeometryMacroPath() const { return fGeometryMacroPath; }
+    void AddVolume(VolumeDefinition* vol) {fVolumes.push_back(vol); };
+    const std::vector<VolumeDefinition*>& GetVolumes() const { return fVolumes; };
+    bool VolumeNameExists(const G4String& name) const {
+        for (const auto& vol : fVolumes) {
+            if (vol->name == name) return true;
+        }
+        return false;
+    };
+    VolumeDefinition* GetVolumeByName(const std::string& name) const {
+        for (auto* vol : fVolumes) {
+            if (vol->name == name) return vol;
+        }
+        return nullptr;
+    }
+
 
 private:
+    //New geometry configuration
     G4UIdirectory* fGeomDirectory;
-    G4UIcmdWithADoubleAndUnit* fOverburdenSizeCmd;  
-    G4UIcmdWithAString* fOverburdenMaterialCmd;  
-    G4UIcmdWithADoubleAndUnit* fAirCavitySizeCmd;  
-    G4UIcmdWithADoubleAndUnit* fTargetSizeCmd;
-    G4UIcmdWithAString* fTargetMaterialCmd;
-
-    //
-    G4double fOverburdenSideLength = 20 * m;
-    G4String fOverburdenMaterial = "Norite";
-    G4double fAirCavitySideLength = 0 * m;
-    G4double fTargetSideLength = 1 * cm;
-    G4String fTargetMaterial = "Norite";
+    
+    std::vector<VolumeDefinition*> fVolumes;
+    G4UIcmdWithAString* fSetGeometryMacroCmd;
+    G4String fGeometryMacroPath = "";
 
     // Output configuration
     G4UIdirectory* fOutputDirectory;
-    G4UIcmdWithAString* fSetOutputFileCmd;
-    G4UIcmdWithABool* fUserPrimariesTreeStatusCmd;
-    G4UIcmdWithABool* fUserNeutronTallyTreeStatusCmd;
+    G4UIcmdWithABool* fSetVRMLStatusCmd;
+    G4UIcmdWithABool* fSetPrimariesTreeStatusCmd;
+    G4UIcmdWithABool* fSetMINTreeStatusCmd;
+    G4UIcmdWithAString* fSetNeutronTallyTreeVolumeCmd;
+    G4UIcmdWithAString* fSetRecoilTreeVolumeCmd;
 
     G4String fOutputFile = "outputFiles/output.root";
-    G4bool fUserPrimariesTreeOutputStatus = true;
-    G4bool fUserNeutronTallyTreeOutputStatus = false;
+    G4bool fPrimariesTreeStatus = true;
+
+    G4bool fMINTreeStatus = false;
+
+    G4String fNeutronTallyTreeVolume = "";
+    G4bool fNeutronTallyTreeStatus = false;
+    
+    G4String fRecoilTreeVolume = "";
+    G4bool fRecoilTreeStatus = false;
+    
+    G4bool fVRMLStatus = false;
 
     //Generator general
     G4UIdirectory* fGeneratorDirectory;
@@ -77,31 +111,25 @@ private:
     // CUSTOM_GENERATOR_HOOK
     // Add new generator names to the list below
     std::vector<G4String> fValidSourceTypes = {
-          "muonGenerator", //Mei & Hime muon generator, with TF1s
-          "muonGeneratorC++" //Equivalent generator but with C++ instead of TF1s (from Alex)
+          "meiHimeMuonGenerator", //Mei & Hime muon generator, with TF1s
+          "muteGenerator" //Mute, samples from 2D histogram of muon energy and thetas (root file)
       };
     
+    G4String fSourceType = "meiHimeMuonGenerator";
+    int fNPS = 100;
+
     // CUSTOM_GENERATOR_HOOK
     // Implement your own generator variables/functions here
     //
-    // "muonGenerator"
-    G4String fSourceType = "muonGenerator";
-    int fNPS = 100;
-    G4UIcmdWithADoubleAndUnit* fMuonEffectiveDepthCmd;
-    G4double fMuonEffectiveDepth = 6 * km;
+    // "meiHimeMuonGenerator"
+    G4UIdirectory* fMeiHimeGeneratorDirectory;
+    G4UIcmdWithADoubleAndUnit* fMeiHimeMuonDepthCmd;
+    G4double fMeiHimeMuonDepth = 6 * km;
     //
-    // "muonGeneratorC++" (from Alex)
-    void InitializeAngularDistribution(); // Initializes the angular distribution
-    void InitializeEnergyIntervals(); // Initializes e_intervals
-	  std::vector<double> GetEnergyDistribution(double theta); // Gets energy distribution from angle
-	  // Samples energy from the distribution
-    double SampleCDF(std::vector<double> cdf, std::vector<double> intervals);
-    // Data members for energy/angular distributions
-    std::vector<double> e_intervals; // Energy intervals
-    std::vector<double> theta_intervals; // Angle intervals
-    std::vector<double> theta_cdf; // Cumulative distribution function for angles
-	  std::map<double, std::vector<double> > e_cdfs;
-
+    // "muteGenerator"
+    G4UIdirectory* fMuteGeneratorDirectory;
+    G4UIcmdWithAString* fSetMuteHistFilenameCmd;
+    G4String fMuteHistFilename;
 
 };
 

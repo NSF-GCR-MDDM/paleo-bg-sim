@@ -12,8 +12,11 @@ void PaleoSimMaterialManager::DefineMaterials() {
     auto nist = G4NistManager::Instance();
 
     G4Element* H = nist->FindOrBuildElement("H");		   // Hydrogen
+    G4Element* B = nist->FindOrBuildElement("B");		   // Boron
+    G4Element* Li = nist->FindOrBuildElement("Li");		   // Li
     G4Element* C = nist->FindOrBuildElement("C");		   // Carbon
     G4Element* O = nist->FindOrBuildElement("O");		   // Oxygen
+    G4Element* F = nist->FindOrBuildElement("F");		   // Fluorine
     G4Element* Na = nist->FindOrBuildElement("Na");		   // Sodium
     G4Element* Mg = nist->FindOrBuildElement("Mg");		   // Magnesium
     G4Element* Al = nist->FindOrBuildElement("Al");		   // Aluminum
@@ -40,9 +43,28 @@ void PaleoSimMaterialManager::DefineMaterials() {
     Norite->AddElement(Fe, 0.061925); // 6.2% Iron
     Norite->AddElement(Ti, 0.004925); // 0.5% Titanium
 
+    G4Material* Borated_HDPE = new G4Material("Borated_HDPE", 1.04*g/cm3, 3);
+    Borated_HDPE->AddElement(B, 0.0500);  // 5% Boron
+    Borated_HDPE->AddElement(H, 0.1365);  // 13.66% Air
+    Borated_HDPE->AddElement(C, 0.8135 ); // 81.3% carbon 
+
+    G4Material* LiF = new G4Material("LiF", 2.635*g/cm3, 2);
+    LiF->AddElement(Li, 0.268);  // 
+    LiF->AddElement(F, 0.732);  // 
+
+    //PDG, Mei & Hime use this?
+    //https://pdg.lbl.gov/2024/AtomicNuclearProperties/HTML/standard_rock.html
+    G4Material* StandardRock = new G4Material("StandardRock", 11, 22, 2.65*g/cm3);
+
     //Add to map - MUST BE LOWER CASE
-    materialMap["air"] = nist->FindOrBuildMaterial("G4_AIR"); // Air  
+    materialMap["air"] = nist->FindOrBuildMaterial("G4_AIR");
     materialMap["norite"] = Norite;
+    materialMap["concrete"] = nist->FindOrBuildMaterial("G4_CONCRETE");  
+    materialMap["borated_hdpe"] = Borated_HDPE; 
+    materialMap["stainless_steel"] = nist->FindOrBuildMaterial("G4_STAINLESS-STEEL");  
+    materialMap["lead"] = nist->FindOrBuildMaterial("G4_Pb");  
+    materialMap["lif"] = LiF;
+    materialMap["standard_rock"] = StandardRock;
 }
 
 
@@ -67,4 +89,20 @@ G4Material* PaleoSimMaterialManager::GetMaterial(const std::string& name) const 
     }
 }
 
+bool PaleoSimMaterialManager::HasMaterial(const std::string& name) const {
+    std::string lowerName = ToLower(name);
+    return materialMap.find(lowerName) != materialMap.end();
+}
 
+PaleoSimMaterialManager* PaleoSimMaterialManager::Instance() {
+    static PaleoSimMaterialManager instance;
+    return &instance;
+}
+
+void PaleoSimMaterialManager::PrintKnownMaterials() const {
+    G4cerr << "Available materials:\n";
+    for (const auto& pair : materialMap) {
+        G4cerr << "  " << pair.first << " (G4 name: " 
+               << pair.second->GetName() << ")\n";
+    }
+}

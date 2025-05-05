@@ -7,6 +7,7 @@
 #include "G4SystemOfUnits.hh"
 #include "G4ThreeVector.hh"
 #include "TF1.h"
+#include "TH2D.h"
 #include "PaleoSimMessenger.hh"
 #include "PaleoSimOutputManager.hh"
 
@@ -18,18 +19,13 @@ public:
 
     virtual void GeneratePrimaries(G4Event*);
 
-    //CUSTOM_GENERATOR_HOOK
-    //Add public setter methods for your generator parameters here
-    //
-    // Mei & Hime muon generator setters
-    void SetMuonEffectiveDepth(G4double depth);
-
 private:
     G4GeneralParticleSource* fGPS;
     PaleoSimMessenger& fMessenger;
     PaleoSimOutputManager& fManager;
-    
-    std::vector<G4String> fValidSourceTypes;
+
+    //Helper functions - could be used by any class
+    G4ThreeVector SamplePointOnTopOfWorldVolume();
 
     //CUSTOM_GENERATOR_HOOK
     // Add private state and methods for your generator implementation here
@@ -37,21 +33,13 @@ private:
     // TF1 version of Mei & Hime muon generator internals
     TF1* fMuonThetaDist = nullptr;
     TF1* fMuonEnergyDist = nullptr;
-    void InitializeMuons();
-    void GenerateMuonPrimaries(G4Event*);
-    G4ThreeVector SamplePointOnTopOfOverburden();
+    void InitializeMeiHimeMuons();
+    void GenerateMeiHimeMuonPrimaries(G4Event*);
     //
-    // C++ version of Mei & Hime muon generator internals (from Alex)
-    void InitializeAngularDistribution(); // Initializes the angular distribution
-    void InitializeEnergyIntervals(); // Initializes e_intervals
-	  std::vector<double> GetEnergyDistribution(double theta); // Gets energy distribution from angle
-    double SampleCDF(std::vector<double> cdf, std::vector<double> intervals); // Samples energy from the distribution
-    // Data members for energy/angular distributions
-    std::vector<double> e_intervals; // Energy intervals
-    std::vector<double> theta_intervals; // Angle intervals
-    std::vector<double> theta_cdf; // Cumulative distribution function for angles
-	  std::map<double, std::vector<double> > e_cdfs;
-	  void GenerateMuonPrimariesCPP(G4Event*);
+    //Mute generator
+    TH2D* fMuteHist = nullptr;
+    void InitializeMuteMuons();
+    void GenerateMutePrimaries(G4Event*);
 };
 
 #endif

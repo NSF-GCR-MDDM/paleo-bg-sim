@@ -5,7 +5,6 @@
 #include "G4Step.hh"
 #include "G4Track.hh"
 #include "G4ParticleDefinition.hh"
-#include "G4ParticleDefinition.hh"
 
 #include "PaleoSimMessenger.hh" 
 #include "PaleoSimOutputManager.hh" 
@@ -17,10 +16,12 @@ public:
     virtual ~PaleoSimSteppingAction();
 
     virtual void UserSteppingAction(const G4Step* step) override;
-
+    
 private:
     PaleoSimMessenger& fMessenger;
     PaleoSimOutputManager& fOutputManager;
+    
+    G4int MapProcessToMT(G4int processType, G4int processSubType);
 };
 
 #endif

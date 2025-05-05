@@ -1,13 +1,13 @@
 #Geometry commands
-/geom/setGeometry /home/sch52/code/paleo-bg-sim/macroFiles/geometry/testGeometry.mac
+/geom/setGeometry /home/sch52/code/paleo-bg-sim/macroFiles/geometry/ambe.mac
 
 #Source commands
 /generator/setSourceType meiHimeMuonGenerator
-/generator/meiHimeMuonGenerator/setMuonEffectiveDepth 6.0 km
-/generator/setNPS 100
+/generator/meiHimeMuonGenerator/setMuonEffectiveDepth 0.5 km
+/generator/setNPS 200000
 
 #Output commands
-/output/setNeutronTallyTreeVolume AirCavity
+/output/setNeutronTallyTreeVolume Collimator
 /output/setRecoilTreeVolume Target
 /output/setVRMLOutputStatus 1
 

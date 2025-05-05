@@ -25,6 +25,15 @@ if(ROOT_FOUND)
   message(STATUS "ROOT found!")
   message(STATUS "ROOT version: ${ROOT_VERSION}")
   message(STATUS "ROOT include dirs: ${ROOT_INCLUDE_DIRS}")
+  
+  # Match C++ standard to ROOT build
+  if(DEFINED ROOT_CXX_STANDARD)
+    message(STATUS "Setting C++ standard to match ROOT (C++${ROOT_CXX_STANDARD})")
+    set(CMAKE_CXX_STANDARD ${ROOT_CXX_STANDARD})
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  else()
+    message(FATAL_ERROR "ROOT_CXX_STANDARD not defined! Cannot determine required C++ standard.")
+  endif()
 endif()
 
 # Include ROOT headers

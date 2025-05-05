@@ -1,5 +1,4 @@
 #include "MiniBooNEBeamlinePrimaryGeneratorAction.hh"
-#include "MiniBooNEBeamlineConstruction.hh"
 #include "PaleoSimOutputManager.hh"
 
 #include "G4Event.hh"
@@ -37,35 +36,30 @@ MiniBooNEBeamlinePrimaryGeneratorAction::MiniBooNEBeamlinePrimaryGeneratorAction
   // Call source initialization logic here if needed for new generators
 	//
 	//Mei & Hime muon generator
-  if (sourceType == "muonGenerator") {
-    InitializeMuons();
+  if (sourceType == "meiHimeMuonGenerator") {
+    InitializeMeiHimeMuons();
   }
-  else if (sourceType == "muonGeneratorC++") {
-    InitializeAngularDistribution(); // Initializes the angular distribution
-    InitializeEnergyIntervals();
+  else if (sourceType == "muteGenerator") {
+    InitializeMuteMuons();
   }
 
 }
 
 MiniBooNEBeamlinePrimaryGeneratorAction::~MiniBooNEBeamlinePrimaryGeneratorAction() {
     delete fGPS;
-    if (fMuonThetaDist) delete fMuonThetaDist;
-    if (fMuonEnergyDist) delete fMuonEnergyDist;
 }
 
-
-//TODO move intialization of the source into its own function somewhere else
 void MiniBooNEBeamlinePrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
   // CUSTOM_GENERATOR_HOOK
   // Add dispatch logic here for new generators
 	//
 	//Mei & Hime muon generator
   G4String sourceType = fMessenger.GetSourceType();
-  if (sourceType == "muonGenerator") {
-    GenerateMuonPrimaries(anEvent);
+  if (sourceType == "meiHimeMuonGenerator") {
+    GenerateMeiHimeMuonPrimaries(anEvent);
   }
-  else if (sourceType == "muonGeneratorC++") {
-    GenerateMuonPrimariesCPP(anEvent);
+  else if (sourceType == "muteGenerator") {
+    GenerateMutePrimaries(anEvent);
   }
 }
 
@@ -73,8 +67,8 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent
 // Your initialization methods go here
 //
 // Mei & Hime Muon Generator
-void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeMuons() {
-  G4double h0 = fMessenger.GetMuonEffectiveDepth();
+void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeMeiHimeMuons() {
+  G4double h0 = fMessenger.GetMeiHimeMuonEffectiveDepth();
   G4double h0_km = h0 / km;
 
   fMuonThetaDist = new TF1("fMuonThetaDist",
@@ -89,7 +83,7 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeMuons() {
   fMuonThetaDist->SetNpx(1000);
 
   fMuonEnergyDist = new TF1("fMuonEnergyDist",
-      "exp(-[0]*[1]*([2]-1)) * (x + [3]*(1-exp(-[0]*[1])))^(-[2])", 1, 3000);
+      "exp(-[0]*[1]*([2]-1)) * (x + [3]*(1-exp(-[0]*[1])))^(-[2])", 0.5, 1e8);
   fMuonEnergyDist->SetParameter(0, 0.4);
   //Par 1 set after sampling theta and calculating slant depth
   fMuonEnergyDist->SetParameter(2, 3.77);
@@ -103,11 +97,10 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeMuons() {
 /////////////////////////////////////
 // Mei & Hime Muon Generator (TF1s)//
 /////////////////////////////////////
-void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMuonPrimaries(G4Event* anEvent) {
-  G4double h0 = fMessenger.GetMuonEffectiveDepth();
+void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMeiHimeMuonPrimaries(G4Event* anEvent) {
+  G4double h0 = fMessenger.GetMeiHimeMuonEffectiveDepth();
   G4double h0_km = h0 / km;
 
-  //TODO: mu+ vs mu- at appropriate ratios--does it really even matter?
   G4ParticleDefinition* muonDef = G4ParticleTable::GetParticleTable()->FindParticle("mu-");
   fGPS->SetParticleDefinition(muonDef);
 
@@ -120,15 +113,7 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMuonPrimaries(G4Event* anE
   G4double E_GeV = fMuonEnergyDist->GetRandom();
   fGPS->GetCurrentSource()->GetEneDist()->SetMonoEnergy(E_GeV*GeV);
 
-  /*
-  G4cout << "[Sampled Muon]" << G4endl
-          << "  Theta (zenith)     = " << theta / deg << " deg" << G4endl
-          << "  Phi (azimuth)      = " << phi / deg << " deg" << G4endl
-          << "  Slant depth        = " << h_km << " km.w.e" << G4endl
-          << "  Energy             = " << E_GeV << " GeV" << G4endl;
-  */
-    
-  G4ThreeVector position = SamplePointOnTopOfOverburden();
+  G4ThreeVector position = SamplePointOnTopOfWorldVolume();
   G4ThreeVector direction(std::sin(theta) * std::cos(phi),
                           std::sin(theta) * std::sin(phi),
                           -std::cos(theta)); // downward
@@ -145,137 +130,106 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMuonPrimaries(G4Event* anE
   anEvent->SetUserInformation(info); //G4 takes ownership, no need to delete
 }
 
-// Mei & Hime Muon Generator
-G4ThreeVector MiniBooNEBeamlinePrimaryGeneratorAction::SamplePointOnTopOfOverburden() {
 
-    G4double sideLength = fMessenger.GetUserOverburdenSideLength();
-    G4double halfSideLength = sideLength / 2.0;
 
-    G4double x = (G4UniformRand() - 0.5) * sideLength;
-    G4double y = (G4UniformRand() - 0.5) * sideLength;
-    G4double z = halfSideLength-0.0001;
+//////////////////
+//Mute generator//
+//////////////////
+void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeMuteMuons() {
+  //Check if fMessenger.GetMuteHistFilename() exists. If not error
+  G4String filename = fMessenger.GetMuteHistFilename();
+  
+  std::ifstream testFile(filename);
+  if (!testFile.good()) {
+    G4Exception("InitializeMuteMuons", "Mute001", FatalException,
+                ("Cannot open MUTE histogram file: " + filename).c_str());
+  }
+  testFile.close();
 
-    return G4ThreeVector(x, y, z);
+  //Open root file. Check if "muonHist exists". If not error
+  TFile* file = TFile::Open(filename);
+  if (!file || file->IsZombie()) {
+    G4Exception("InitializeMuteMuons", "Mute002", FatalException,
+                ("Failed to open ROOT file: " + filename).c_str());
+  }
+  
+  //Store in fMuteHist
+  fMuteHist = dynamic_cast<TH2D*>(file->Get("muonHist"));
+  if (!fMuteHist) {
+    G4Exception("InitializeMuteMuons", "Mute004", FatalException,
+                "Histogram 'muonHist' not found or wrong type in file.");
+  }
+  fMuteHist->SetDirectory(0); //Store in memory
+  file->Close();
+  delete file;
 }
 
-/////////////////////////////////////////////////
-// Mei & Hime muon generator in C++ (from Alex)//
-/////////////////////////////////////////////////
+void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMutePrimaries(G4Event* anEvent) {
+  
+  G4ParticleDefinition* muonDef = G4ParticleTable::GetParticleTable()->FindParticle("mu-");
+  fGPS->SetParticleDefinition(muonDef);
 
-void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeAngularDistribution() {
-	// Constants:
-	const double h0 = fMessenger.GetMuonEffectiveDepth();
-  const double h0_km = h0/km;
-	const double dtheta = 0.001;
-	const double I1 = 0.0000086;
-	const double I2 = 0.00000047;
-	const double lambda1 = 0.45;
-	const double lambda2 = 0.87;
+  //Get random energy, theta from fMuteHist
+  double E_GeV = -1, theta = -1;
+  fMuteHist->GetRandom2(E_GeV, theta);  
+  fGPS->GetCurrentSource()->GetEneDist()->SetMonoEnergy(E_GeV*GeV);
 
-	double theta_min = -M_PI_2 + 0.001;
-	double theta_max = M_PI_2 - 0.001;
-	for (double theta = theta_min; theta < theta_max; theta += dtheta) {
-		theta_intervals.push_back(theta);
-	}
+  //Get random phi
+  G4double phi = (2.0 * M_PI - 0.001) * G4UniformRand();
 
-	// Calculate the angle PDF and CDF
-	double cumulative = 0.0;
-	for (size_t i = 0; i < theta_intervals.size() - 1; ++i) {
-		double theta_mid = 0.5 * (theta_intervals[i] + theta_intervals[i + 1]);
-		double pdf_value = I1 * std::exp(-h0 / lambda1 / std::cos(theta_mid));
-		pdf_value += I2 * std::exp(-h0 / lambda2 / std::cos(theta_mid));
-		pdf_value /= std::cos(theta_mid);
-		double probability = pdf_value * dtheta;
-		cumulative += probability;
-		theta_cdf.push_back(cumulative);
-	}
+  //Calculate position, direction, set those
+  G4ThreeVector position = SamplePointOnTopOfWorldVolume();
+  G4ThreeVector direction(std::sin(theta) * std::cos(phi),
+                          std::sin(theta) * std::sin(phi),
+                          -std::cos(theta)); // downward
+  fGPS->GetCurrentSource()->GetAngDist()->SetParticleMomentumDirection(direction);
+  fGPS->GetCurrentSource()->GetPosDist()->SetCentreCoords(position);
 
-	// Normalize the angle CDF
-	for (size_t i = 0; i < theta_cdf.size(); ++i) {
-		theta_cdf[i] /= cumulative;
-	}
-
-	return;
-}
-
-void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeEnergyIntervals() {
-	  const double E_min = 1.0;
-    const double E_max = 4000.0;
-    const double dE = 0.01;
-
-	for (double E = E_min; E < E_max; E += dE) {
-		e_intervals.push_back(E);
-	}
-}
-
-std::vector<double> MiniBooNEBeamlinePrimaryGeneratorAction::GetEnergyDistribution(double theta) {
-	// Constants:
-	const double h0 = fMessenger.GetMuonEffectiveDepth();
-  const double h0_km = h0/km;
-	const double b = 0.4;
-	const double gamma = 3.77;
-	const double epsilon = 693;
-	const double dE = 0.01;
-
-	// Compute depth for given theta
-	double h = h0 * (1 / std::cos(theta));
-
-	// Clear previous energy distributions
-	std::vector<double> e_cdf;
-
-	// Compute the energy PDF and CDF
-	double cumulative = 0.0;
-	for (size_t i = 0; i < e_intervals.size() - 1; ++i) {
-		double x_mid = 0.5 * (e_intervals[i] + e_intervals[i + 1]);
-		double pdf_value = std::exp(-b * h * (gamma - 1));
-		pdf_value *= std::pow(x_mid + epsilon * (1 - std::exp(-b * h)), -gamma);
-		double probability = pdf_value * dE;
-		cumulative += probability;
-		e_cdf.push_back(cumulative);
-	}
-
-	// Normalize the energy CDF
-	for (size_t i = 0; i < e_cdf.size(); ++i) {
-		e_cdf[i] /= cumulative;
-	}
-
-	return e_cdf;
-}
-
-double MiniBooNEBeamlinePrimaryGeneratorAction::SampleCDF(std::vector<double> cdf,
-														  std::vector<double> intervals) {
-	double random_value = G4UniformRand(); // Generates a random value between 0 and 1
-	std::vector<double>::iterator it = std::lower_bound(cdf.begin(), cdf.end(), random_value);
-	size_t index = std::distance(cdf.begin(), it);
-	return intervals[index];
-}
-
-void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMuonPrimariesCPP(G4Event* anEvent) {
-	// Generate energy from the distribution
-	double sampled_theta = SampleCDF(theta_cdf, theta_intervals);
-	std::vector<double> e_cdf = GetEnergyDistribution(sampled_theta);
-	double sampled_energy = SampleCDF(e_cdf, e_intervals);
-  fGPS->GetCurrentSource()->GetEneDist()->SetMonoEnergy(sampled_energy*GeV);
-
-
-	// Set position and direction to match the desired angle.
-	fGPS->SetParticlePosition(G4ThreeVector(0 * m, 0 * m, 0 * m));
-
-	G4double phi = 2.0 * M_PI * G4UniformRand();
-	G4double dirZ = std::cos(sampled_theta);
-	G4double sin_theta = std::sin(sampled_theta);
-	G4double dirX = sin_theta * std::cos(phi);
-  G4double dirY = sin_theta * std::sin(phi);
-  fGPS->GetCurrentSource()->GetAngDist()->SetParticleMomentumDirection(G4ThreeVector(dirX, dirY, dirZ));
-
-	fGPS->GeneratePrimaryVertex(anEvent);
+  //Generate vertex
+  fGPS->GeneratePrimaryVertex(anEvent);
 
   //We store custom variables in a UserEventInfo to pass them to beginningOfEventAction to load into trees
   auto* info = new PaleoSimUserEventInformation();
-  info->muonTheta.push_back(sampled_theta);
+  info->muonTheta.push_back(theta);
   info->muonPhi.push_back(phi);
-  info->muonSlantDepth.push_back(fMessenger.GetMuonEffectiveDepth()/std::cos(sampled_theta));
   anEvent->SetUserInformation(info); //G4 takes ownership, no need to delete
+}
 
-	return;
+//////////////////
+//Other function//
+//////////////////
+//Gets random point on top of world volume. Requires world to be a cylinder or box for now
+G4ThreeVector MiniBooNEBeamlinePrimaryGeneratorAction::SamplePointOnTopOfWorldVolume() {
+  //Find the world volume
+  const auto& volumes = fMessenger.GetVolumes();
+  const VolumeDefinition* worldDef = nullptr;
+  for (const auto* vol : volumes) {
+      if (vol->parentName == "None") {
+          worldDef = vol;
+          break;
+      }
+  }
+
+  //Generate a random point on top surface if it's a box or cylinder, error out otherwise
+  G4ThreeVector localTop;
+  if (worldDef->shape == "box") {
+      G4double x = (G4UniformRand() - 0.5) * 2 * worldDef->halfLengths.x();
+      G4double y = (G4UniformRand() - 0.5) * 2 * worldDef->halfLengths.y();
+      G4double z = +worldDef->halfLengths.z();
+      localTop = G4ThreeVector(x, y, z);
+  }
+  else if (worldDef->shape == "cylinder") {
+      G4double r = worldDef->radius * std::sqrt(G4UniformRand());
+      G4double theta = G4UniformRand() * 2 * CLHEP::pi;
+      G4double x = r * std::cos(theta);
+      G4double y = r * std::sin(theta);
+      G4double z = worldDef->halfHeight;
+      localTop = G4ThreeVector(x, y, z);
+  }
+  else {
+      G4Exception("SamplePointOnTopOfWorldVolume", "UnsupportedShape", FatalException,
+                  ("Top surface sampling not supported for shape: " + worldDef->shape).c_str());
+  }
+
+  return worldDef->absolutePosition + localTop;
 }

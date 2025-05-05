@@ -5,7 +5,6 @@
 #include "globals.hh"
 #include "PaleoSimOutputManager.hh"
 #include "PaleoSimMessenger.hh"
-#include <map>
 
 class MiniBooNEBeamlineEventAction : public G4UserEventAction
 {
@@ -17,8 +16,8 @@ class MiniBooNEBeamlineEventAction : public G4UserEventAction
     virtual void EndOfEventAction(const G4Event* event);
 
   private:
-    PaleoSimOutputManager& fOutputManager;
-    PaleoSimMessenger fMessenger;
+  PaleoSimMessenger& fMessenger;
+  PaleoSimOutputManager& fOutputManager;
   
 };
 

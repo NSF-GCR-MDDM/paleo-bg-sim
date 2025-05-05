@@ -18,18 +18,9 @@ public:
     void CreateOutputFileAndTrees();
     void WriteAndClose();
 
-    //Setters for tree status
-    void DeterminePrimariesTreeOutputStatus();         //Checks macro, sets the fPrimaryTreeStatus bool accordingly
-    void DetermineNeutronTallyTreeOutputStatus();      //Checks macro, sets the fNeutronTallyTreeStatus bool accordingly
-
-    //Getters for tree status
-    bool GetPrimariesTreeOutputStatus() const { return fPrimariesTreeStatus; };
-    bool GetNeutronTallyTreeOutputStatus() const { return fNeutronTallyTreeStatus; }; 
-    
-    // Primary event filler/clearer
+    //PRIMARY TREE
     void FillPrimariesTreeEvent();
     void ClearPrimariesTreeEvent();
-    int GetPrimaryEventVectorSize() const { return fPrimaryPdgID.size(); };
     void PushPrimaryEventID(int val) { fPrimaryEventID = val; };
     void PushPrimaryEventPDG(int val) { fPrimaryPdgID.push_back(val); };
     void PushPrimaryEventEnergy(double val) { fPrimaryEnergy.push_back(val); };
@@ -47,33 +38,57 @@ public:
     void PushPrimaryMuonPhi(double val) { fPrimaryMuonPhi.push_back(val); };
     void PushPrimaryMuonSlant(double val) { fPrimaryMuonSlant.push_back(val); };
 
-    // Neutron tally event filler/clearer
+    //MUON-INDUCED NEUTRON TREE
+    void FillMINTreeEvent();
+    void ClearMINTreeEvent();
+    void PushMINEventID(int val) { fMINEventID = val; };
+    void PushMINEventMultiplicity(int val) { fMINEventMultiplicity = val; };
+    void PushMINEventAngleRelMuon(double val) { fMINEventAngleRelMuon.push_back(val); };
+    void PushMINEventEnergy(double val) { fMINEventEnergy.push_back(val); };
+    void PushMINEventDistanceToMuonTrack(double val) { fMINEventDistanceToMuonTrack.push_back(val); };
+
+    //NEUTRON TALLY TREE
     void FillNeutronTallyTreeEvent();
     void ClearNeutronTallyTreeEvent();
-    int GetNeutronTallyEventVectorSize() const { return fNeutron_entryEnergy.size(); };
     void PushNeutronTallyEventID(int val) { fNeutronTallyEventID = val; };
     void PushNeutronTallyEventEntryEnergy(double val) { fNeutron_entryEnergy.push_back(val); };
-    void PushNeutronTallyEventCreationEnergy(double val) { fNeutron_creationEnergy.push_back(val); };
     void PushNeutronTallyEventEntryX(double val) { fNeutron_entryX.push_back(val); };
     void PushNeutronTallyEventEntryY(double val) { fNeutron_entryY.push_back(val); };
     void PushNeutronTallyEventEntryZ(double val) { fNeutron_entryZ.push_back(val); };
-    void PushNeutronTallyEventEntryPx(double val) { fNeutron_entryPx.push_back(val); };
-    void PushNeutronTallyEventEntryPy(double val) { fNeutron_entryPy.push_back(val); };
-    void PushNeutronTallyEventEntryPz(double val) { fNeutron_entryPz.push_back(val); };
-    void PushNeutronTallyEventDistanceToVertex(double val) { fNeutron_distToVertex.push_back(val); };
-    void PushNeutronTallyEventEntryTheta(double val) { fNeutron_entryTheta.push_back(val); };
-	void PushNeutronTallyAngleRelMuon(double val) { fNeutron_parentTheta.push_back(val); };
+    void PushNeutronTallyEventEntryU(double val) { fNeutron_entryU.push_back(val); };
+    void PushNeutronTallyEventEntryV(double val) { fNeutron_entryV.push_back(val); };
+    void PushNeutronTallyEventEntryW(double val) { fNeutron_entryW.push_back(val); };
+    void IncrementNeutronTallyEventMultiplicity() { fNeutronEntryMultiplicity++;};
 
+    //RECOIL TREE
+    void FillRecoilTreeEvent();
+    void ClearRecoilTreeEvent();
+    void PushRecoilEventID(int val) { fRecoilEventID = val; };
+    void PushRecoilEventPDG(int val) { fRecoilEventPDGCode.push_back(val); };
+    void PushRecoilEventParentPDG(int val) { fRecoilEventParentPDGCode.push_back(val); };
+    void PushRecoilEventEnergy(double val) { fRecoilEventEnergy.push_back(val); };
+    void PushRecoilEventX(double val) { fRecoilEventX.push_back(val); };
+    void PushRecoilEventY(double val) { fRecoilEventY.push_back(val); };
+    void PushRecoilEventZ(double val) { fRecoilEventZ.push_back(val); };
+    void PushRecoilEventU(double val) { fRecoilEventU.push_back(val); };
+    void PushRecoilEventV(double val) { fRecoilEventV.push_back(val); };
+    void PushRecoilEventW(double val) { fRecoilEventW.push_back(val); };
+    void PushRecoilEventTime(double val) { fRecoilEventTime.push_back(val); };
+    void PushRecoilEventCode(double val) { fRecoilEventCode.push_back(val); };
+    void IncrementNRecoils() { fNRecoils++;};
+
+    //Writing output
+    void WriteVRMLGeometry(const G4String& vrmlFilename);
 
 private:
     PaleoSimMessenger& fMessenger; 
 
-    bool fPrimariesTreeStatus = true;
-    bool fNeutronTallyTreeStatus = false;
-
     TFile* fFile = nullptr;
+    TTree* fHeaderTree = nullptr;
     TTree* fPrimariesTree = nullptr;
-    TTree* fNeutronTallyTree = nullptr; // Neutron tally tree
+    TTree* fMINTree = nullptr;
+    TTree* fNeutronTallyTree = nullptr;
+    TTree* fRecoilTree = nullptr;
 
     // Primary Tree variables
     int fPrimaryEventID = -1;
@@ -87,13 +102,29 @@ private:
     //Mei & Hime Muon generator
     std::vector<double> fPrimaryMuonTheta, fPrimaryMuonPhi, fPrimaryMuonSlant;
 
+    //Muon-induced neutron tree
+    int fMINEventID = -1;
+    int fMINEventMultiplicity = 0;
+    std::vector<double> fMINEventAngleRelMuon;
+    std::vector<double> fMINEventEnergy;
+    std::vector<double> fMINEventDistanceToMuonTrack;
+
     // Neutron Tally Tree variables (added for neutron tracking)
     int fNeutronTallyEventID = -1;
-    std::vector<double> fNeutron_entryEnergy, fNeutron_creationEnergy;
+    int fNeutronEntryMultiplicity = 0; //How many neutrons entered the cavity for this event
+    std::vector<double> fNeutron_entryEnergy;
     std::vector<double> fNeutron_entryX, fNeutron_entryY, fNeutron_entryZ;
-    std::vector<double> fNeutron_entryPx, fNeutron_entryPy, fNeutron_entryPz;
-    std::vector<double> fNeutron_distToVertex;
-    std::vector<double> fNeutron_entryTheta, fNeutron_parentTheta;
+    std::vector<double> fNeutron_entryU, fNeutron_entryV, fNeutron_entryW;
+
+    // Recoil Tree variables
+    int fRecoilEventID = -1;
+    std::vector<int> fRecoilEventPDGCode, fRecoilEventParentPDGCode;
+    int fNRecoils = 0;
+    std::vector<double> fRecoilEventEnergy;
+    std::vector<double> fRecoilEventTime;
+    std::vector<double> fRecoilEventX, fRecoilEventY, fRecoilEventZ;
+    std::vector<double> fRecoilEventU, fRecoilEventV, fRecoilEventW;
+    std::vector<double> fRecoilEventCode;
 };
 
 #endif

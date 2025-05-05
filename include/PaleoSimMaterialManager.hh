@@ -7,12 +7,16 @@
 
 class PaleoSimMaterialManager {
 public:
-    PaleoSimMaterialManager();
     ~PaleoSimMaterialManager() = default;
+    static PaleoSimMaterialManager* Instance();
 
     G4Material* GetMaterial(const std::string& name) const;
-
+    bool HasMaterial(const std::string& name) const;
+    void PrintKnownMaterials() const;
+    
 private:
+    PaleoSimMaterialManager();
+
     void DefineMaterials();
     std::map<std::string, G4Material*> materialMap;
 };

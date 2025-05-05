@@ -1,5 +1,5 @@
-#ifndef PHYSICS_LIST_HH
-#define PHYSICS_LIST_HH
+#ifndef PALEOSIMPHYSICSLIST_HH
+#define PALEOSIMPHYSICSLIST_HH
 
 #include "G4VModularPhysicsList.hh"
 

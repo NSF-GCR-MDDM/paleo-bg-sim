@@ -2,6 +2,7 @@
 #define PALEOSIMEVENTINFO_HH
 
 #include "G4VUserEventInformation.hh"
+#include "G4ThreeVector.hh"
 #include <deque>
 #include "globals.hh"
 
@@ -9,6 +10,8 @@ class PaleoSimUserEventInformation : public G4VUserEventInformation {
   public:
       PaleoSimUserEventInformation() = default;
   
+      std::vector<G4ThreeVector> primaryDirection;
+
       // CUSTOM_GENERATOR_HOOK
       // If you need information passed from your primary generation to your PrimariesTree, put that here
       //

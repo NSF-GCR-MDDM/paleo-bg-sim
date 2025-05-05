@@ -1,0 +1,17 @@
+#Geometry commands
+/geom/setGeometry /home/sch52/code/paleo-bg-sim/macroFiles/geometry/meiHime.geo
+
+#Source commands
+/generator/setSourceType muteGenerator
+/generator/muteGenerator/setMuteHistFilename /home/sch52/code/paleo-bg-sim/data/muteMuons.root
+/generator/setNPS 200000
+
+#Output commands
+/output/setNeutronTallyTreeVolume AirCavity
+/output/setVRMLOutputStatus 0
+
+#Verbosity settings
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
