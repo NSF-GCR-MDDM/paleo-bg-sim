@@ -20,6 +20,7 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
 	G4int trackID = track->GetTrackID();
   	G4int parentID = track->GetParentID();
     G4ParticleDefinition* particleDef = track->GetDefinition();
+	G4int particlePDG = particleDef->GetPDGEncoding();
 
 	MiniBooNEBeamlineEventAction* eventAction =
 		static_cast<MiniBooNEBeamlineEventAction*>(
@@ -27,7 +28,7 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
 				G4RunManager::GetRunManager()->GetUserEventAction()));
 	
 	// For primary muons
-	if (particleDef->GetPDGEncoding() == 13 or particleDef->GetPDGEncoding() == -13) {
+	if (particlePDG == 13 || particlePDG == -13) {
 		// Check for secondary neutrons and tally zenith angle (in radians)
 		auto secondaries = step->GetSecondaryInCurrentStep();
 		for (const auto& sec : *secondaries) {
@@ -41,7 +42,7 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
 	}
 	
     // Check if the primary is a neutron
-    if (particleDef->GetPDGEncoding() == 2112) {
+    if (particlePDG == 2112) {
         G4StepPoint* preStepPoint = step->GetPreStepPoint();
         G4StepPoint* postStepPoint = step->GetPostStepPoint();
 
