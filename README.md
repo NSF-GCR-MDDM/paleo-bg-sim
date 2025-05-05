@@ -25,7 +25,7 @@ Full installation instructions can be found here:[Installation Instructions]](do
 ## Running
 
 ```bash
-./particleProduction <macro file>
+./particleProduction < macro file >
 ```
 
 The macro file arguments are documented here: [Macro Command Options](docs/macro_commands.md). In the newest vesion
