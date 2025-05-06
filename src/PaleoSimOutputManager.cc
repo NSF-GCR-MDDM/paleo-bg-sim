@@ -4,13 +4,13 @@
 #include "TTree.h"
 #include "G4SystemOfUnits.hh"
 #include <stdexcept>
-#include <filesystem>
+#include <sys/stat.h> 
+#include <thread>
+#include <chrono>
 
 #include "G4VisExecutive.hh"
 #include "G4VisManager.hh"
 #include "G4UImanager.hh"
-#include <thread>
-#include <chrono>
 
 //Constructor
 PaleoSimOutputManager::PaleoSimOutputManager(PaleoSimMessenger& messenger)
@@ -52,11 +52,22 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
   G4String outputPath = fMessenger.GetOutputPath();
 
   // Check if the specified output directory exists; if it does not, create it
-  namespace fs = std::filesystem;
-  fs::path outputFsPath(outputPath.c_str());
-  fs::path outputDir = outputFsPath.parent_path();
-  if (!outputDir.empty() && outputDir != "." && !fs::exists(outputDir)) {
-      fs::create_directories(outputDir);
+
+  std::string outputDir;
+  size_t slashPos = outputPath.find_last_of("/\\");
+  if (slashPos != std::string::npos) {
+      outputDir = outputPath.substr(0, slashPos);
+  } else {
+      outputDir = ".";  // No slash means current directory
+  }
+
+  if (!outputDir.empty() && outputDir != ".") {
+    struct stat info;
+    bool pathExists = stat(outputDir.c_str(), &info) == 0 && S_ISDIR(info.st_mode);
+    if (!pathExists) {
+      G4Exception("PaleoSimOutputManager", "outputFolderMissing", FatalException,
+                  ("Specified output folder does not exist: " + outputDir).c_str());
+    }
   }
 
   //Make output file
