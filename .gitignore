@@ -4,3 +4,5 @@ CMakeFiles
 Makefile
 CMakeCache.txt
 *.sh
+*.wrl
+*.vrml

@@ -122,7 +122,7 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
     if (command == fSetGeometryMacroCmd) {
 		G4String messengerPath = __FILE__;
 		G4String sourceDir = messengerPath.substr(0, messengerPath.find_last_of("/"));
-		G4String geomPath = sourceDir + "/../" + newValue;
+		G4String geomPath = sourceDir + "/.." + newValue;
 		G4cout << "Opening geometry file from " << geomPath << "\n" << G4endl;
 
         std::ifstream file(geomPath);
