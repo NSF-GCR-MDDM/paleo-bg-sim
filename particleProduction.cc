@@ -40,7 +40,6 @@ To-do:
 */
 
 int main(int argc, char** argv) {
-
 	std::vector<std::string> vars = {
 			"G4ENSDFSTATEDATA",
 			"G4LEVELGAMMADATA",

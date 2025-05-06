@@ -117,17 +117,21 @@ PaleoSimMessenger::~PaleoSimMessenger() {
     delete fSetMuteHistFilenameCmd;
 }
 
-
 void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
     //Geometry
     if (command == fSetGeometryMacroCmd) {
-        std::ifstream file(newValue);
+		G4String messengerPath = __FILE__;
+		G4String sourceDir = messengerPath.substr(0, messengerPath.find_last_of("/"));
+		G4String geomPath = sourceDir + "/../" + newValue;
+		G4cout << "Opening geometry file from " << geomPath << "\n" << G4endl;
+
+        std::ifstream file(geomPath);
         if (!file.good()) {
             G4Exception("PaleoSimMessenger", "InvalidGeometryMacro", FatalException,
                         ("Specified geometry macro file does not exist: " + newValue).c_str());
         }
-        fGeometryMacroPath = newValue;
-        G4cout << "Geometry macro file set in macro to: " << newValue << G4endl;
+        fGeometryMacroPath = geomPath;
+        G4cout << "Geometry macro file set in macro to: " << geomPath << G4endl;
     }
     
     // Output

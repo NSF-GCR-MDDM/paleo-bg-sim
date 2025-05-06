@@ -1,5 +1,5 @@
 #Geometry commands
-/geom/setGeometry /home/sch52/code/paleo-bg-sim/macroFiles/geometry/testGeometry.mac
+/geom/setGeometry /macroFiles/geometry/testGeometry.mac
 
 #Source commands
 /generator/setSourceType meiHimeMuonGenerator

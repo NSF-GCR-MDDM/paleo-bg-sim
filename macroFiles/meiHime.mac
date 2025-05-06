@@ -1,5 +1,5 @@
 #Geometry commands
-/geom/setGeometry /home/sch52/code/paleo-bg-sim/macroFiles/geometry/meiHime.geo
+/geom/setGeometry /macroFiles/geometry/meiHime.geo
 
 #Source commands
 /generator/setSourceType meiHimeMuonGenerator

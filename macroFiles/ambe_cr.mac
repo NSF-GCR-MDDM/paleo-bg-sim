@@ -1,5 +1,5 @@
 #Geometry commands
-/geom/setGeometry /home/sch52/code/paleo-bg-sim/macroFiles/geometry/ambe.mac
+/geom/setGeometry /macroFiles/geometry/ambe.mac
 
 #Source commands
 /generator/setSourceType meiHimeMuonGenerator
