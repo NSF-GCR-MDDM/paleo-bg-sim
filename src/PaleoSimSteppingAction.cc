@@ -22,9 +22,10 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
     G4ParticleDefinition* particleDef = track->GetDefinition();
     auto* event = G4EventManager::GetEventManager()->GetConstCurrentEvent();
 
-    ////////////
-    //MIN TREE//
-    ////////////
+    /////////////
+    //MIN TREE //
+    /////////////
+
     if (fMessenger.GetMINTreeStatus()) {
         G4int trackID = track->GetTrackID();
         G4int parentID = track->GetParentID();
@@ -48,16 +49,20 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
 
 					// Multiplicity:
 					fOutputManager.IncrementMINEventMultiplicity();
+
+					// Energy:
+					G4double MINKinE = sec->GetKineticEnergy();
+					fOutputManager.PushMINEventEnergy(MINKinE);
                 }
             }
         }
     }
 
-
     //////////////////////
     //NEUTRON TALLY TREE//
     //////////////////////
-    if (fMessenger.GetNeutronTallyTreeStatus()==true) {
+
+    if (fMessenger.GetNeutronTallyTreeStatus()) {
         // Check if the particle is a neutron
         if (particleDef->GetPDGEncoding() == 2112) {
             G4StepPoint* preStepPoint = step->GetPreStepPoint();
@@ -94,7 +99,8 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
     ////////////////
     // RECOIL TREE//
     ////////////////
-    if (fMessenger.GetRecoilTreeStatus()==true) {
+
+    if (fMessenger.GetRecoilTreeStatus()) {
 
         G4StepPoint* stepPoint = step->GetPreStepPoint();
         G4VPhysicalVolume* stepVolume = stepPoint->GetPhysicalVolume();
