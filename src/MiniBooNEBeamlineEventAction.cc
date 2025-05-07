@@ -10,8 +10,9 @@ MiniBooNEBeamlineEventAction::~MiniBooNEBeamlineEventAction() {}
 
 void MiniBooNEBeamlineEventAction::BeginOfEventAction(const G4Event* event) {    
   if (event->GetEventID() % 100 == 0) {
-      G4cout << "Event # " << event->GetEventID() << G4endl;
-  }
+      G4cout << "Event # " << event->GetEventID() << " of " << fMessenger.GetNPS()
+	  	     << G4endl;
+}
 
   //For now, we assume 1 primary vertex, but that it can contain multiple particles there
   G4PrimaryVertex* vertex = event->GetPrimaryVertex(0); //1 particle
@@ -101,13 +102,13 @@ void MiniBooNEBeamlineEventAction::EndOfEventAction(const G4Event* event) {
   }
 
   //Data loaded into NeutronTallyTree variables in stepping action
-  if ( fMessenger.GetNeutronTallyTreeStatus() ) {
+  if (fMessenger.GetNeutronTallyTreeStatus()) {
     fOutputManager.FillNeutronTallyTreeEvent();
     fOutputManager.ClearNeutronTallyTreeEvent();
   }    
 
   //Data loaded into RecoilTree variables in stepping action
-  if ( fMessenger.GetRecoilTreeStatus() ) {
+  if (fMessenger.GetRecoilTreeStatus()) {
     fOutputManager.FillRecoilTreeEvent();
     fOutputManager.ClearRecoilTreeEvent();
   }    

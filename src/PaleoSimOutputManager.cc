@@ -185,7 +185,7 @@ void PaleoSimOutputManager::FillPrimariesTreeEvent() {
 
 void PaleoSimOutputManager::FillMINTreeEvent() {
     if (!fMessenger.GetMINTreeStatus() || !fMINTree) return;
-    //if (fMINEventMultiplicity == 0) return;
+    // if (fMINEventMultiplicity == 0) return;
     if (fMINEventAngleRelMuon.size() == 0 ) return;
     fMINTree->Fill();
 }
