@@ -22,9 +22,9 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
     G4ParticleDefinition* particleDef = track->GetDefinition();
     auto* event = G4EventManager::GetEventManager()->GetConstCurrentEvent();
 
-    /////////////
-    //MIN TREE //
-    /////////////
+    //////////////
+    // MIN TREE //
+    //////////////
 
     if (fMessenger.GetMINTreeStatus()) {
         G4int trackID = track->GetTrackID();
@@ -53,14 +53,21 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
 					// Energy:
 					G4double MINKinE = sec->GetKineticEnergy();
 					fOutputManager.PushMINEventEnergy(MINKinE);
+
+					// Distance from muon track:
+					G4ThreeVector muPos = track->GetPosition();
+					G4ThreeVector MINPos = sec->GetPosition();
+					G4ThreeVector MINDisplacement = MINPos - muPos;
+					G4double MINDistToTrack = (MINDisplacement.cross(muDir)).mag();
+					fOutputManager.PushMINEventDistanceToMuonTrack(MINDistToTrack);
                 }
             }
         }
     }
 
-    //////////////////////
-    //NEUTRON TALLY TREE//
-    //////////////////////
+    ////////////////////////
+    // NEUTRON TALLY TREE //
+    ////////////////////////
 
     if (fMessenger.GetNeutronTallyTreeStatus()) {
         // Check if the particle is a neutron
@@ -96,9 +103,9 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
         }
     }
 
-    ////////////////
-    // RECOIL TREE//
-    ////////////////
+    /////////////////
+    // RECOIL TREE //
+    /////////////////
 
     if (fMessenger.GetRecoilTreeStatus()) {
 
