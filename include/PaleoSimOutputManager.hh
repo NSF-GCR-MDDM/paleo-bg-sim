@@ -43,6 +43,7 @@ public:
     void ClearMINTreeEvent();
     void PushMINEventID(int val) { fMINEventID = val; };
     void PushMINEventMultiplicity(int val) { fMINEventMultiplicity = val; };
+	void IncrementMINEventMultiplicity() { fMINEventMultiplicity++; };
     void PushMINEventAngleRelMuon(double val) { fMINEventAngleRelMuon.push_back(val); };
     void PushMINEventEnergy(double val) { fMINEventEnergy.push_back(val); };
     void PushMINEventDistanceToMuonTrack(double val) { fMINEventDistanceToMuonTrack.push_back(val); };

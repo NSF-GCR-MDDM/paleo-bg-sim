@@ -1,4 +1,5 @@
 #include "PaleoSimSteppingAction.hh"
+#include "G4Event.hh"
 #include "G4Step.hh"
 #include "G4Track.hh"
 #include "G4ParticleDefinition.hh"
@@ -6,6 +7,7 @@
 #include "G4EventManager.hh"
 #include "G4VProcess.hh"
 #include "PaleoSimUserEventInformation.hh"
+#include "MiniBooNEBeamlineEventAction.hh"
 
 PaleoSimSteppingAction::PaleoSimSteppingAction(PaleoSimMessenger& messenger, 
                                                PaleoSimOutputManager& manager)
@@ -20,9 +22,10 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
     G4ParticleDefinition* particleDef = track->GetDefinition();
     auto* event = G4EventManager::GetEventManager()->GetConstCurrentEvent();
 
-    ////////////
-    //MIN TREE//
-    ////////////
+    //////////////
+    // MIN TREE //
+    //////////////
+
     if (fMessenger.GetMINTreeStatus()) {
         G4int trackID = track->GetTrackID();
         G4int parentID = track->GetParentID();
@@ -33,24 +36,40 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
             G4int eventID = event->GetEventID();
             fOutputManager.PushMINEventID(eventID);
 
-            // Check for secondary neutrons and tally zenith angle (in radians)
+            // Check for secondary neutrons and tally zenith angle (in radians) and
+			// increment multiplicity.
             auto secondaries = step->GetSecondaryInCurrentStep();
             for (const auto& sec : *secondaries) {
                 G4int secPDGCode = sec->GetParticleDefinition()->GetPDGEncoding();
                 if (secPDGCode == 2112) {
+					// Zenith angle:
                     G4ThreeVector muDir = track->GetMomentumDirection();
                     G4ThreeVector neutronDir = sec->GetMomentumDirection();
                     fOutputManager.PushMINEventAngleRelMuon(neutronDir.angle(muDir));
+
+					// Multiplicity:
+					fOutputManager.IncrementMINEventMultiplicity();
+
+					// Energy:
+					G4double MINKinE = sec->GetKineticEnergy();
+					fOutputManager.PushMINEventEnergy(MINKinE);
+
+					// Distance from muon track:
+					G4ThreeVector muPos = track->GetPosition();
+					G4ThreeVector MINPos = sec->GetPosition();
+					G4ThreeVector MINDisplacement = MINPos - muPos;
+					G4double MINDistToTrack = (MINDisplacement.cross(muDir)).mag();
+					fOutputManager.PushMINEventDistanceToMuonTrack(MINDistToTrack);
                 }
             }
         }
     }
 
+    ////////////////////////
+    // NEUTRON TALLY TREE //
+    ////////////////////////
 
-    //////////////////////
-    //NEUTRON TALLY TREE//
-    //////////////////////
-    if (fMessenger.GetNeutronTallyTreeStatus()==true) {
+    if (fMessenger.GetNeutronTallyTreeStatus()) {
         // Check if the particle is a neutron
         if (particleDef->GetPDGEncoding() == 2112) {
             G4StepPoint* preStepPoint = step->GetPreStepPoint();
@@ -61,7 +80,8 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
         
             if (!preVol || !postVol) return;  // Safety check for particles leaving the world volume
 
-            if ((preVol != postVol) && (postVol->GetName() == fMessenger.GetNeutronTallyTreeVolume())) { 
+            if ((preVol != postVol)
+				&& (postVol->GetName() == fMessenger.GetNeutronTallyTreeVolume())) { 
                 G4int eventID = event->GetEventID();
                 fOutputManager.PushNeutronTallyEventID(eventID);
 
@@ -83,10 +103,11 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
         }
     }
 
-    ////////////////
-    // RECOIL TREE//
-    ////////////////
-    if (fMessenger.GetRecoilTreeStatus()==true) {
+    /////////////////
+    // RECOIL TREE //
+    /////////////////
+
+    if (fMessenger.GetRecoilTreeStatus()) {
 
         G4StepPoint* stepPoint = step->GetPreStepPoint();
         G4VPhysicalVolume* stepVolume = stepPoint->GetPhysicalVolume();

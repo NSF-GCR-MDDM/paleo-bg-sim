@@ -7,7 +7,7 @@
 
 struct VolumeDefinition {
     //Defining volume properties
-    std::string name = "";
+    G4String name = "";
     std::string parentName = "None";
     std::string shape = "";
     std::string materialName = "";
