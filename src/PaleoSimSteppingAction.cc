@@ -30,37 +30,35 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
         G4int trackID = track->GetTrackID();
         G4int parentID = track->GetParentID();
         G4int particlePDG = particleDef->GetPDGEncoding();
-    
-        // For primary muons
-        if (particlePDG == 13 || particlePDG == -13) {
-            G4int eventID = event->GetEventID();
-            fOutputManager.PushMINEventID(eventID);
 
-            // Check for secondary neutrons and tally zenith angle (in radians) and
-			// increment multiplicity.
-            auto secondaries = step->GetSecondaryInCurrentStep();
-            for (const auto& sec : *secondaries) {
-                G4int secPDGCode = sec->GetParticleDefinition()->GetPDGEncoding();
-                if (secPDGCode == 2112) {
-					// Zenith angle:
-                    G4ThreeVector muDir = track->GetMomentumDirection();
-                    G4ThreeVector neutronDir = sec->GetMomentumDirection();
-                    fOutputManager.PushMINEventAngleRelMuon(neutronDir.angle(muDir));
+        //Add event ID
+        G4int eventID = event->GetEventID();
+        fOutputManager.PushMINEventID(eventID);
 
-					// Multiplicity:
-					fOutputManager.IncrementMINEventMultiplicity();
+        // Check for secondary neutrons and tally zenith angle (in radians) and
+        // increment multiplicity.
+        auto secondaries = step->GetSecondaryInCurrentStep();
+        for (const auto& sec : *secondaries) {
+            G4int secPDGCode = sec->GetParticleDefinition()->GetPDGEncoding();
+            if (secPDGCode == 2112) {
+                // Zenith angle:
+                G4ThreeVector muDir = track->GetMomentumDirection();
+                G4ThreeVector neutronDir = sec->GetMomentumDirection();
+                fOutputManager.PushMINEventAngleRelMuon(neutronDir.angle(muDir));
 
-					// Energy:
-					G4double MINKinE = sec->GetKineticEnergy();
-					fOutputManager.PushMINEventEnergy(MINKinE);
+                // Multiplicity:
+                fOutputManager.IncrementMINEventMultiplicity();
 
-					// Distance from muon track:
-					G4ThreeVector muPos = track->GetPosition();
-					G4ThreeVector MINPos = sec->GetPosition();
-					G4ThreeVector MINDisplacement = MINPos - muPos;
-					G4double MINDistToTrack = (MINDisplacement.cross(muDir)).mag();
-					fOutputManager.PushMINEventDistanceToMuonTrack(MINDistToTrack);
-                }
+                // Energy:
+                G4double MINKinE = sec->GetKineticEnergy();
+                fOutputManager.PushMINEventEnergy(MINKinE);
+
+                // Distance from muon track:
+                G4ThreeVector muPos = track->GetPosition();
+                G4ThreeVector MINPos = sec->GetPosition();
+                G4ThreeVector MINDisplacement = MINPos - muPos;
+                G4double MINDistToTrack = (MINDisplacement.cross(muDir)).mag();
+                fOutputManager.PushMINEventDistanceToMuonTrack(MINDistToTrack);
             }
         }
     }

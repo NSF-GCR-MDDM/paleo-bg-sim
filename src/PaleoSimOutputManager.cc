@@ -92,9 +92,11 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
   //CUSTOM_GENERATOR_HOOK
   //
   //Mei & Hime muon generator
-  if (fMessenger.GetSourceType().c_str()=="meiHimeMuonGenerator") {
+  if (fMessenger.GetSourceType()=="meiHimeMuonGenerator") {
     double meiHimeMuonEffectiveDepth = fMessenger.GetMeiHimeMuonEffectiveDepth();
-    fHeaderTree->Branch("meiHimeMuonEffectiveDepth_km", &meiHimeMuonEffectiveDepth);
+    fHeaderTree->Branch("meiHimeMuonEffectiveDepth_mm", &meiHimeMuonEffectiveDepth);
+    double meiHimeFluxNormalization = fMessenger.GetMeiHimeFluxNormalization();
+    fHeaderTree->Branch("meiHimeFluxNormalization_per_cm2_per_s", &meiHimeFluxNormalization);
   }
 
   // Fill once when we make the tree, we aren't ever updating this
@@ -185,8 +187,7 @@ void PaleoSimOutputManager::FillPrimariesTreeEvent() {
 
 void PaleoSimOutputManager::FillMINTreeEvent() {
     if (!fMessenger.GetMINTreeStatus() || !fMINTree) return;
-    // if (fMINEventMultiplicity == 0) return;
-    if (fMINEventAngleRelMuon.size() == 0 ) return;
+    if (fMINEventMultiplicity == 0) return;
     fMINTree->Fill();
 }
 
