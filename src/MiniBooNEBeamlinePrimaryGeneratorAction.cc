@@ -127,7 +127,7 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMeiHimeMuonPrimaries(G4Eve
   info->muonTheta.push_back(theta);
   info->muonPhi.push_back(phi);
   info->muonSlantDepth.push_back(h_km*km);
-  anEvent->SetUserInformation(info); //G4 takes ownership, no need to delete
+  anEvent->SetUserInformation(info); 
 }
 
 

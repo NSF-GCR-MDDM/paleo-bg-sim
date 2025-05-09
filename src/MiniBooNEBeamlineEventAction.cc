@@ -18,11 +18,16 @@ void MiniBooNEBeamlineEventAction::BeginOfEventAction(const G4Event* event) {
   G4PrimaryVertex* vertex = event->GetPrimaryVertex(0); //1 particle
   G4ThreeVector position = vertex->GetPosition();
   G4PrimaryParticle* particle = vertex->GetPrimary();
+
   auto* info = dynamic_cast<PaleoSimUserEventInformation*>(event->GetUserInformation());
   //We might want to load up other stuff into user event info here just to have access to it for later
   while (particle) {
     if (info) {
-      info->primaryDirection.push_back(G4ThreeVector(particle->GetPx(), particle->GetPy(), particle->GetPz()));
+      G4ThreeVector momentum(particle->GetPx(), particle->GetPy(), particle->GetPz());
+      G4ThreeVector momentumDirection = momentum.unit();  
+      info->primaryDirection.push_back(momentumDirection);
+      
+      info->primaryGenerationPosition.push_back(position);
     }
     particle = particle->GetNext(); // Get the next primary particle at this vertex
   }

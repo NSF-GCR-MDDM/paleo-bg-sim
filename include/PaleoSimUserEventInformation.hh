@@ -11,6 +11,7 @@ class PaleoSimUserEventInformation : public G4VUserEventInformation {
       PaleoSimUserEventInformation() = default;
   
       std::vector<G4ThreeVector> primaryDirection;
+      std::vector<G4ThreeVector> primaryGenerationPosition;
 
       // CUSTOM_GENERATOR_HOOK
       // If you need information passed from your primary generation to your PrimariesTree, put that here
