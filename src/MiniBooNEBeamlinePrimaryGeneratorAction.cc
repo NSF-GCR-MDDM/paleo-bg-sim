@@ -71,6 +71,10 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeMeiHimeMuons() {
   G4double h0 = fMessenger.GetMeiHimeMuonEffectiveDepth();
   G4double h0_km = h0 / km;
 
+  // Flux normalization (Mei & Hime Eq. 4)
+  G4double I0 = 67.97e-6 * std::exp(-h0_km / 0.285) + 2.071e-6 * std::exp(-h0_km / 0.698);
+  fMessenger.SetMeiHimeFluxNormalization(I0);
+
   fMuonThetaDist = new TF1("fMuonThetaDist",
                         "( [0]*exp(-[2]/([3]*cos(x))) + [1]*exp(-[2]/([4]*cos(x))) ) / cos(x)",
                         0, CLHEP::pi / 2. - 0.001);
