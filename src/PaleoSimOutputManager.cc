@@ -98,7 +98,15 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     double meiHimeFluxNormalization = fMessenger.GetMeiHimeFluxNormalization();
     fHeaderTree->Branch("meiHimeFluxNormalization_per_cm2_per_s", &meiHimeFluxNormalization);
   }
+  if (fMessenger.GetSourceType()=="CRYGenerator") {
+    double CRYRunTime = fMessenger.GetCRYRunTime();
+    double CRYAltitude = fMessenger.GetCRYAltitude();
+    double CRYLatitude = fMessenger.GetCRYLatitude();
+    fHeaderTree->Branch("CRYRunTime_s", &CRYRunTime);
+    fHeaderTree->Branch("CRYAltitude_m", &CRYAltitude);
+    fHeaderTree->Branch("CRYLatitude", &CRYLatitude);
 
+  }
   // Fill once when we make the tree, we aren't ever updating this
   fHeaderTree->Fill();
 
@@ -124,6 +132,14 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     fPrimariesTree->Branch("muonTheta", &fPrimaryMuonTheta);
     fPrimariesTree->Branch("muonPhi", &fPrimaryMuonPhi);
     fPrimariesTree->Branch("muonSlant", &fPrimaryMuonSlant);
+    //
+    //CRY
+    fPrimariesTree->Branch("CRYCoreX", &fCRYCoreX);
+    fPrimariesTree->Branch("CRYCoreY", &fCRYCoreY);
+    fPrimariesTree->Branch("CRYCoreZ", &fCRYCoreZ);
+    fPrimariesTree->Branch("CRYCoreTheta", &fCRYCoreTheta);
+    fPrimariesTree->Branch("CRYCorePhi", &fCRYCorePhi);
+    fPrimariesTree->Branch("CRYTotalEnergy", &fCRYTotalEnergy);
   }
 
   ///////////////////////////////////
@@ -219,11 +235,6 @@ void PaleoSimOutputManager::ClearPrimariesTreeEvent() {
   fPrimaryPz.clear();
   //CUSTOM_GENERATOR_HOOK
   //Clear/reset vars here
-  //
-  //Mei & Hime muon generator
-  fPrimaryMuonTheta.clear();
-  fPrimaryMuonPhi.clear();
-  fPrimaryMuonSlant.clear();
 }
 
 void PaleoSimOutputManager::ClearMINTreeEvent() {

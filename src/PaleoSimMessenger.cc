@@ -83,6 +83,15 @@ PaleoSimMessenger::PaleoSimMessenger() {
     fSetMuteHistFilenameCmd->SetGuidance("File containing 'muonHist' TH2D with GeV on x and Theta (rad) on y");
     fSetMuteHistFilenameCmd->SetParameterName("muteHistFilename", true);
     fSetMuteHistFilenameCmd->SetDefaultValue(fMuteHistFilename);
+
+    //CRY generator
+    fCRYGeneratorDirectory = new G4UIdirectory("/generator/cry/");
+    fCRYGeneratorDirectory->SetGuidance("Controls for Cry Generator");
+
+    fSetCRYFilenameCmd = new G4UIcmdWithAString("/generator/cry/setCRYFilename", this);
+    fSetCRYFilenameCmd->SetGuidance("Pass in output of cryGenerator code (root file)");
+    fSetCRYFilenameCmd->SetParameterName("fCRYFilename", true);
+    fSetCRYFilenameCmd->SetDefaultValue(fCRYFilename);
 }
 
 PaleoSimMessenger::~PaleoSimMessenger() {
@@ -115,6 +124,9 @@ PaleoSimMessenger::~PaleoSimMessenger() {
     //Mute generator
     delete fMuteGeneratorDirectory;
     delete fSetMuteHistFilenameCmd;
+    //CRY
+    delete fCRYGeneratorDirectory;
+    delete fSetCRYFilenameCmd;
 }
 
 void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
@@ -180,6 +192,15 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
         if (fMuteHistFilename.empty()) {
             G4Exception("SetNewValue", "EmptyMuteFile", FatalException,
                         "/generator/muteGenerator/setMuteHistFilename needs an argument");
+        }
+    }
+    //CRY
+    else if (command == fSetCRYFilenameCmd) {
+        fCRYFilename = newValue;
+        G4cout << "Cry filename set to " << newValue << G4endl;
+        if (fCRYFilename.empty()) {
+            G4Exception("SetNewValue", "EmptyCryFile", FatalException,
+                        "/generator/cry/setCRYFilename needs an argument");
         }
     }
 

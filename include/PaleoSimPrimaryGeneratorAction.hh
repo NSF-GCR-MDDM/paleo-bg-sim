@@ -1,13 +1,17 @@
 #ifndef PaleoSimPrimaryGeneratorAction_h
 #define PaleoSimPrimaryGeneratorAction_h 1
 
+#include <vector>
+
 #include "G4VUserPrimaryGeneratorAction.hh"
 #include "G4GeneralParticleSource.hh"
-#include <vector>
 #include "G4SystemOfUnits.hh"
 #include "G4ThreeVector.hh"
+
 #include "TF1.h"
 #include "TH2D.h"
+#include "TTree.h"
+
 #include "PaleoSimMessenger.hh"
 #include "PaleoSimOutputManager.hh"
 
@@ -26,6 +30,7 @@ private:
 
     //Helper functions - could be used by any class
     G4ThreeVector SamplePointOnTopOfWorldVolume();
+    G4bool IsWithinTopSurface(const G4ThreeVector& point);
 
     //CUSTOM_GENERATOR_HOOK
     // Add private state and methods for your generator implementation here
@@ -40,6 +45,22 @@ private:
     TH2D* fMuteHist = nullptr;
     void InitializeMuteMuons();
     void GenerateMutePrimaries(G4Event*);
+    //
+    //CRY generator
+    TFile* cryFile = nullptr;
+    bool cryFileLoaded = false;
+    TTree* cryTree = nullptr;
+    int nCryEntries = 0;
+    std::vector<int>* cry_pdgcode = nullptr;
+    std::vector<float>* cry_energy = nullptr;
+    std::vector<float>* cry_u = nullptr;
+    std::vector<float>* cry_v = nullptr;
+    std::vector<float>* cry_w = nullptr;
+    std::vector<float>* cry_x = nullptr;
+    std::vector<float>* cry_y = nullptr;
+
+    void InitializeCRYGenerator();
+    void GenerateCRYPrimaries(G4Event*);
 };
 
 #endif

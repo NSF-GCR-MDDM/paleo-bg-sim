@@ -42,11 +42,18 @@ PaleoSimPrimaryGeneratorAction::PaleoSimPrimaryGeneratorAction(PaleoSimMessenger
   else if (sourceType == "muteGenerator") {
     InitializeMuteMuons();
   }
+  else if (sourceType == "CRYGenerator") {
+    InitializeCRYGenerator();
+  }
 
 }
 
 PaleoSimPrimaryGeneratorAction::~PaleoSimPrimaryGeneratorAction() {
     delete fGPS;
+    if (cryFileLoaded) {
+      cryFile->Close();
+      delete cryFile;
+    }
 }
 
 void PaleoSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
@@ -58,14 +65,22 @@ void PaleoSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
   if (sourceType == "meiHimeMuonGenerator") {
     GenerateMeiHimeMuonPrimaries(anEvent);
   }
+  //MUTE
   else if (sourceType == "muteGenerator") {
     GenerateMutePrimaries(anEvent);
+  }
+  //CRY
+  else if (sourceType == "CRYGenerator") {
+    GenerateCRYPrimaries(anEvent);
   }
 }
 
 // CUSTOM_GENERATOR_HOOK
 // Your initialization methods go here
 //
+///////////////////////////////
+// Mei & Hime Muon Generator //
+///////////////////////////////
 // Mei & Hime Muon Generator
 void PaleoSimPrimaryGeneratorAction::InitializeMeiHimeMuons() {
   G4double h0 = fMessenger.GetMeiHimeMuonEffectiveDepth();
@@ -95,12 +110,6 @@ void PaleoSimPrimaryGeneratorAction::InitializeMeiHimeMuons() {
   fMuonEnergyDist->SetNpx(1000);
 }
 
-// CUSTOM_GENERATOR_HOOK
-// Your primary generator methods methods go here
-//
-/////////////////////////////////////
-// Mei & Hime Muon Generator (TF1s)//
-/////////////////////////////////////
 void PaleoSimPrimaryGeneratorAction::GenerateMeiHimeMuonPrimaries(G4Event* anEvent) {
   G4double h0 = fMessenger.GetMeiHimeMuonEffectiveDepth();
   G4double h0_km = h0 / km;
@@ -128,13 +137,11 @@ void PaleoSimPrimaryGeneratorAction::GenerateMeiHimeMuonPrimaries(G4Event* anEve
 
   //We store custom variables in a UserEventInfo to pass them to beginningOfEventAction to load into trees
   auto* info = new PaleoSimUserEventInformation();
-  info->muonTheta.push_back(theta);
-  info->muonPhi.push_back(phi);
-  info->muonSlantDepth.push_back(h_km*km);
+  info->muonTheta=theta;
+  info->muonPhi=phi;
+  info->muonSlantDepth=h_km*km;
   anEvent->SetUserInformation(info); 
 }
-
-
 
 //////////////////
 //Mute generator//
@@ -194,11 +201,119 @@ void PaleoSimPrimaryGeneratorAction::GenerateMutePrimaries(G4Event* anEvent) {
 
   //We store custom variables in a UserEventInfo to pass them to beginningOfEventAction to load into trees
   auto* info = new PaleoSimUserEventInformation();
-  info->muonTheta.push_back(theta);
-  info->muonPhi.push_back(phi);
+  info->muonTheta=theta;
+  info->muonPhi=phi;
   anEvent->SetUserInformation(info); //G4 takes ownership, no need to delete
 }
 
+///////////////////
+// CRY generator //
+///////////////////
+void PaleoSimPrimaryGeneratorAction::InitializeCRYGenerator() {
+  //Load file
+    G4String filename = fMessenger.GetCRYFilename();
+  
+    std::ifstream testFile(filename);
+    if (!testFile.good()) {
+      G4Exception("InitializeCRY", "CRY001", FatalException,
+                  ("Cannot open CRY file: " + filename).c_str());
+    }
+    testFile.close();
+  
+    //Open root file. Check if "muonHist exists". If not error
+    cryFile = TFile::Open(filename);
+    if (!cryFile || cryFile->IsZombie()) {
+      G4Exception("InitializeCRY", "CRY002", FatalException,
+                  ("Failed to open CRY ROOT file: " + filename).c_str());
+    }
+    
+    //Read in tree
+    cryTree = dynamic_cast<TTree*>(cryFile->Get("cryTree"));
+    if (!cryFile) {
+      G4Exception("InitializeCRY", "CRY003", FatalException,
+                  "Tree 'cryTree' not found in ROOT file.");
+    }
+
+    cryTree->SetBranchAddress("pdgCode",    &cry_pdgcode);
+    cryTree->SetBranchAddress("energy_MeV", &cry_energy);
+    cryTree->SetBranchAddress("u",          &cry_u);
+    cryTree->SetBranchAddress("v",          &cry_v);
+    cryTree->SetBranchAddress("w",          &cry_w);
+    cryTree->SetBranchAddress("x_mm",       &cry_x);
+    cryTree->SetBranchAddress("y_mm",       &cry_y);
+    nCryEntries = cryTree->GetEntries();
+    std::cout<<"Number of CRY particles to sample is "<<nCryEntries<<std::endl;
+    cryFileLoaded = true;
+
+    //Get header ingo
+    TTree * headerTree = dynamic_cast<TTree*>(cryFile->Get("headerTree"));
+    float timeSimulated,altitude,latitude;
+    headerTree->SetBranchAddress("timeSimulated",    &timeSimulated);
+    headerTree->SetBranchAddress("altitude", &altitude);
+    headerTree->SetBranchAddress("latitude",          &latitude);
+    headerTree->GetEvent(0);
+    fMessenger.SetCRYRunTime(static_cast<double>(timeSimulated));
+    fMessenger.SetCRYAltitude(static_cast<double>(altitude));
+    fMessenger.SetCRYLatitude(static_cast<double>(latitude));
+    delete headerTree;
+}
+
+void PaleoSimPrimaryGeneratorAction::GenerateCRYPrimaries(G4Event* anEvent) {
+  //Get random event
+  Long64_t entry = G4RandFlat::shootInt(nCryEntries);
+  cryTree->GetEntry(entry);
+
+  // Sample a position on the top of the world volume
+  G4ThreeVector basePosition = SamplePointOnTopOfWorldVolume();
+
+  //Load all particles into vertices
+  for (size_t i = 0; i < cry_pdgcode->size(); i++) {
+    int pdgCode = cry_pdgcode->at(i);
+    G4ParticleDefinition* particleDef = G4ParticleTable::GetParticleTable()->FindParticle(pdgCode);
+    if (!particleDef) {
+        G4cerr << "Unknown PDG code in CRY: " << pdgCode << G4endl;
+        continue;
+    }
+
+    double Ekin = cry_energy->at(i) * MeV;
+    double mass = particleDef->GetPDGMass();
+    double Etot = Ekin + mass;
+    double p = std::sqrt(Etot * Etot - mass * mass);
+
+    G4ThreeVector position = basePosition + G4ThreeVector(cry_x->at(i) * cm, cry_y->at(i) * cm, 0);
+    if (IsWithinTopSurface(position)) {
+      G4ThreeVector direction(cry_u->at(i), cry_v->at(i), cry_w->at(i));
+      G4ThreeVector momentum = direction * p;
+
+      G4PrimaryParticle* primary = new G4PrimaryParticle(particleDef,
+                                                        momentum.x(),
+                                                        momentum.y(),
+                                                        momentum.z());
+
+      G4PrimaryVertex* vertex = new G4PrimaryVertex(position, 0.0);
+      vertex->SetPrimary(primary);
+      anEvent->AddPrimaryVertex(vertex);
+    }
+  }
+
+  //Store primary info in userEventInfo
+  auto* info = new PaleoSimUserEventInformation();
+  // Compute total energy
+  double totalEnergy = 0.0;
+  G4ThreeVector weightedDirection(0,0,0);
+  for (size_t i = 0; i < cry_pdgcode->size(); ++i) {
+      double energy = cry_energy->at(i);  // in MeV
+      totalEnergy += energy;
+      weightedDirection += G4ThreeVector(cry_u->at(i), cry_v->at(i), cry_w->at(i)) * energy;
+  }
+  G4ThreeVector dir = weightedDirection.unit();
+  info->CRYCoreTheta = dir.theta();  // radians
+  info->CRYCorePhi   = dir.phi();    // radians
+  info->CRYTotalEnergy = totalEnergy;  // MeV
+  info->CRYCorePosition = basePosition;
+  anEvent->SetUserInformation(info); //G4 takes ownership, no need to delete
+}
+  
 //////////////////
 //Other function//
 //////////////////
@@ -236,4 +351,34 @@ G4ThreeVector PaleoSimPrimaryGeneratorAction::SamplePointOnTopOfWorldVolume() {
   }
 
   return worldDef->absolutePosition + localTop;
+}
+
+//Checks if a point is on the top surface or not
+G4bool PaleoSimPrimaryGeneratorAction::IsWithinTopSurface(const G4ThreeVector& point) {
+  const auto& volumes = fMessenger.GetVolumes();
+  const VolumeDefinition* worldDef = nullptr;
+  for (const auto* vol : volumes) {
+      if (vol->parentName == "None") {
+          worldDef = vol;
+          break;
+      }
+  }
+
+  if (worldDef->shape == "box") {
+      if (std::abs(point.x()) <= worldDef->halfLengths.x() && std::abs(point.y()) <= worldDef->halfLengths.y()) {
+        return true;
+      }
+  }
+  else if (worldDef->shape == "cylinder") {
+      double r2 = point.x()*point.x() + point.y()*point.y();
+      if (r2 <= worldDef->radius * worldDef->radius) {
+        return true;
+      }
+  }
+  else {
+      G4Exception("IsWithinTopSurface", "UnsupportedShape", FatalException,
+                  ("Top surface sampling not supported for shape: " + worldDef->shape).c_str());
+  }
+
+  return false;
 }

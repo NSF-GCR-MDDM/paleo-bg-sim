@@ -48,6 +48,16 @@ public:
     //
     //Mute generator
     G4String GetMuteHistFilename() const { return fMuteHistFilename;};
+    //
+    //CRY generator
+    G4String GetCRYFilename() const { return fCRYFilename; };
+    void SetCRYRunTime(double val) { fCRYRunTime = val;};
+    void SetCRYAltitude(double val) { fCRYAltitude = val;};
+    void SetCRYLatitude(double val) { fCRYLatitude = val;};    
+    G4double GetCRYRunTime() const { return fCRYRunTime;};  
+    G4double GetCRYAltitude() const { return fCRYAltitude;};  
+    G4double GetCRYLatitude() const { return fCRYLatitude;};
+
 
     //Geometric calculations
     void ComputeCoordinates();
@@ -112,7 +122,8 @@ private:
     // Add new generator names to the list below
     std::vector<G4String> fValidSourceTypes = {
           "meiHimeMuonGenerator", //Mei & Hime muon generator, with TF1s
-          "muteGenerator" //Mute, samples from 2D histogram of muon energy and thetas (root file)
+          "muteGenerator", //Mute, samples from 2D histogram of muon energy and thetas (root file)
+          "CRYGenerator" //Samples root file containing list of events
       };
     
     G4String fSourceType = "meiHimeMuonGenerator";
@@ -130,7 +141,13 @@ private:
     // "muteGenerator"
     G4UIdirectory* fMuteGeneratorDirectory;
     G4UIcmdWithAString* fSetMuteHistFilenameCmd;
-    G4String fMuteHistFilename;
+    G4String fMuteHistFilename="";
+    //
+    // "cry"
+    G4UIdirectory* fCRYGeneratorDirectory;
+    G4UIcmdWithAString* fSetCRYFilenameCmd;
+    G4String fCRYFilename="";
+    G4double fCRYRunTime, fCRYAltitude, fCRYLatitude;
 
 };
 

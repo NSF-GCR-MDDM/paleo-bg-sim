@@ -2,14 +2,15 @@
 /geom/setGeometry /macroFiles/geometry/ambe.mac
 
 #Source commands
-/generator/setSourceType meiHimeMuonGenerator
-/generator/meiHimeMuonGenerator/setMuonEffectiveDepth 0.5 km
-/generator/setNPS 200000
+/generator/setSourceType CRYGenerator 
+/generator/cry/setCRYFilename /home/sch52/code/paleo-bg-sim/data/cry_vt.root
+/generator/setNPS 2000
 
 #Output commands
+/output/setPrimariesTreeStatus 1
 /output/setNeutronTallyTreeVolume Collimator
 /output/setRecoilTreeVolume Target
-/output/setVRMLOutputStatus 1
+/output/setVRMLOutputStatus 0
 
 #Verbosity settings
 /control/verbose 0
