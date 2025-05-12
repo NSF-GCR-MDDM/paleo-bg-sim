@@ -1,4 +1,4 @@
-#include "MiniBooNEBeamlinePrimaryGeneratorAction.hh"
+#include "PaleoSimPrimaryGeneratorAction.hh"
 #include "PaleoSimOutputManager.hh"
 
 #include "G4Event.hh"
@@ -16,7 +16,7 @@
 #include <algorithm>
 #include <vector>
 
-MiniBooNEBeamlinePrimaryGeneratorAction::MiniBooNEBeamlinePrimaryGeneratorAction(PaleoSimMessenger& messenger,
+PaleoSimPrimaryGeneratorAction::PaleoSimPrimaryGeneratorAction(PaleoSimMessenger& messenger,
                                                                                  PaleoSimOutputManager& manager)
 : G4VUserPrimaryGeneratorAction(), 
   fGPS(new G4GeneralParticleSource()), 
@@ -28,7 +28,7 @@ MiniBooNEBeamlinePrimaryGeneratorAction::MiniBooNEBeamlinePrimaryGeneratorAction
   G4String sourceType = fMessenger.GetSourceType();
   std::vector<G4String> validSourceTypes = fMessenger.GetValidSourceTypes();
   if (std::find(validSourceTypes.begin(), validSourceTypes.end(), sourceType) == validSourceTypes.end()) {
-      G4Exception("MiniBooNEBeamlinePrimaryGeneratorAction", "InvalidSource", FatalException,
+      G4Exception("PaleoSimPrimaryGeneratorAction", "InvalidSource", FatalException,
                   ("Invalid source type: " + sourceType).c_str());
   }
 
@@ -45,11 +45,11 @@ MiniBooNEBeamlinePrimaryGeneratorAction::MiniBooNEBeamlinePrimaryGeneratorAction
 
 }
 
-MiniBooNEBeamlinePrimaryGeneratorAction::~MiniBooNEBeamlinePrimaryGeneratorAction() {
+PaleoSimPrimaryGeneratorAction::~PaleoSimPrimaryGeneratorAction() {
     delete fGPS;
 }
 
-void MiniBooNEBeamlinePrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
+void PaleoSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
   // CUSTOM_GENERATOR_HOOK
   // Add dispatch logic here for new generators
 	//
@@ -67,7 +67,7 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent
 // Your initialization methods go here
 //
 // Mei & Hime Muon Generator
-void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeMeiHimeMuons() {
+void PaleoSimPrimaryGeneratorAction::InitializeMeiHimeMuons() {
   G4double h0 = fMessenger.GetMeiHimeMuonEffectiveDepth();
   G4double h0_km = h0 / km;
 
@@ -101,7 +101,7 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeMeiHimeMuons() {
 /////////////////////////////////////
 // Mei & Hime Muon Generator (TF1s)//
 /////////////////////////////////////
-void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMeiHimeMuonPrimaries(G4Event* anEvent) {
+void PaleoSimPrimaryGeneratorAction::GenerateMeiHimeMuonPrimaries(G4Event* anEvent) {
   G4double h0 = fMessenger.GetMeiHimeMuonEffectiveDepth();
   G4double h0_km = h0 / km;
 
@@ -131,7 +131,7 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMeiHimeMuonPrimaries(G4Eve
   info->muonTheta.push_back(theta);
   info->muonPhi.push_back(phi);
   info->muonSlantDepth.push_back(h_km*km);
-  anEvent->SetUserInformation(info); //G4 takes ownership, no need to delete
+  anEvent->SetUserInformation(info); 
 }
 
 
@@ -139,7 +139,7 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMeiHimeMuonPrimaries(G4Eve
 //////////////////
 //Mute generator//
 //////////////////
-void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeMuteMuons() {
+void PaleoSimPrimaryGeneratorAction::InitializeMuteMuons() {
   //Check if fMessenger.GetMuteHistFilename() exists. If not error
   G4String filename = fMessenger.GetMuteHistFilename();
   
@@ -168,7 +168,7 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::InitializeMuteMuons() {
   delete file;
 }
 
-void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMutePrimaries(G4Event* anEvent) {
+void PaleoSimPrimaryGeneratorAction::GenerateMutePrimaries(G4Event* anEvent) {
   
   G4ParticleDefinition* muonDef = G4ParticleTable::GetParticleTable()->FindParticle("mu-");
   fGPS->SetParticleDefinition(muonDef);
@@ -203,7 +203,7 @@ void MiniBooNEBeamlinePrimaryGeneratorAction::GenerateMutePrimaries(G4Event* anE
 //Other function//
 //////////////////
 //Gets random point on top of world volume. Requires world to be a cylinder or box for now
-G4ThreeVector MiniBooNEBeamlinePrimaryGeneratorAction::SamplePointOnTopOfWorldVolume() {
+G4ThreeVector PaleoSimPrimaryGeneratorAction::SamplePointOnTopOfWorldVolume() {
   //Find the world volume
   const auto& volumes = fMessenger.GetVolumes();
   const VolumeDefinition* worldDef = nullptr;

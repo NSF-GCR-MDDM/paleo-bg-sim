@@ -1,12 +1,12 @@
-#include "MiniBooNEBeamlineRunAction.hh"
+#include "PaleoSimRunAction.hh"
 #include "G4RunManager.hh"
 #include "G4Run.hh"
 
-MiniBooNEBeamlineRunAction::MiniBooNEBeamlineRunAction(PaleoSimOutputManager& manager)
+PaleoSimRunAction::PaleoSimRunAction(PaleoSimOutputManager& manager)
  : G4UserRunAction(), fOutputManager(manager)
 { }
 
-void MiniBooNEBeamlineRunAction::BeginOfRunAction(const G4Run*)
+void PaleoSimRunAction::BeginOfRunAction(const G4Run*)
 {
   // Disable random seed saving
   G4RunManager::GetRunManager()->SetRandomNumberStore(false);
@@ -15,7 +15,7 @@ void MiniBooNEBeamlineRunAction::BeginOfRunAction(const G4Run*)
   fOutputManager.CreateOutputFileAndTrees();
 }
 
-void MiniBooNEBeamlineRunAction::EndOfRunAction(const G4Run* run)
+void PaleoSimRunAction::EndOfRunAction(const G4Run* run)
 {
   if (run->GetNumberOfEvent() == 0) return;
 

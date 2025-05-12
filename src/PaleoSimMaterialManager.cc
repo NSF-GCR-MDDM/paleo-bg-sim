@@ -52,7 +52,6 @@ void PaleoSimMaterialManager::DefineMaterials() {
     LiF->AddElement(Li, 0.268);  // 
     LiF->AddElement(F, 0.732);  // 
 
-    //PDG, Mei & Hime use this?
     //https://pdg.lbl.gov/2024/AtomicNuclearProperties/HTML/standard_rock.html
     G4Material* StandardRock = new G4Material("StandardRock", 11, 22, 2.65*g/cm3);
 

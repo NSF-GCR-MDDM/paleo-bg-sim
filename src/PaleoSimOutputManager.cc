@@ -154,6 +154,8 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     fNeutronTallyTree->Branch("entry_u", &fNeutron_entryU);
     fNeutronTallyTree->Branch("entry_v", &fNeutron_entryV);
     fNeutronTallyTree->Branch("entry_w", &fNeutron_entryW);
+    fNeutronTallyTree->Branch("angleRelMuon", &fNeutron_angle);
+    fNeutronTallyTree->Branch("distanceToMuonTrack", &fNeutron_distance);
   }
 
   //////////////////////
@@ -241,6 +243,8 @@ void PaleoSimOutputManager::ClearNeutronTallyTreeEvent() {
   fNeutron_entryU.clear();
   fNeutron_entryV.clear();
   fNeutron_entryW.clear();
+  fNeutron_angle.clear();
+  fNeutron_distance.clear();
 }
 
 void PaleoSimOutputManager::ClearRecoilTreeEvent() {

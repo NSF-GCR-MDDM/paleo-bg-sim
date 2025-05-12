@@ -5,8 +5,8 @@
 #include "Randomize.hh"
 
 #include "PaleoSimDetectorConstruction.hh"
-#include "MiniBooNEBeamlinePrimaryGeneratorAction.hh"
-#include "MiniBooNEBeamlineActionInitialization.hh"
+#include "PaleoSimPrimaryGeneratorAction.hh"
+#include "PaleoSimActionInitialization.hh"
 #include "PaleoSimPhysicsList.hh"
 #include "PaleoSimMessenger.hh"
 #include "PaleoSimGeometryMessenger.hh"
@@ -129,7 +129,7 @@ int main(int argc, char** argv) {
   runManager->SetUserInitialization(new PaleoSimPhysicsList());
 
   // 8. Register actions (via ActionInitialization). Generator is built in here.
-  runManager->SetUserInitialization(new MiniBooNEBeamlineActionInitialization(*messenger, *outputManager));
+  runManager->SetUserInitialization(new PaleoSimActionInitialization(*messenger, *outputManager));
 
   // 8. Initialize run manager AFTER all setup is complete
   runManager->Initialize();  // or RunInitialization if directly used

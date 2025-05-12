@@ -59,6 +59,8 @@ public:
     void PushNeutronTallyEventEntryU(double val) { fNeutron_entryU.push_back(val); };
     void PushNeutronTallyEventEntryV(double val) { fNeutron_entryV.push_back(val); };
     void PushNeutronTallyEventEntryW(double val) { fNeutron_entryW.push_back(val); };
+    void PushNeutronTallyEventAngleRelMuon(double val) {fNeutron_angle.push_back(val); };
+    void PushNeutronTallyEventDistanceToMuonTrack(double val) {fNeutron_distance.push_back(val); };
     void IncrementNeutronTallyEventMultiplicity() { fNeutronEntryMultiplicity++;};
 
     //RECOIL TREE
@@ -116,6 +118,7 @@ private:
     std::vector<double> fNeutron_entryEnergy;
     std::vector<double> fNeutron_entryX, fNeutron_entryY, fNeutron_entryZ;
     std::vector<double> fNeutron_entryU, fNeutron_entryV, fNeutron_entryW;
+    std::vector<double> fNeutron_angle, fNeutron_distance;
 
     // Recoil Tree variables
     int fRecoilEventID = -1;

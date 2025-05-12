@@ -7,7 +7,7 @@
 #include "G4EventManager.hh"
 #include "G4VProcess.hh"
 #include "PaleoSimUserEventInformation.hh"
-#include "MiniBooNEBeamlineEventAction.hh"
+#include "PaleoSimEventAction.hh"
 
 PaleoSimSteppingAction::PaleoSimSteppingAction(PaleoSimMessenger& messenger, 
                                                PaleoSimOutputManager& manager)
@@ -21,6 +21,7 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
     G4Track* track = step->GetTrack();
     G4ParticleDefinition* particleDef = track->GetDefinition();
     auto* event = G4EventManager::GetEventManager()->GetConstCurrentEvent();
+    auto* info = dynamic_cast<const PaleoSimUserEventInformation*>(event->GetUserInformation());
 
     //////////////
     // MIN TREE //
@@ -42,7 +43,7 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
             G4int secPDGCode = sec->GetParticleDefinition()->GetPDGEncoding();
             if (secPDGCode == 2112) {
                 // Zenith angle:
-                G4ThreeVector muDir = track->GetMomentumDirection();
+                G4ThreeVector muDir = info->primaryDirection.at(0);
                 G4ThreeVector neutronDir = sec->GetMomentumDirection();
                 fOutputManager.PushMINEventAngleRelMuon(neutronDir.angle(muDir));
 
@@ -54,7 +55,7 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
                 fOutputManager.PushMINEventEnergy(MINKinE);
 
                 // Distance from muon track:
-                G4ThreeVector muPos = track->GetPosition();
+                G4ThreeVector muPos = info->primaryGenerationPosition.at(0);
                 G4ThreeVector MINPos = sec->GetPosition();
                 G4ThreeVector MINDisplacement = MINPos - muPos;
                 G4double MINDistToTrack = (MINDisplacement.cross(muDir)).mag();
@@ -95,6 +96,17 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
                 fOutputManager.PushNeutronTallyEventEntryU(momentumDirection.x());
                 fOutputManager.PushNeutronTallyEventEntryV(momentumDirection.y());
                 fOutputManager.PushNeutronTallyEventEntryW(momentumDirection.z());
+
+                // Zenith angle:
+                G4ThreeVector muDir = info->primaryDirection.at(0);
+                G4ThreeVector neutronDir = track->GetMomentumDirection();
+                fOutputManager.PushNeutronTallyEventAngleRelMuon(neutronDir.angle(muDir));
+
+                // Distance from muon track:
+                G4ThreeVector muPos = info->primaryGenerationPosition.at(0);
+                G4ThreeVector displacement = position - muPos;
+                G4double distToTrack = (displacement.cross(muDir)).mag();
+                fOutputManager.PushNeutronTallyEventDistanceToMuonTrack(distToTrack);
 
                 fOutputManager.IncrementNeutronTallyEventMultiplicity();
             }

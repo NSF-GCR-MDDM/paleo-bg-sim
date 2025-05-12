@@ -1,14 +1,14 @@
 #include "PaleoSimOutputManager.hh"
 #include "G4Event.hh" 
-#include "MiniBooNEBeamlineEventAction.hh"
+#include "PaleoSimEventAction.hh"
 #include "PaleoSimUserEventInformation.hh"
 
-MiniBooNEBeamlineEventAction::MiniBooNEBeamlineEventAction(PaleoSimMessenger &messenger,PaleoSimOutputManager& manager)
+PaleoSimEventAction::PaleoSimEventAction(PaleoSimMessenger &messenger,PaleoSimOutputManager& manager)
 : G4UserEventAction(), fMessenger(messenger), fOutputManager(manager) {}
 
-MiniBooNEBeamlineEventAction::~MiniBooNEBeamlineEventAction() {}
+PaleoSimEventAction::~PaleoSimEventAction() {}
 
-void MiniBooNEBeamlineEventAction::BeginOfEventAction(const G4Event* event) {    
+void PaleoSimEventAction::BeginOfEventAction(const G4Event* event) {    
   if (event->GetEventID() % 100 == 0) {
       G4cout << "Event # " << event->GetEventID() << " of " << fMessenger.GetNPS()
 	  	     << G4endl;
@@ -18,11 +18,16 @@ void MiniBooNEBeamlineEventAction::BeginOfEventAction(const G4Event* event) {
   G4PrimaryVertex* vertex = event->GetPrimaryVertex(0); //1 particle
   G4ThreeVector position = vertex->GetPosition();
   G4PrimaryParticle* particle = vertex->GetPrimary();
+
   auto* info = dynamic_cast<PaleoSimUserEventInformation*>(event->GetUserInformation());
   //We might want to load up other stuff into user event info here just to have access to it for later
   while (particle) {
     if (info) {
-      info->primaryDirection.push_back(G4ThreeVector(particle->GetPx(), particle->GetPy(), particle->GetPz()));
+      G4ThreeVector momentum(particle->GetPx(), particle->GetPy(), particle->GetPz());
+      G4ThreeVector momentumDirection = momentum.unit();  
+      info->primaryDirection.push_back(momentumDirection);
+      
+      info->primaryGenerationPosition.push_back(position);
     }
     particle = particle->GetNext(); // Get the next primary particle at this vertex
   }
@@ -86,7 +91,7 @@ void MiniBooNEBeamlineEventAction::BeginOfEventAction(const G4Event* event) {
   }
 }
 
-void MiniBooNEBeamlineEventAction::EndOfEventAction(const G4Event* event) {
+void PaleoSimEventAction::EndOfEventAction(const G4Event* event) {
 
   //Fill trees at end of event, then clear
   //Data loaded into Primaries tree variables in generator

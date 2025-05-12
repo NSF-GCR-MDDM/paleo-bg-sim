@@ -1,11 +1,11 @@
-#include "MiniBooNEBeamlineActionInitialization.hh"
-#include "MiniBooNEBeamlinePrimaryGeneratorAction.hh"
-#include "MiniBooNEBeamlineRunAction.hh"
-#include "MiniBooNEBeamlineEventAction.hh"
+#include "PaleoSimActionInitialization.hh"
+#include "PaleoSimPrimaryGeneratorAction.hh"
+#include "PaleoSimRunAction.hh"
+#include "PaleoSimEventAction.hh"
 #include "PaleoSimSteppingAction.hh"
 
 // Constructor now accepts a pointer to the already-created generator and detector
-MiniBooNEBeamlineActionInitialization::MiniBooNEBeamlineActionInitialization(
+PaleoSimActionInitialization::PaleoSimActionInitialization(
     PaleoSimMessenger& messenger,
     PaleoSimOutputManager& manager)
  : G4VUserActionInitialization(),
@@ -13,20 +13,20 @@ MiniBooNEBeamlineActionInitialization::MiniBooNEBeamlineActionInitialization(
    fOutputManager(manager)
 {}
 
-void MiniBooNEBeamlineActionInitialization::BuildForMaster() const
+void PaleoSimActionInitialization::BuildForMaster() const
 {
-  auto* runAction = new MiniBooNEBeamlineRunAction(fOutputManager);
+  auto* runAction = new PaleoSimRunAction(fOutputManager);
   SetUserAction(runAction);
 }
 
-void MiniBooNEBeamlineActionInitialization::Build() const
+void PaleoSimActionInitialization::Build() const
 {
   G4cout << "Registering Primary Generator Action..." << G4endl;
 
-  auto* generator = new MiniBooNEBeamlinePrimaryGeneratorAction(fMessenger, fOutputManager);
+  auto* generator = new PaleoSimPrimaryGeneratorAction(fMessenger, fOutputManager);
   SetUserAction(generator);  // Use the generator passed in from main()
   
-  auto* runAction = new MiniBooNEBeamlineRunAction(fOutputManager);
+  auto* runAction = new PaleoSimRunAction(fOutputManager);
   SetUserAction(runAction);
 
   // Pass SteppingAction to EventAction
@@ -34,6 +34,6 @@ void MiniBooNEBeamlineActionInitialization::Build() const
   SetUserAction(steppingAction);
 
   // Now pass the SteppingAction into EventAction
-  auto* eventAction = new MiniBooNEBeamlineEventAction(fMessenger, fOutputManager);
+  auto* eventAction = new PaleoSimEventAction(fMessenger, fOutputManager);
   SetUserAction(eventAction);
 }
