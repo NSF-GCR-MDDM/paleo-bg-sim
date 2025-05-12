@@ -19,7 +19,6 @@
 /*
 To-do:
   - Consistency with variable names needs some cleaning up
-  - MiniBooNE -> PaleoSim naming
   - Very minimal testing has been done. 
   - Maybe we should append units to output branches? Or be consistent with units
   - Implement CRY generator
