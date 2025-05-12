@@ -7,7 +7,7 @@
 #include "G4EventManager.hh"
 #include "G4VProcess.hh"
 #include "PaleoSimUserEventInformation.hh"
-#include "MiniBooNEBeamlineEventAction.hh"
+#include "PaleoSimEventAction.hh"
 
 PaleoSimSteppingAction::PaleoSimSteppingAction(PaleoSimMessenger& messenger, 
                                                PaleoSimOutputManager& manager)
@@ -32,6 +32,7 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
         G4int parentID = track->GetParentID();
         G4int particlePDG = particleDef->GetPDGEncoding();
 
+        //Add event ID
         G4int eventID = event->GetEventID();
         fOutputManager.PushMINEventID(eventID);
 

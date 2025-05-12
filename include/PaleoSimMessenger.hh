@@ -43,6 +43,8 @@ public:
     //
     //Mei & Hime muon generator
     G4double GetMeiHimeMuonEffectiveDepth() const { return fMeiHimeMuonDepth;};
+    void SetMeiHimeFluxNormalization(double val) { fMeiHimeFluxNormalization = val;};
+    G4double GetMeiHimeFluxNormalization() const { return fMeiHimeFluxNormalization;};
     //
     //Mute generator
     G4String GetMuteHistFilename() const { return fMuteHistFilename;};
@@ -123,6 +125,7 @@ private:
     G4UIdirectory* fMeiHimeGeneratorDirectory;
     G4UIcmdWithADoubleAndUnit* fMeiHimeMuonDepthCmd;
     G4double fMeiHimeMuonDepth = 6 * km;
+    G4double fMeiHimeFluxNormalization = 0;
     //
     // "muteGenerator"
     G4UIdirectory* fMuteGeneratorDirectory;

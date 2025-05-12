@@ -1,14 +1,14 @@
 #include "PaleoSimOutputManager.hh"
 #include "G4Event.hh" 
-#include "MiniBooNEBeamlineEventAction.hh"
+#include "PaleoSimEventAction.hh"
 #include "PaleoSimUserEventInformation.hh"
 
-MiniBooNEBeamlineEventAction::MiniBooNEBeamlineEventAction(PaleoSimMessenger &messenger,PaleoSimOutputManager& manager)
+PaleoSimEventAction::PaleoSimEventAction(PaleoSimMessenger &messenger,PaleoSimOutputManager& manager)
 : G4UserEventAction(), fMessenger(messenger), fOutputManager(manager) {}
 
-MiniBooNEBeamlineEventAction::~MiniBooNEBeamlineEventAction() {}
+PaleoSimEventAction::~PaleoSimEventAction() {}
 
-void MiniBooNEBeamlineEventAction::BeginOfEventAction(const G4Event* event) {    
+void PaleoSimEventAction::BeginOfEventAction(const G4Event* event) {    
   if (event->GetEventID() % 100 == 0) {
       G4cout << "Event # " << event->GetEventID() << " of " << fMessenger.GetNPS()
 	  	     << G4endl;
@@ -91,7 +91,7 @@ void MiniBooNEBeamlineEventAction::BeginOfEventAction(const G4Event* event) {
   }
 }
 
-void MiniBooNEBeamlineEventAction::EndOfEventAction(const G4Event* event) {
+void PaleoSimEventAction::EndOfEventAction(const G4Event* event) {
 
   //Fill trees at end of event, then clear
   //Data loaded into Primaries tree variables in generator

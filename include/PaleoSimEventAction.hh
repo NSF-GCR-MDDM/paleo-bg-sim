@@ -1,16 +1,16 @@
-#ifndef MiniBooNEBeamlineEventAction_h
-#define MiniBooNEBeamlineEventAction_h 1
+#ifndef PaleoSimEventAction_h
+#define PaleoSimEventAction_h 1
 
 #include "G4UserEventAction.hh"
 #include "globals.hh"
 #include "PaleoSimOutputManager.hh"
 #include "PaleoSimMessenger.hh"
 
-class MiniBooNEBeamlineEventAction : public G4UserEventAction
+class PaleoSimEventAction : public G4UserEventAction
 {
   public:
-    MiniBooNEBeamlineEventAction(PaleoSimMessenger& messenger,PaleoSimOutputManager& manager);
-    virtual ~MiniBooNEBeamlineEventAction();
+    PaleoSimEventAction(PaleoSimMessenger& messenger,PaleoSimOutputManager& manager);
+    virtual ~PaleoSimEventAction();
 
     virtual void BeginOfEventAction(const G4Event* event);
     virtual void EndOfEventAction(const G4Event* event);

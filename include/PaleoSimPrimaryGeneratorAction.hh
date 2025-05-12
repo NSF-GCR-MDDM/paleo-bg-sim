@@ -1,5 +1,5 @@
-#ifndef MiniBooNEBeamlinePrimaryGeneratorAction_h
-#define MiniBooNEBeamlinePrimaryGeneratorAction_h 1
+#ifndef PaleoSimPrimaryGeneratorAction_h
+#define PaleoSimPrimaryGeneratorAction_h 1
 
 #include "G4VUserPrimaryGeneratorAction.hh"
 #include "G4GeneralParticleSource.hh"
@@ -11,11 +11,11 @@
 #include "PaleoSimMessenger.hh"
 #include "PaleoSimOutputManager.hh"
 
-class MiniBooNEBeamlinePrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction {
+class PaleoSimPrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction {
 public:
-    MiniBooNEBeamlinePrimaryGeneratorAction(PaleoSimMessenger& messenger,
+    PaleoSimPrimaryGeneratorAction(PaleoSimMessenger& messenger,
                                             PaleoSimOutputManager& manager);
-    virtual ~MiniBooNEBeamlinePrimaryGeneratorAction() override;
+    virtual ~PaleoSimPrimaryGeneratorAction() override;
 
     virtual void GeneratePrimaries(G4Event*);
 
