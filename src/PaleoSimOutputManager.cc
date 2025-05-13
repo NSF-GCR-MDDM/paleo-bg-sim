@@ -99,13 +99,12 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     fHeaderTree->Branch("meiHimeFluxNormalization_per_cm2_per_s", &meiHimeFluxNormalization);
   }
   if (fMessenger.GetSourceType()=="CRYGenerator") {
-    double CRYRunTime = fMessenger.GetCRYRunTime();
     double CRYAltitude = fMessenger.GetCRYAltitude();
     double CRYLatitude = fMessenger.GetCRYLatitude();
-    fHeaderTree->Branch("CRYRunTime_s", &CRYRunTime);
+    double CRYNorm = fMessenger.GetCRYNorm();
     fHeaderTree->Branch("CRYAltitude_m", &CRYAltitude);
     fHeaderTree->Branch("CRYLatitude", &CRYLatitude);
-
+    fHeaderTree->Branch("primaries_per_cm2_per_s", &CRYNorm);
   }
   // Fill once when we make the tree, we aren't ever updating this
   fHeaderTree->Fill();

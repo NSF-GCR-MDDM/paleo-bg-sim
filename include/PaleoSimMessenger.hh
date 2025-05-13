@@ -51,12 +51,12 @@ public:
     //
     //CRY generator
     G4String GetCRYFilename() const { return fCRYFilename; };
-    void SetCRYRunTime(double val) { fCRYRunTime = val;};
     void SetCRYAltitude(double val) { fCRYAltitude = val;};
-    void SetCRYLatitude(double val) { fCRYLatitude = val;};    
-    G4double GetCRYRunTime() const { return fCRYRunTime;};  
+    void SetCRYLatitude(double val) { fCRYLatitude = val;};   
+    void SetCRYNorm(double val) { fCRYNorm = val;};    
     G4double GetCRYAltitude() const { return fCRYAltitude;};  
     G4double GetCRYLatitude() const { return fCRYLatitude;};
+    G4double GetCRYNorm() const { return fCRYNorm;};
 
 
     //Geometric calculations
@@ -147,7 +147,8 @@ private:
     G4UIdirectory* fCRYGeneratorDirectory;
     G4UIcmdWithAString* fSetCRYFilenameCmd;
     G4String fCRYFilename="";
-    G4double fCRYRunTime, fCRYAltitude, fCRYLatitude;
+    G4double fCRYAltitude, fCRYLatitude;
+    G4double fCRYNorm;
 
 };
 

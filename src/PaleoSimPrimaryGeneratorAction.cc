@@ -245,16 +245,17 @@ void PaleoSimPrimaryGeneratorAction::InitializeCRYGenerator() {
     std::cout<<"Number of CRY particles to sample is "<<nCryEntries<<std::endl;
     cryFileLoaded = true;
 
-    //Get header ingo
+    //Get header info
     TTree * headerTree = dynamic_cast<TTree*>(cryFile->Get("headerTree"));
-    float timeSimulated,altitude,latitude;
-    headerTree->SetBranchAddress("timeSimulated",    &timeSimulated);
+    float altitude,latitude,norm;
     headerTree->SetBranchAddress("altitude", &altitude);
     headerTree->SetBranchAddress("latitude",          &latitude);
+    headerTree->SetBranchAddress("primaries_per_cm2_per_s",          &norm);
+
     headerTree->GetEvent(0);
-    fMessenger.SetCRYRunTime(static_cast<double>(timeSimulated));
     fMessenger.SetCRYAltitude(static_cast<double>(altitude));
     fMessenger.SetCRYLatitude(static_cast<double>(latitude));
+    fMessenger.SetCRYNorm(static_cast<double>(norm));
     delete headerTree;
 }
 

@@ -84,7 +84,7 @@ void PaleoSimEventAction::BeginOfEventAction(const G4Event* event) {
       fOutputManager.SetPrimaryMuonSlant(info->muonSlantDepth);
     }
 
-    if (srcType == "cryGenerator") {
+    if (srcType == "CRYGenerator") {
       fOutputManager.SetCRYCoreX(info->CRYCorePosition.x());
       fOutputManager.SetCRYCoreY(info->CRYCorePosition.y());
       fOutputManager.SetCRYCoreZ(info->CRYCorePosition.z());
