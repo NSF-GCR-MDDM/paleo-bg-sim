@@ -3,7 +3,8 @@
 #include "G4UImanager.hh"
 #include "G4TransportationManager.hh"
 #include "Randomize.hh"
-
+#include "QGSP_BERT_HP.hh"
+#include "QGSP_BIC_HP.hh"
 #include "PaleoSimDetectorConstruction.hh"
 #include "PaleoSimPrimaryGeneratorAction.hh"
 #include "PaleoSimActionInitialization.hh"
@@ -125,8 +126,12 @@ int main(int argc, char** argv) {
   auto* outputManager  = new PaleoSimOutputManager(*messenger);
 
   // 7. Physics list
-  runManager->SetUserInitialization(new PaleoSimPhysicsList());
+  //Josh commented this out for Pranav and added the two lines below:
+  //runManager->SetUserInitialization(new PaleoSimPhysicsList());
+  QGSP_BIC_HP* physicsList = new QGSP_BIC_HP();
+  runManager->SetUserInitialization(physicsList);
 
+  
   // 8. Register actions (via ActionInitialization). Generator is built in here.
   runManager->SetUserInitialization(new PaleoSimActionInitialization(*messenger, *outputManager));
 
