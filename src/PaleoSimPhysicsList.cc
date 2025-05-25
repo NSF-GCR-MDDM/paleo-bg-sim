@@ -9,6 +9,7 @@
 
 // Hadronic physics
 #include "G4HadronPhysicsQGSP_BERT_HP.hh"
+#include "G4HadronPhysicsQGSP_BIC_HP.hh"
 #include "G4HadronElasticPhysicsHP.hh"
 #include "G4NeutronTrackingCut.hh"
 
@@ -34,6 +35,7 @@ PaleoSimPhysicsList::PaleoSimPhysicsList() {
 
   // Hadronic physics
   RegisterPhysics(new G4HadronPhysicsQGSP_BERT_HP());
+  //RegisterPhysics(new G4HadronPhysicsQGSP_BIC_HP());
   RegisterPhysics(new G4HadronElasticPhysicsHP());
   RegisterPhysics(new G4NeutronTrackingCut());
 

@@ -1,7 +1,6 @@
 import sys
 import numpy as np
 import uproot as up
-import ROOT
 import math
 #Open file
 inpFilename = sys.argv[1]
@@ -9,14 +8,59 @@ inpFile = up.open(inpFilename)
 
 #Get trees, can selectively load branches by passing in arrays=["names"] into arrays() call
 headerTree = inpFile["headerTree"].arrays(library="np")
-norm = headerTree["meiHimeFluxNormalization_per_cm2_per_s"]
-nps = headerTree["nps"]
+norm = headerTree["meiHimeFluxNormalization_per_cm2_per_s"][0]
+nps = headerTree["nps"][0]
 
 tallyTree = inpFile["neutronTallyTree"].arrays(library="np")
+primariesTree = inpFile["primariesTree"].arrays(library="np")
+
+#1. Compare neutron flux entering into the cavity with Mei & Hime
+# for this, we compare the total neutron flux, flux > 1, 10, and 100 MeV.
+# Mei & Hime apply the correction 0.64E_mu^0.02 - 0.74E_mu^-0.12. Basically we take the number
+# of neutrons per muon and scale it by this factor. 
+# First, we need to calculate the simulation time
+worldArea = 2000 * 2000 #cm
+nps_per_cm2 = float(nps) / worldArea
+simTime = nps_per_cm2/norm 
+timeScalingFactor = 1./simTime
+# Next we step through the number of neutrons in each bin
+cutEnergies = [0,1,10,100]
+nNeutrons = [0,0,0,0]
+#Step through events
+for entry in range(0,len(tallyTree["numNeutronsEntered"])):
+    #Get event ID
+    eventID = tallyTree["eventID"][entry]
+    #Get the energy of the event in the primary tree with this event ID. Calculate correction factor
+    idx = np.where(primariesTree["eventID"] == eventID)[0][0]
+    muonEnergy_GeV = primariesTree["energy"][idx] / 1000.
+    muonEnergy_GeV = primariesTree["energy"][primariesTree["eventID"] == eventID][0] / 1000.
+    correctionFactor = 0.64*math.pow(muonEnergy_GeV,0.02) - 0.74*math.pow(muonEnergy_GeV,-0.12)
+    print(correctionFactor)
+    #Calculate # of muons above each cut, applying correction factor
+    for icut,cutEnergy in enumerate(cutEnergies):
+        eventsAboveCut = [nrg for nrg in tallyTree["entry_energy"][entry] if nrg > cutEnergy]
+        nAboveCut = len(eventsAboveCut) / correctionFactor
+        nNeutrons[icut] += nAboveCut
+
+#Now we need to get the flux into neutrons/cm2/sec
+cavityArea = 600 * 600 #cm
+units_scaling = 1e-9
+for icut,cutEnergy in enumerate(cutEnergies):
+    flux = nNeutrons[icut] / cavityArea * timeScalingFactor
+    flux = flux / units_scaling
+    print("Flux >{0} MeV is {1:.3} x 10^9 n/cm2/sec".format(cutEnergy,flux))
+
+'''
 multiplicityHist = ROOT.TH1D("multiplicityHist",";Multiplicity;Neutrons/cm^{2}/sec",34,0,102)
 distanceHist = ROOT.TH1D("distanceHist",";Distance (m);Fraction of neutrons",20,0,5)
 energyHist = ROOT.TH1D("energyHist",";Energy (GeV);Neutrons/cm^{2}/GeV/sec",70,0,3.5)
 cosAngleHist = ROOT.TH1D("cosAngleHist",";cos(theta);Neutrons/cm^{2}/sec",100,-1,1)
+
+secondaryTree = inpFile["MINTree"].arrays(library="np")
+MINMultiplicityHist = ROOT.TH1D("MINMultiplicityHist",";Multiplicity;Neutrons/cm^{2}/sec",34,0,102)
+MINDistanceHist = ROOT.TH1D("distMINDistanceHistanceHist",";Distance (cm);Fraction of Neutrons",20,0,5)
+MINEnergyHist = ROOT.TH1D("MINEnergyHist",";Energy (GeV);Neutrons/cm^{2}/GeV/sec",70,0,3.5)
+MINCosAngleHist = ROOT.TH1D("MINCosAngleHist",";cos(theta);Neutrons/cm^{2}/sec",100,-1,1)
 
 scaleFactor = norm / nps #units of /cm2/sec
 
@@ -51,13 +95,6 @@ c1.cd(4)
 cosAngleHist.Draw("hist")
 c1.Modified()
 c1.Update()
-
-
-secondaryTree = inpFile["MINTree"].arrays(library="np")
-MINMultiplicityHist = ROOT.TH1D("MINMultiplicityHist",";Multiplicity;Neutrons/cm^{2}/sec",34,0,102)
-MINDistanceHist = ROOT.TH1D("distMINDistanceHistanceHist",";Distance (cm);Fraction of Neutrons",20,0,5)
-MINEnergyHist = ROOT.TH1D("MINEnergyHist",";Energy (GeV);Neutrons/cm^{2}/GeV/sec",70,0,3.5)
-MINCosAngleHist = ROOT.TH1D("MINCosAngleHist",";cos(theta);Neutrons/cm^{2}/sec",100,-1,1)
 
 MINMultiplicityHist.SetStats(0)
 MINEnergyHist.SetStats(0)
@@ -94,3 +131,4 @@ try:
     input("Press enter")
 except SyntaxError:
     pass
+'''

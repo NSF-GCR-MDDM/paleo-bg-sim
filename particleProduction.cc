@@ -19,10 +19,8 @@
 /*
 To-do:
   - Consistency with variable names needs some cleaning up
-  - MiniBooNE -> PaleoSim naming
   - Very minimal testing has been done. 
   - Maybe we should append units to output branches? Or be consistent with units
-  - Implement CRY generator
   - Long-term goal: Generators should be in their own pieces of code, in a generators folder or something
   - Do we care about mu- vs. mu+ in meiHime & mute
   - Error checking on parameters for RGBA in geometry file

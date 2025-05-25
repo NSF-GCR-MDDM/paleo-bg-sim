@@ -12,7 +12,7 @@ mtc.set_verbose(0)
 mtc.set_vertical_depth(depth)
 mtc.set_medium("rock")
 mtc.set_density(2.65)
-mtc.set_n_muon(100000)
+mtc.set_n_muon(10)
 
 # Get flux grid
 fluxes = mtu.calc_u_fluxes(primary_model="GSF", interaction_model="DDM")  # shape (E, slant_depth)
