@@ -27,6 +27,9 @@ void PaleoSimMaterialManager::DefineMaterials() {
     G4Element* Fe = nist->FindOrBuildElement("Fe");		   // Iron
     G4Element* Ti = nist->FindOrBuildElement("Ti");		   // Titanium
 
+    G4Material* CALCIUM_CARBONATE = nist->FindOrBuildMaterial("CALCIUM_CARBONATE");     // CaCO3
+    G4Material* MAGNESIUM_CARBONATE = nist->FindOrBuildMaterial("MAGNESIUM_CARBONATE"); // MgCO3
+
     //Begin Norite
     G4Material* Norite = new G4Material("Norite", 2.894*g/cm3, 12);
     // Add elements to the material (fractions are by mass)
@@ -43,6 +46,17 @@ void PaleoSimMaterialManager::DefineMaterials() {
     Norite->AddElement(Fe, 0.061925); // 6.2% Iron
     Norite->AddElement(Ti, 0.004925); // 0.5% Titanium
 
+    //Begin Gran Sasso Rock
+    G4Material* Gran_Sasso_Rock = new G4Material("Gran_Sasso_Rock", 2.71*g/cm3, 8);
+    Gran_Sasso_Rock->AddElement(H, 0.0003);  // 0.03% Hydrogen
+    Gran_Sasso_Rock->AddElement(C, 0.1218);  // 12.17% Carbon
+    Gran_Sasso_Rock->AddElement(O, 0.5078);  // 50.77% Oxygen
+    Gran_Sasso_Rock->AddElement(Mg, 0.0833); // 8.32% Magnesium
+    Gran_Sasso_Rock->AddElement(Al, 0.0063); // 0.63% Aluminum
+    Gran_Sasso_Rock->AddElement(Si, 0.0105); // 1.05% Silicon
+    Gran_Sasso_Rock->AddElement(K, 0.0010);  // 0.10% Potassium
+    Gran_Sasso_Rock->AddElement(Ca, 0.2690); // 26.89% Calcium
+
     G4Material* Borated_HDPE = new G4Material("Borated_HDPE", 1.04*g/cm3, 3);
     Borated_HDPE->AddElement(B, 0.0500);  // 5% Boron
     Borated_HDPE->AddElement(H, 0.1365);  // 13.66% Air
@@ -58,6 +72,7 @@ void PaleoSimMaterialManager::DefineMaterials() {
     //Add to map - MUST BE LOWER CASE
     materialMap["air"] = nist->FindOrBuildMaterial("G4_AIR");
     materialMap["norite"] = Norite;
+    materialMap["gran_sasso_rock"] = Gran_Sasso_Rock;
     materialMap["concrete"] = nist->FindOrBuildMaterial("G4_CONCRETE");  
     materialMap["borated_hdpe"] = Borated_HDPE; 
     materialMap["stainless_steel"] = nist->FindOrBuildMaterial("G4_STAINLESS-STEEL");  

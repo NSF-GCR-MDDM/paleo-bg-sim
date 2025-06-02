@@ -127,10 +127,9 @@ int main(int argc, char** argv) {
 
   // 7. Physics list
   //Josh commented this out for Pranav and added the two lines below:
-  //runManager->SetUserInitialization(new PaleoSimPhysicsList());
+  // runManager->SetUserInitialization(new PaleoSimPhysicsList());
   QGSP_BIC_HP* physicsList = new QGSP_BIC_HP();
   runManager->SetUserInitialization(physicsList);
-
   
   // 8. Register actions (via ActionInitialization). Generator is built in here.
   runManager->SetUserInitialization(new PaleoSimActionInitialization(*messenger, *outputManager));
