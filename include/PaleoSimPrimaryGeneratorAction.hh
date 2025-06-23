@@ -58,9 +58,20 @@ private:
     std::vector<float>* cry_w = nullptr;
     std::vector<float>* cry_x = nullptr;
     std::vector<float>* cry_y = nullptr;
-
     void InitializeCRYGenerator();
     void GenerateCRYPrimaries(G4Event*);
+    //
+    //Disk source generator
+    TFile* diskSourceSpectrumFile = nullptr;
+    bool diskSourceSpectrumFileLoaded = false;
+    TH1D* diskSourceSpectrumHist = nullptr;
+    int diskSourcePDGCode;
+    G4ThreeVector diskSourcePosition;
+    G4String diskSourceType;
+    void InitializeDiskSourceGenerator();
+    void GenerateDiskSourcePrimaries(G4Event*);
+    G4ThreeVector SamplePointOnDisk(double radius,const G4ThreeVector& position, const G4ThreeVector& axis);
+
 };
 
 #endif
