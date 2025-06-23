@@ -21,14 +21,15 @@ To-do:
   - Consistency with variable names needs some cleaning up
   - Very minimal testing has been done. 
   - Maybe we should append units to output branches? Or be consistent with units
-  - Implement CRY generator
   - Long-term goal: Generators should be in their own pieces of code, in a generators folder or something
+  - Long-term goal: refactor messenger class to make less messy
   - Do we care about mu- vs. mu+ in meiHime & mute
   - Error checking on parameters for RGBA in geometry file
   - Check G4 MT codes
   - Try different physics lists
   - headerTree needs updating
   - We could store the geometry file in the tree--is that with GDML only? nEXO does this
+  - Pranav having some issues with physics lists not being set, but works fine from within particle production...?
   - Could have a 'cellNum' argument for volumes, and then potentially track multiple cells with recoils, tallies, etc.,
     or store cellNum -> volumeName map in header tree
   - Compare with Geant4 Mei & hime simulation paper from--different settings?

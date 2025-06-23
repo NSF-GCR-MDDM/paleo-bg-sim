@@ -2,7 +2,7 @@
 
 Automatically generated from PaleoSimMessenger.hh and PaleoSimMessenger.cc with genMacroDoc.py
 
-Last generated on: 2025-05-05 16:38
+Last generated on: 2025-05-12 20:25
 
 ## /geom/
 
@@ -54,4 +54,11 @@ Last generated on: 2025-05-05 16:38
 
 - **/generator/muteGenerator/setMuteHistFilename** (optional) — `muteHistFilename`
   - Description: File containing 'muonHist' TH2D with GeV on x and Theta (rad) on y
+  - Default: `""`
+
+### /generator/cry/
+
+- **/generator/cry/setCRYFilename** (optional) — `fCRYFilename`
+  - Description: Pass in output of cryGenerator code (root file)
+  - Default: `""`
 

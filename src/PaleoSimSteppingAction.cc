@@ -43,7 +43,7 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
             G4int secPDGCode = sec->GetParticleDefinition()->GetPDGEncoding();
             if (secPDGCode == 2112) {
                 // Zenith angle:
-                G4ThreeVector muDir = info->primaryDirection.at(0);
+                G4ThreeVector muDir = info->primaryDirection;
                 G4ThreeVector neutronDir = sec->GetMomentumDirection();
                 fOutputManager.PushMINEventAngleRelMuon(neutronDir.angle(muDir));
 
@@ -55,7 +55,7 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
                 fOutputManager.PushMINEventEnergy(MINKinE);
 
                 // Distance from muon track:
-                G4ThreeVector muPos = info->primaryGenerationPosition.at(0);
+                G4ThreeVector muPos = info->primaryGenerationPosition;
                 G4ThreeVector MINPos = sec->GetPosition();
                 G4ThreeVector MINDisplacement = MINPos - muPos;
                 G4double MINDistToTrack = (MINDisplacement.cross(muDir)).mag();
@@ -98,12 +98,12 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
                 fOutputManager.PushNeutronTallyEventEntryW(momentumDirection.z());
 
                 // Zenith angle:
-                G4ThreeVector muDir = info->primaryDirection.at(0);
+                G4ThreeVector muDir = info->primaryDirection;
                 G4ThreeVector neutronDir = track->GetMomentumDirection();
                 fOutputManager.PushNeutronTallyEventAngleRelMuon(neutronDir.angle(muDir));
 
                 // Distance from muon track:
-                G4ThreeVector muPos = info->primaryGenerationPosition.at(0);
+                G4ThreeVector muPos = info->primaryGenerationPosition;
                 G4ThreeVector displacement = position - muPos;
                 G4double distToTrack = (displacement.cross(muDir)).mag();
                 fOutputManager.PushNeutronTallyEventDistanceToMuonTrack(distToTrack);

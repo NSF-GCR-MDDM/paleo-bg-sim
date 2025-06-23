@@ -10,16 +10,22 @@ class PaleoSimUserEventInformation : public G4VUserEventInformation {
   public:
       PaleoSimUserEventInformation() = default;
   
-      std::vector<G4ThreeVector> primaryDirection;
-      std::vector<G4ThreeVector> primaryGenerationPosition;
+      //For multiparticle events, these are mass-energy weighted
+      G4ThreeVector primaryDirection;
+      G4ThreeVector primaryGenerationPosition;
 
       // CUSTOM_GENERATOR_HOOK
       // If you need information passed from your primary generation to your PrimariesTree, put that here
       //
-      // Mei & Hime muon generator
-      std::deque<G4double> muonTheta = {};
-      std::deque<G4double> muonPhi = {};
-      std::deque<G4double> muonSlantDepth = {};
+      // Mei & Hime muon generator (and same for mute for all except slant)
+      G4double muonTheta;
+      G4double muonPhi;
+      G4double muonSlantDepth;
+      //
+      //CRY
+      G4ThreeVector CRYCorePosition;
+      G4double CRYCoreTheta,CRYCorePhi;
+      G4double CRYTotalEnergy;
       
       void Print() const override {};
   };

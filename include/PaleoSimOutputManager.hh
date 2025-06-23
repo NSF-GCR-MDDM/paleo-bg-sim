@@ -34,9 +34,17 @@ public:
     // If you want to add more branches to the primaries tree, write setters here
     //
     // Mei & Hime muon generator
-    void PushPrimaryMuonTheta(double val) { fPrimaryMuonTheta.push_back(val); };
-    void PushPrimaryMuonPhi(double val) { fPrimaryMuonPhi.push_back(val); };
-    void PushPrimaryMuonSlant(double val) { fPrimaryMuonSlant.push_back(val); };
+    void SetPrimaryMuonTheta(double val) { fPrimaryMuonTheta = val; };
+    void SetPrimaryMuonPhi(double val) { fPrimaryMuonPhi = val; };
+    void SetPrimaryMuonSlant(double val) { fPrimaryMuonSlant = val; };
+    //
+    //CRY generator
+    void SetCRYCoreX(double val) { fCRYCoreX = val;};
+    void SetCRYCoreY(double val) { fCRYCoreY = val;};
+    void SetCRYCoreZ(double val) { fCRYCoreZ = val;};
+    void SetCRYCoreTheta(double val) { fCRYCoreTheta = val;};
+    void SetCRYCorePhi(double val) { fCRYCorePhi = val;};
+    void SetCRYTotalEnergy(double val) { fCRYTotalEnergy = val; };
 
     //MUON-INDUCED NEUTRON TREE
     void FillMINTreeEvent();
@@ -102,8 +110,13 @@ private:
     // CUSTOM_GENERATOR_HOOK
     // Create vectors to be stored as branches in the primaries tree for your custom generator here
     //
-    //Mei & Hime Muon generator
-    std::vector<double> fPrimaryMuonTheta, fPrimaryMuonPhi, fPrimaryMuonSlant;
+    //Mei & Hime Muon generator (and MUTE except for Slant)
+    double fPrimaryMuonTheta, fPrimaryMuonPhi, fPrimaryMuonSlant;
+    // 
+    // CRY
+    double fCRYCoreX, fCRYCoreY, fCRYCoreZ;
+    double fCRYCoreTheta, fCRYCorePhi;
+    double fCRYTotalEnergy;
 
     //Muon-induced neutron tree
     int fMINEventID = -1;

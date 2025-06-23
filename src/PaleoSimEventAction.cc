@@ -8,88 +8,93 @@ PaleoSimEventAction::PaleoSimEventAction(PaleoSimMessenger &messenger,PaleoSimOu
 
 PaleoSimEventAction::~PaleoSimEventAction() {}
 
-void PaleoSimEventAction::BeginOfEventAction(const G4Event* event) {    
+
+void PaleoSimEventAction::BeginOfEventAction(const G4Event* event) {
   if (event->GetEventID() % 100 == 0) {
-      G4cout << "Event # " << event->GetEventID() << " of " << fMessenger.GetNPS()
-	  	     << G4endl;
-}
-
-  //For now, we assume 1 primary vertex, but that it can contain multiple particles there
-  G4PrimaryVertex* vertex = event->GetPrimaryVertex(0); //1 particle
-  G4ThreeVector position = vertex->GetPosition();
-  G4PrimaryParticle* particle = vertex->GetPrimary();
-
-  auto* info = dynamic_cast<PaleoSimUserEventInformation*>(event->GetUserInformation());
-  //We might want to load up other stuff into user event info here just to have access to it for later
-  while (particle) {
-    if (info) {
-      G4ThreeVector momentum(particle->GetPx(), particle->GetPy(), particle->GetPz());
-      G4ThreeVector momentumDirection = momentum.unit();  
-      info->primaryDirection.push_back(momentumDirection);
-      
-      info->primaryGenerationPosition.push_back(position);
-    }
-    particle = particle->GetNext(); // Get the next primary particle at this vertex
+      G4cout << "Event # " << event->GetEventID() << " of " << fMessenger.GetNPS() << G4endl;
   }
 
-  //////////////////////////////////
-  //Only if primaries tree enabled//
-  //////////////////////////////////
-  if (fMessenger.GetPrimariesTreeStatus()) {
-      
-    //Fill primaries tree
-    G4int eventID = event->GetEventID();
-    fOutputManager.PushPrimaryEventID(eventID);
-  
-    //Loop through primary particles
-    particle = vertex->GetPrimary();
+  //We calculate the position and momentum of events. For single particle sources
+  //this is easy. For multiparticle sources we calculate the weighted position/momentum
+  G4double totalEnergy = 0.0;
+  G4ThreeVector primaryMomentum(0, 0, 0);
+  G4ThreeVector primaryPosition(0, 0, 0);
+
+  // Loop over all vertices and all particles
+  for (G4int ivert = 0; ivert < event->GetNumberOfPrimaryVertex(); ivert++) {
+    G4PrimaryVertex* vertex = event->GetPrimaryVertex(ivert);
+    G4ThreeVector vertexPos = vertex->GetPosition();
+    G4PrimaryParticle* particle = vertex->GetPrimary();
+
     while (particle) {
-      G4int pdg = particle->GetPDGcode();
       G4double energy = particle->GetTotalEnergy();
-      G4ThreeVector momentum(particle->GetPx(), particle->GetPy(), particle->GetPz());
+      G4ThreeVector p(particle->GetPx(), particle->GetPy(), particle->GetPz());
+      primaryMomentum += p;
+      primaryPosition += (vertexPos * energy);
+      totalEnergy += energy;
+      particle = particle->GetNext();
+    }
+  }
 
-      fOutputManager.PushPrimaryEventPDG(pdg);
-      fOutputManager.PushPrimaryEventEnergy(energy);
-      fOutputManager.PushPrimaryEventX(position.x());
-      fOutputManager.PushPrimaryEventY(position.y());
-      fOutputManager.PushPrimaryEventZ(position.z());
-      fOutputManager.PushPrimaryEventPx(momentum.x());
-      fOutputManager.PushPrimaryEventPy(momentum.y());
-      fOutputManager.PushPrimaryEventPz(momentum.z());
+  //Write this to our user event info
+  auto* info = dynamic_cast<PaleoSimUserEventInformation*>(event->GetUserInformation());
+  if (info && totalEnergy > 0) {
+      info->primaryDirection = primaryMomentum.unit();
+      info->primaryGenerationPosition = (primaryPosition / totalEnergy);
+  }
 
-      //CUSTOM_GENERATOR_HOOK
-      //If you've set up the user information object to store quantities for each particle, load them now.
-      //
-      //Mei & Hime muon generator
-      if ((info) && (fMessenger.GetSourceType() == "meiHimeMuonGenerator")) {
-        if (!info->muonTheta.empty()) {
-            fOutputManager.PushPrimaryMuonTheta(info->muonTheta.front());
-            info->muonTheta.pop_front();
-        }
-        if (!info->muonPhi.empty()) {
-            fOutputManager.PushPrimaryMuonPhi(info->muonPhi.front());
-            info->muonPhi.pop_front();
-        }
-        if (!info->muonSlantDepth.empty()) {
-            fOutputManager.PushPrimaryMuonSlant(info->muonSlantDepth.front());
-            info->muonSlantDepth.pop_front();
-        }
+  /////////////////////////////////////////////
+  // Fill primaries tree if enabled
+  /////////////////////////////////////////////
+  if (fMessenger.GetPrimariesTreeStatus()) {
+    fOutputManager.PushPrimaryEventID(event->GetEventID());
+
+    for (G4int ivert = 0; ivert < event->GetNumberOfPrimaryVertex(); ivert++) {
+      G4PrimaryVertex* vertex = event->GetPrimaryVertex(ivert);
+      G4ThreeVector pos = vertex->GetPosition();
+      G4PrimaryParticle* particle = vertex->GetPrimary();
+
+      while (particle) {
+        G4int pdg = particle->GetPDGcode();
+        G4double energy = particle->GetTotalEnergy();
+        G4ThreeVector momentum(particle->GetPx(), particle->GetPy(), particle->GetPz());
+
+        fOutputManager.PushPrimaryEventPDG(pdg);
+        fOutputManager.PushPrimaryEventEnergy(energy);
+        fOutputManager.PushPrimaryEventX(pos.x());
+        fOutputManager.PushPrimaryEventY(pos.y());
+        fOutputManager.PushPrimaryEventZ(pos.z());
+        fOutputManager.PushPrimaryEventPx(momentum.x());
+        fOutputManager.PushPrimaryEventPy(momentum.y());
+        fOutputManager.PushPrimaryEventPz(momentum.z());
+
+        particle = particle->GetNext();
       }
-      //Mute generator
-      if ((info) && (fMessenger.GetSourceType() == "muteGenerator")) {
-        if (!info->muonTheta.empty()) {
-            fOutputManager.PushPrimaryMuonTheta(info->muonTheta.front());
-            info->muonTheta.pop_front();
-        }
-        if (!info->muonPhi.empty()) {
-            fOutputManager.PushPrimaryMuonPhi(info->muonPhi.front());
-            info->muonPhi.pop_front();
-        }
-      }
-      particle = particle->GetNext(); // Get the next primary particle at this vertex
+    }
+
+    // Generator-specific metadata
+    auto* info = dynamic_cast<PaleoSimUserEventInformation*>(event->GetUserInformation());
+    G4String srcType = fMessenger.GetSourceType();
+
+    if (srcType == "meiHimeMuonGenerator" || srcType == "muteGenerator") {
+      fOutputManager.SetPrimaryMuonTheta(info->muonTheta);
+      fOutputManager.SetPrimaryMuonPhi(info->muonPhi);
+    }
+    if (srcType == "meiHimeMuonGenerator") {
+      fOutputManager.SetPrimaryMuonSlant(info->muonSlantDepth);
+    }
+
+    if (srcType == "CRYGenerator") {
+      fOutputManager.SetCRYCoreX(info->CRYCorePosition.x());
+      fOutputManager.SetCRYCoreY(info->CRYCorePosition.y());
+      fOutputManager.SetCRYCoreZ(info->CRYCorePosition.z());
+      fOutputManager.SetCRYCoreTheta(info->CRYCoreTheta);
+      fOutputManager.SetCRYCorePhi(info->CRYCorePhi);
+      fOutputManager.SetCRYTotalEnergy(info->CRYTotalEnergy);
     }
   }
 }
+
 
 void PaleoSimEventAction::EndOfEventAction(const G4Event* event) {
 

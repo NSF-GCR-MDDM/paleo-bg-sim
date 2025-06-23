@@ -42,11 +42,25 @@ PaleoSimPrimaryGeneratorAction::PaleoSimPrimaryGeneratorAction(PaleoSimMessenger
   else if (sourceType == "muteGenerator") {
     InitializeMuteMuons();
   }
+  else if (sourceType == "CRYGenerator") {
+    InitializeCRYGenerator();
+  }
+  else if (sourceType == "diskSourceGenerator") {
+    InitializeDiskSourceGenerator();
+  }
 
 }
 
 PaleoSimPrimaryGeneratorAction::~PaleoSimPrimaryGeneratorAction() {
     delete fGPS;
+    if (cryFileLoaded) {
+      cryFile->Close();
+      delete cryFile;
+    }
+    if (diskSourceSpectrumFileLoaded) {
+      diskSourceSpectrumFile->Close();
+      delete diskSourceSpectrumFile;
+    }
 }
 
 void PaleoSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
@@ -58,14 +72,26 @@ void PaleoSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
   if (sourceType == "meiHimeMuonGenerator") {
     GenerateMeiHimeMuonPrimaries(anEvent);
   }
+  //MUTE
   else if (sourceType == "muteGenerator") {
     GenerateMutePrimaries(anEvent);
+  }
+  //CRY
+  else if (sourceType == "CRYGenerator") {
+    GenerateCRYPrimaries(anEvent);
+  }
+  //Disk source
+  else if (sourceType == "diskSourceGenerator") {
+    GenerateDiskSourcePrimaries(anEvent);
   }
 }
 
 // CUSTOM_GENERATOR_HOOK
 // Your initialization methods go here
 //
+///////////////////////////////
+// Mei & Hime Muon Generator //
+///////////////////////////////
 // Mei & Hime Muon Generator
 void PaleoSimPrimaryGeneratorAction::InitializeMeiHimeMuons() {
   G4double h0 = fMessenger.GetMeiHimeMuonEffectiveDepth();
@@ -95,12 +121,6 @@ void PaleoSimPrimaryGeneratorAction::InitializeMeiHimeMuons() {
   fMuonEnergyDist->SetNpx(1000);
 }
 
-// CUSTOM_GENERATOR_HOOK
-// Your primary generator methods methods go here
-//
-/////////////////////////////////////
-// Mei & Hime Muon Generator (TF1s)//
-/////////////////////////////////////
 void PaleoSimPrimaryGeneratorAction::GenerateMeiHimeMuonPrimaries(G4Event* anEvent) {
   G4double h0 = fMessenger.GetMeiHimeMuonEffectiveDepth();
   G4double h0_km = h0 / km;
@@ -128,13 +148,11 @@ void PaleoSimPrimaryGeneratorAction::GenerateMeiHimeMuonPrimaries(G4Event* anEve
 
   //We store custom variables in a UserEventInfo to pass them to beginningOfEventAction to load into trees
   auto* info = new PaleoSimUserEventInformation();
-  info->muonTheta.push_back(theta);
-  info->muonPhi.push_back(phi);
-  info->muonSlantDepth.push_back(h_km*km);
+  info->muonTheta=theta;
+  info->muonPhi=phi;
+  info->muonSlantDepth=h_km*km;
   anEvent->SetUserInformation(info); 
 }
-
-
 
 //////////////////
 //Mute generator//
@@ -194,9 +212,181 @@ void PaleoSimPrimaryGeneratorAction::GenerateMutePrimaries(G4Event* anEvent) {
 
   //We store custom variables in a UserEventInfo to pass them to beginningOfEventAction to load into trees
   auto* info = new PaleoSimUserEventInformation();
-  info->muonTheta.push_back(theta);
-  info->muonPhi.push_back(phi);
+  info->muonTheta=theta;
+  info->muonPhi=phi;
   anEvent->SetUserInformation(info); //G4 takes ownership, no need to delete
+}
+
+///////////////////
+// CRY generator //
+///////////////////
+void PaleoSimPrimaryGeneratorAction::InitializeCRYGenerator() {
+    //Load file
+    G4String filename = fMessenger.GetCRYFilename();
+  
+    //Check and open root file
+    std::ifstream testFile(filename);
+    if (!testFile.good()) {
+      G4Exception("InitializeCRY", "CRY001", FatalException,
+                  ("Cannot open CRY file: " + filename).c_str());
+    }
+    testFile.close();
+    cryFile = TFile::Open(filename);
+    if (!cryFile || cryFile->IsZombie()) {
+      G4Exception("InitializeCRY", "CRY002", FatalException,
+                  ("Failed to open CRY ROOT file: " + filename).c_str());
+    }
+    
+    //Read in tree
+    cryTree = dynamic_cast<TTree*>(cryFile->Get("cryTree"));
+    if (!cryTree) {
+      G4Exception("InitializeCRY", "CRY003", FatalException,
+                  "Tree 'cryTree' not found in ROOT file.");
+    }
+
+    cryTree->SetBranchAddress("pdgCode",    &cry_pdgcode);
+    cryTree->SetBranchAddress("energy_MeV", &cry_energy);
+    cryTree->SetBranchAddress("u",          &cry_u);
+    cryTree->SetBranchAddress("v",          &cry_v);
+    cryTree->SetBranchAddress("w",          &cry_w);
+    cryTree->SetBranchAddress("x_mm",       &cry_x);
+    cryTree->SetBranchAddress("y_mm",       &cry_y);
+    nCryEntries = cryTree->GetEntries();
+    std::cout<<"Number of CRY particles to sample is "<<nCryEntries<<std::endl;
+    cryFileLoaded = true;
+
+    //Get header info
+    TTree * headerTree = dynamic_cast<TTree*>(cryFile->Get("headerTree"));
+    float altitude,latitude,norm;
+    headerTree->SetBranchAddress("altitude", &altitude);
+    headerTree->SetBranchAddress("latitude",          &latitude);
+    headerTree->SetBranchAddress("primaries_per_cm2_per_s",          &norm);
+
+    headerTree->GetEvent(0);
+    fMessenger.SetCRYAltitude(static_cast<double>(altitude));
+    fMessenger.SetCRYLatitude(static_cast<double>(latitude));
+    fMessenger.SetCRYNorm(static_cast<double>(norm));
+    delete headerTree;
+}
+
+void PaleoSimPrimaryGeneratorAction::GenerateCRYPrimaries(G4Event* anEvent) {
+  //Get random event
+  Long64_t entry = G4RandFlat::shootInt(nCryEntries);
+  cryTree->GetEntry(entry);
+
+  // Sample a position on the top of the world volume
+  G4ThreeVector basePosition = SamplePointOnTopOfWorldVolume();
+
+  //Load all particles into vertices
+  for (size_t i = 0; i < cry_pdgcode->size(); i++) {
+    int pdgCode = cry_pdgcode->at(i);
+    G4ParticleDefinition* particleDef = G4ParticleTable::GetParticleTable()->FindParticle(pdgCode);
+    if (!particleDef) {
+        G4cerr << "Unknown PDG code in CRY: " << pdgCode << G4endl;
+        continue;
+    }
+
+    double Ekin = cry_energy->at(i) * MeV;
+    double mass = particleDef->GetPDGMass();
+    double Etot = Ekin + mass;
+    double p = std::sqrt(Etot * Etot - mass * mass);
+
+    G4ThreeVector position = basePosition + G4ThreeVector(cry_x->at(i) * cm, cry_y->at(i) * cm, 0);
+    if (IsWithinTopSurface(position)) {
+      G4ThreeVector direction(cry_u->at(i), cry_v->at(i), cry_w->at(i));
+      G4ThreeVector momentum = direction * p;
+
+      G4PrimaryParticle* primary = new G4PrimaryParticle(particleDef,
+                                                        momentum.x(),
+                                                        momentum.y(),
+                                                        momentum.z());
+
+      G4PrimaryVertex* vertex = new G4PrimaryVertex(position, 0.0);
+      vertex->SetPrimary(primary);
+      anEvent->AddPrimaryVertex(vertex);
+    }
+  }
+
+  //Store primary info in userEventInfo
+  auto* info = new PaleoSimUserEventInformation();
+  // Compute total energy
+  double totalEnergy = 0.0;
+  G4ThreeVector weightedDirection(0,0,0);
+  for (size_t i = 0; i < cry_pdgcode->size(); ++i) {
+      double energy = cry_energy->at(i);  // in MeV
+      totalEnergy += energy;
+      weightedDirection += G4ThreeVector(cry_u->at(i), cry_v->at(i), cry_w->at(i)) * energy;
+  }
+  G4ThreeVector dir = weightedDirection.unit();
+  info->CRYCoreTheta = dir.theta();  // radians
+  info->CRYCorePhi   = dir.phi();    // radians
+  info->CRYTotalEnergy = totalEnergy;  // MeV
+  info->CRYCorePosition = basePosition;
+  anEvent->SetUserInformation(info); //G4 takes ownership, no need to delete
+}
+
+///////////////////////////
+// Disk source generator //
+///////////////////////////
+void PaleoSimPrimaryGeneratorAction::InitializeDiskSourceGenerator() {
+  //Try to get histogram if requested
+  if (fMessenger.GetDiskSourceType() == "hist") {
+    //Load file
+    G4String filename = fMessenger.GetDiskSourceSpectrumFilename();
+  
+    //Check and open root file
+    std::ifstream testFile(filename);
+    if (!testFile.good()) {
+      G4Exception("InitializeDiskSourceGenerator", "DISK001", FatalException,
+                  ("Cannot open disk source spectrum file: " + filename).c_str());
+    }
+    testFile.close();
+    diskSourceSpectrumFile = TFile::Open(filename);
+    if (!diskSourceSpectrumFile || diskSourceSpectrumFile->IsZombie()) {
+      G4Exception("InitializeDiskSourceGenerator", "DISK002", FatalException,
+                  ("Failed to open Disk source file: " + filename).c_str());
+    }
+  
+    //Read in hist
+    G4String histName = fMessenger.GetDiskSourceSpectrumHistName();
+    diskSourceSpectrumHist = dynamic_cast<TH1D*>(diskSourceSpectrumFile->Get(histName));
+    if (!diskSourceSpectrumHist) {
+      G4Exception("InitializeDiskSourceGenerator", "DISK003", FatalException,
+                  ("Hist '" + histName + "' was not found in ROOT file.").c_str());
+    }
+  }
+}
+
+void PaleoSimPrimaryGeneratorAction::GenerateDiskSourcePrimaries(G4Event* anEvent) {
+
+  //Set particle type
+  int pdgCode = fMessenger.GetDiskSourcePDGCode();
+  G4ParticleDefinition* particleDef = G4ParticleTable::GetParticleTable()->FindParticle(pdgCode);
+  if (!particleDef) {
+    G4String msg = "Unknown PDG code in Disk Source Generator: " + std::to_string(pdgCode);
+    G4Exception("PaleoSimPrimaryGeneratorAction::GenerateDiskSourcePrimaries",
+                "DiskSource001", FatalException, msg.c_str());
+  }
+  fGPS->SetParticleDefinition(particleDef);
+
+  //Sample random position on disk, set position
+  G4ThreeVector pos = SamplePointOnDisk(fMessenger.GetDiskSourceRadius(),fMessenger.GetDiskSourcePosition(),fMessenger.GetDiskSourceAxis());
+  fGPS->GetCurrentSource()->GetPosDist()->SetCentreCoords(pos);
+
+  //Set energy
+  double energy=0;
+  if (fMessenger.GetDiskSourceType()=="hist") {
+    energy = diskSourceSpectrumHist->GetRandom()*MeV;
+  }
+  else {
+    energy = fMessenger.GetDiskSourceMonoEnergy();
+  }
+  fGPS->GetCurrentSource()->GetEneDist()->SetMonoEnergy(energy);
+  
+  fGPS->GetCurrentSource()->GetAngDist()->SetParticleMomentumDirection(fMessenger.GetDiskSourceDirection());
+
+  //Generate vertex
+  fGPS->GeneratePrimaryVertex(anEvent);
 }
 
 //////////////////
@@ -236,4 +426,51 @@ G4ThreeVector PaleoSimPrimaryGeneratorAction::SamplePointOnTopOfWorldVolume() {
   }
 
   return worldDef->absolutePosition + localTop;
+}
+
+//Checks if a point is on the top surface or not
+G4bool PaleoSimPrimaryGeneratorAction::IsWithinTopSurface(const G4ThreeVector& point) {
+  const auto& volumes = fMessenger.GetVolumes();
+  const VolumeDefinition* worldDef = nullptr;
+  for (const auto* vol : volumes) {
+      if (vol->parentName == "None") {
+          worldDef = vol;
+          break;
+      }
+  }
+
+  if (worldDef->shape == "box") {
+      if (std::abs(point.x()) <= worldDef->halfLengths.x() && std::abs(point.y()) <= worldDef->halfLengths.y()) {
+        return true;
+      }
+  }
+  else if (worldDef->shape == "cylinder") {
+      double r2 = point.x()*point.x() + point.y()*point.y();
+      if (r2 <= worldDef->radius * worldDef->radius) {
+        return true;
+      }
+  }
+  else {
+      G4Exception("IsWithinTopSurface", "UnsupportedShape", FatalException,
+                  ("Top surface sampling not supported for shape: " + worldDef->shape).c_str());
+  }
+
+  return false;
+}
+
+//Sample point on disk via MC.
+G4ThreeVector PaleoSimPrimaryGeneratorAction::SamplePointOnDisk(double radius, const G4ThreeVector& center, const G4ThreeVector& axis) {
+    G4ThreeVector n = axis.unit();
+    //If almost completely oriented along z-axis, use z-axis
+    G4ThreeVector temp = (std::fabs(n.z()) < 0.99999) ? G4ThreeVector(0,0,1) : G4ThreeVector(1,0,0);
+    G4ThreeVector u = n.cross(temp).unit();
+    G4ThreeVector v = n.cross(u).unit();
+    
+    double r = radius * std::sqrt(G4UniformRand());
+    double theta = 2 * CLHEP::pi * G4UniformRand();
+    double x_local = r * std::cos(theta);
+    double y_local = r * std::sin(theta);
+
+    // Transform to global coordinates
+    return center + x_local * u + y_local * v;
 }
