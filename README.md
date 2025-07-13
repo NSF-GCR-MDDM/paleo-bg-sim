@@ -27,7 +27,18 @@ Testing has been done with ROOT v6.32.04 and Geant4 v.11.3.0.
 
 Full installation instructions will located here once written:[Installation Instructions](docs/install.md)
 
-## Running
+## Compiling & Running
+
+To compile, create a build folder outside of the code base directory. Then, execute the following commands:
+
+```bash
+cmake </path/to/code/folder>
+make clean
+make -j<#>
+```
+It is recommended to do a `make clean` any time code is changed in a header file, and to re-do a `cmake` if new files are added to the source code. When executing the `make`, the number of cores with which to compile the code can be passed in to speed up the compilation. 
+
+To run:
 
 ```bash
 ./particleProduction < macro file >
