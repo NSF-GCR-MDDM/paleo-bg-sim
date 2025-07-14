@@ -7,13 +7,16 @@
 #include "G4GeneralParticleSource.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4ThreeVector.hh"
+#include "G4VSolid.hh"
 
 #include "TF1.h"
 #include "TH2D.h"
+#include "TH1D.h"
 #include "TTree.h"
 
 #include "PaleoSimMessenger.hh"
 #include "PaleoSimOutputManager.hh"
+#include "PaleoSimVolumeDefinition.hh"
 
 class PaleoSimPrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction {
 public:
@@ -21,16 +24,17 @@ public:
                                             PaleoSimOutputManager& manager);
     virtual ~PaleoSimPrimaryGeneratorAction() override;
 
+    void InitializeSource();
     virtual void GeneratePrimaries(G4Event*);
 
 private:
-    G4GeneralParticleSource* fGPS;
     PaleoSimMessenger& fMessenger;
     PaleoSimOutputManager& fManager;
 
     //Helper functions - could be used by any class
     G4ThreeVector SamplePointOnTopOfWorldVolume();
     G4bool IsWithinTopSurface(const G4ThreeVector& point);
+    G4ThreeVector SamplePointInVolume(const PaleoSimVolumeDefinition* vol,const G4ThreeVector& minBounds,const G4ThreeVector& maxBounds);
 
     //CUSTOM_GENERATOR_HOOK
     // Add private state and methods for your generator implementation here
@@ -61,24 +65,18 @@ private:
     void InitializeCRYGenerator();
     void GenerateCRYPrimaries(G4Event*);
     //
-    //Disk source generator
-    TFile* diskSourceSpectrumFile = nullptr;
-    bool diskSourceSpectrumFileLoaded = false;
-    TH1D* diskSourceSpectrumHist = nullptr;
-    int diskSourcePDGCode;
-    G4ThreeVector diskSourcePosition;
-    G4String diskSourceType;
-    void InitializeDiskSourceGenerator();
-    void GenerateDiskSourcePrimaries(G4Event*);
-    G4ThreeVector SamplePointOnDisk(double radius,const G4ThreeVector& position, const G4ThreeVector& axis);
-
+    //Volumetric source generator
+    TFile* fVolumetricSourceSpectrumFile = nullptr;
+    bool fVolumetricSourceSpectrumFileLoaded = false;
+    TH1D* fVolumetricSourceSpectrumHist = nullptr;
+    int fVolumetricSourcePDGCode;
+    bool fBoundingBoxInitialized = false;
+    G4String fVolumetricSourceType;
+    G4ThreeVector fVolumetricBoundsMin;
+    G4ThreeVector fVolumetricBoundsMax;
+    PaleoSimVolumeDefinition* fSourceVolumeDefinition = nullptr;
+    void InitializeVolumetricSourceGenerator();
+    void GenerateVolumetricSourcePrimaries(G4Event*);
 };
 
 #endif
-
-
-
-
-
-
-

@@ -24,7 +24,7 @@ public:
 
 private:
     PaleoSimMessenger* fMessenger;                         
-    VolumeDefinition* fCurrentVolume = nullptr; // actively-constructed volume
+    PaleoSimVolumeDefinition* fCurrentVolume = nullptr; // actively-constructed volume
     
     // Directories
     G4UIdirectory* fVolumeDirectory = nullptr;

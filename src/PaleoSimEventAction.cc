@@ -27,7 +27,7 @@ void PaleoSimEventAction::BeginOfEventAction(const G4Event* event) {
     G4PrimaryParticle* particle = vertex->GetPrimary();
 
     while (particle) {
-      G4double energy = particle->GetTotalEnergy();
+      G4double energy = particle->GetKineticEnergy();
       G4ThreeVector p(particle->GetPx(), particle->GetPy(), particle->GetPz());
       primaryMomentum += p;
       primaryPosition += (vertexPos * energy);
@@ -56,7 +56,7 @@ void PaleoSimEventAction::BeginOfEventAction(const G4Event* event) {
 
       while (particle) {
         G4int pdg = particle->GetPDGcode();
-        G4double energy = particle->GetTotalEnergy();
+        G4double energy = particle->GetKineticEnergy();
         G4ThreeVector momentum(particle->GetPx(), particle->GetPy(), particle->GetPz());
 
         fOutputManager.PushPrimaryEventPDG(pdg);

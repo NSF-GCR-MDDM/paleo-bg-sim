@@ -117,7 +117,6 @@ int main(int argc, char** argv) {
   messenger->CheckForMacroErrors();
   messenger->ComputeCoordinates();
 
-
   // 5. Create detector, register, create output manager
   auto* detector       = new PaleoSimDetectorConstruction(*messenger);
   runManager->SetUserInitialization(detector);  

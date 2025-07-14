@@ -6,7 +6,7 @@
 PaleoSimGeometryMessenger::PaleoSimGeometryMessenger(PaleoSimMessenger* messenger)
     : fMessenger(messenger)
 {
-    VolumeDefinition defDefaults;  // uses default values from volume definition class
+    PaleoSimVolumeDefinition defDefaults;  // uses default values from volume definition class
 
     fVolumeDirectory = new G4UIdirectory("/volume/");
     fVolumeDirectory->SetGuidance("Holds properties of specific geometry volumes.");
@@ -110,6 +110,7 @@ PaleoSimGeometryMessenger::~PaleoSimGeometryMessenger() {
     delete fSetHalfHeightCmd;
     delete fSetCylinderAxisCmd;
 }
+
 void PaleoSimGeometryMessenger::SetNewValue(G4UIcommand* cmd, G4String val) {
     //NVolume properties
     if (cmd == fNewCmd) {
@@ -117,7 +118,7 @@ void PaleoSimGeometryMessenger::SetNewValue(G4UIcommand* cmd, G4String val) {
             G4Exception("PaleoSimGeometryMessenger", "DuplicateName", FatalException,
                         ("Volume with name already exists: " + val).c_str());
         }
-        fCurrentVolume = new VolumeDefinition();
+        fCurrentVolume = new PaleoSimVolumeDefinition();
         fCurrentVolume->name = val;
     }
     //Otherwise we need to make sure we have a volume defined!

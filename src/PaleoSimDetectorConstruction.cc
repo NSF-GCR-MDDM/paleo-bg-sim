@@ -40,7 +40,8 @@ G4VPhysicalVolume* PaleoSimDetectorConstruction::Construct() {
         }
 
         G4LogicalVolume* logical = new G4LogicalVolume(solid, mat, def->name);
-        fLogicalVolumes[def->name] = logical;
+        def->logical = logical;
+        def->solid = solid;
 
         // Visualization attributes
         G4VisAttributes* vis = new G4VisAttributes(G4Colour(def->rgb.x(), def->rgb.y(), def->rgb.z(), def->alpha));
@@ -50,10 +51,11 @@ G4VPhysicalVolume* PaleoSimDetectorConstruction::Construct() {
 
     // Place physical volumes
     for (const auto& def : volumes) {
-        //Get parrent volume--nullptr for world volume
+        //Get parent volume--nullptr for world volume
         G4LogicalVolume* mother = nullptr;
         if (def->parentName != "None") {
-            mother = fLogicalVolumes.at(def->parentName);
+            PaleoSimVolumeDefinition* parent = fMessenger.GetVolumeByName(def->parentName);
+            mother = parent->logical;
         }
 
         //Cylinders are all created relative to the z-axis. We want to
@@ -64,9 +66,9 @@ G4VPhysicalVolume* PaleoSimDetectorConstruction::Construct() {
         if (def->shape == "cylinder") {
             rot = new G4RotationMatrix(def->rotationMatrix); // apply user-specified rotation
         }
-        else {
+        else if (def->parentName != "None") {
             // Undo the rotation of the parent (if any)
-            VolumeDefinition* parent = fMessenger.GetVolumeByName(def->parentName);
+            PaleoSimVolumeDefinition* parent = fMessenger.GetVolumeByName(def->parentName);
             if (parent) {
                 G4RotationMatrix undo = parent->cumulativeRotationMatrix.inverse();
                 rot = new G4RotationMatrix(undo);
@@ -76,7 +78,7 @@ G4VPhysicalVolume* PaleoSimDetectorConstruction::Construct() {
         auto* placed = new G4PVPlacement(
             rot,
             def->relativePosition,
-            fLogicalVolumes.at(def->name),
+            def->logical,
             def->name,
             mother,
             false,
@@ -87,6 +89,7 @@ G4VPhysicalVolume* PaleoSimDetectorConstruction::Construct() {
         if (def->parentName == "None") {
             physWorld = placed;
         }
+        delete rot;
     }
 
     return physWorld;

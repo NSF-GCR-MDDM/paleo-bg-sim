@@ -93,51 +93,38 @@ PaleoSimMessenger::PaleoSimMessenger() {
     fSetCRYFilenameCmd->SetParameterName("fCRYFilename", true);
     fSetCRYFilenameCmd->SetDefaultValue(fCRYFilename);
 
-    //Disk Source Generator
-    fDiskSourceGeneratorDirectory = new G4UIdirectory("/generator/diskSource/");
-    fDiskSourceGeneratorDirectory->SetGuidance("Controls for Disk Source Generator");
+    //Volumetric Source Generator
+    fVolumetricSourceDirectory = new G4UIdirectory("/generator/VolumetricSource/");
+    fVolumetricSourceDirectory->SetGuidance("Controls for Volumetric Source Generator");
 
-    fSetDiskSourcePDGCodeCmd = new G4UIcmdWithAnInteger("/generator/diskSource/pdgCode",this);
-    fSetDiskSourcePDGCodeCmd->SetGuidance("Input PDG code of particle to throw");
-    fSetDiskSourcePDGCodeCmd->SetParameterName("fDiskSourcePDGCode", true);
-    fSetDiskSourcePDGCodeCmd->SetDefaultValue(fDiskSourcePDGCode);
-    fSetDiskSourceTypeCmd = new G4UIcmdWithAString("/generator/diskSource/setDiskSourceType",this);
-    fSetDiskSourceTypeCmd->SetGuidance("Set disk source type: 'mono' or 'hist'");
-    fSetDiskSourceTypeCmd->SetParameterName("fDiskSourceType", true);
-    fSetDiskSourceTypeCmd->SetDefaultValue(fDiskSourceType);
+    fSetVolumetricSourceVolumeNameCmd = new G4UIcmdWithAString("/generator/VolumetricSource/setVolumeName",this);
+    fSetVolumetricSourceVolumeNameCmd->SetGuidance("Set Volumetric source name, must be defined in geometry file");
+    fSetVolumetricSourceVolumeNameCmd->SetParameterName("fVolumetricSourceVolumeName", true);
+    fSetVolumetricSourceVolumeNameCmd->SetDefaultValue(fVolumetricSourceVolumeName);
+    fSetVolumetricSourcePDGCodeCmd = new G4UIcmdWithAnInteger("/generator/VolumetricSource/setPDGCode",this);
+    fSetVolumetricSourcePDGCodeCmd->SetGuidance("Input PDG code of particle to throw");
+    fSetVolumetricSourcePDGCodeCmd->SetParameterName("fVolumetricSourcePDGCode", true);
+    fSetVolumetricSourcePDGCodeCmd->SetDefaultValue(fVolumetricSourcePDGCode);
+    fSetVolumetricSourceTypeCmd = new G4UIcmdWithAString("/generator/VolumetricSource/setVolumetricSourceType",this);
+    fSetVolumetricSourceTypeCmd->SetGuidance("Set Volumetric source type: 'mono' or 'hist'");
+    fSetVolumetricSourceTypeCmd->SetParameterName("fVolumetricSourceType", true);
+    fSetVolumetricSourceTypeCmd->SetDefaultValue(fVolumetricSourceType);
     //Root 'hist'
-    fSetDiskSourceSpectrumFilenameCmd = new G4UIcmdWithAString("/generator/diskSource/setDiskSourceSpectrumFilename",this);
-    fSetDiskSourceSpectrumFilenameCmd->SetGuidance("Input name of root file with spectrum TH1D or TH1F and energy in MeV");
-    fSetDiskSourceSpectrumFilenameCmd->SetParameterName("fDiskSourceSpectrumFilename", true);
-    fSetDiskSourceSpectrumFilenameCmd->SetDefaultValue(fDiskSourceSpectrumFilename);
-    fSetDiskSourceSpectrumHistNameCmd = new G4UIcmdWithAString("/generator/diskSource/setDiskSourceSpectrumHistName",this);
-    fSetDiskSourceSpectrumHistNameCmd->SetGuidance("Input name of TH1D or TH1F with energy in MeV!");
-    fSetDiskSourceSpectrumHistNameCmd->SetParameterName("fDiskSourceSpectrumHistName", true);
-    fSetDiskSourceSpectrumHistNameCmd->SetDefaultValue(fDiskSourceSpectrumHistName);
+    fSetVolumetricSourceSpectrumFilenameCmd = new G4UIcmdWithAString("/generator/VolumetricSource/setVolumetricSourceSpectrumFilename",this);
+    fSetVolumetricSourceSpectrumFilenameCmd->SetGuidance("Input name of root file with spectrum TH1D or TH1F and energy in MeV");
+    fSetVolumetricSourceSpectrumFilenameCmd->SetParameterName("fVolumetricSourceSpectrumFilename", true);
+    fSetVolumetricSourceSpectrumFilenameCmd->SetDefaultValue(fVolumetricSourceSpectrumFilename);
+    fSetVolumetricSourceSpectrumHistNameCmd = new G4UIcmdWithAString("/generator/VolumetricSource/setVolumetricSourceSpectrumHistName",this);
+    fSetVolumetricSourceSpectrumHistNameCmd->SetGuidance("Input name of TH1D or TH1F with energy in MeV!");
+    fSetVolumetricSourceSpectrumHistNameCmd->SetParameterName("fVolumetricSourceSpectrumHistName", true);
+    fSetVolumetricSourceSpectrumHistNameCmd->SetDefaultValue(fVolumetricSourceSpectrumHistName);
     //'mono'
-    fSetDiskSourceMonoEnergyCmd = new G4UIcmdWithADoubleAndUnit("/generator/diskSource/setDiskSourceMonoEnergy", this);
-    fSetDiskSourceMonoEnergyCmd->SetGuidance("Set energy and unit of particles");
-    fSetDiskSourceMonoEnergyCmd->SetParameterName("fDiskSourceMonoEnergy", true);
-    fSetDiskSourceMonoEnergyCmd->SetRange("fDiskSourceMonoEnergy >= 0.");
-    fSetDiskSourceMonoEnergyCmd->SetDefaultUnit("MeV");
-    fSetDiskSourceMonoEnergyCmd->SetDefaultValue(fDiskSourceMonoEnergy);
-    //Geometric properties
-    fSetDiskSourceRadiusCmd = new G4UIcmdWithADoubleAndUnit("/generator/diskSource/setDiskSourceRadius", this);
-    fSetDiskSourceRadiusCmd->SetGuidance("Set radius of disk");
-    fSetDiskSourceRadiusCmd->SetParameterName("fDiskSourceRadius", true);
-    fSetDiskSourceRadiusCmd->SetRange("fDiskSourceRadius >= 0.");
-    fSetDiskSourceRadiusCmd->SetDefaultUnit("cm");
-    fSetDiskSourceRadiusCmd->SetDefaultValue(fDiskSourceRadius);
-    fSetDiskSourcePositionCmd = new G4UIcmdWith3VectorAndUnit("/generator/diskSource/setDiskSourcePositionCmd", this);
-    fSetDiskSourcePositionCmd->SetGuidance("Set position of center of disk");
-    fSetDiskSourcePositionCmd->SetDefaultUnit("cm");
-    fSetDiskSourcePositionCmd->SetDefaultValue(fDiskSourcePosition);
-    fSetDiskSourceAxisCmd = new G4UIcmdWith3Vector("/generator/diskSource/setDiskSourceAxis", this);
-    fSetDiskSourceAxisCmd->SetGuidance("Set axis of the disk.");
-    fSetDiskSourceAxisCmd->SetDefaultValue(fDiskSourceAxis);
-    fSetDiskSourceDirectionCmd = new G4UIcmdWith3Vector("/generator/diskSource/setDiskSourceDirection", this);
-    fSetDiskSourceDirectionCmd->SetGuidance("Set direction of particles emergying from the disk");
-    fSetDiskSourceDirectionCmd->SetDefaultValue(fDiskSourceDirection);
+    fSetVolumetricSourceMonoEnergyCmd = new G4UIcmdWithADoubleAndUnit("/generator/VolumetricSource/setVolumetricSourceMonoEnergy", this);
+    fSetVolumetricSourceMonoEnergyCmd->SetGuidance("Set energy and unit of particles");
+    fSetVolumetricSourceMonoEnergyCmd->SetParameterName("fVolumetricSourceMonoEnergy", true);
+    fSetVolumetricSourceMonoEnergyCmd->SetRange("fVolumetricSourceMonoEnergy >= 0.");
+    fSetVolumetricSourceMonoEnergyCmd->SetDefaultUnit("MeV");
+    fSetVolumetricSourceMonoEnergyCmd->SetDefaultValue(fVolumetricSourceMonoEnergy);
 }
 
 PaleoSimMessenger::~PaleoSimMessenger() {
@@ -173,26 +160,25 @@ PaleoSimMessenger::~PaleoSimMessenger() {
     //CRY
     delete fCRYGeneratorDirectory;
     delete fSetCRYFilenameCmd;
-    //Disk source
-    delete fDiskSourceGeneratorDirectory;
-    delete fSetDiskSourcePDGCodeCmd;
-    delete fSetDiskSourceTypeCmd;
-    delete fSetDiskSourceSpectrumFilenameCmd;
-    delete fSetDiskSourceSpectrumHistNameCmd;
-    delete fSetDiskSourceMonoEnergyCmd;
-    delete fSetDiskSourceRadiusCmd;
-    delete fSetDiskSourcePositionCmd;
-    delete fSetDiskSourceAxisCmd;
-    delete fSetDiskSourceDirectionCmd;
+    //Volumetric source
+    delete fVolumetricSourceDirectory;
+    delete fSetVolumetricSourceVolumeNameCmd;
+    delete fSetVolumetricSourcePDGCodeCmd;
+    delete fSetVolumetricSourceTypeCmd;
+    delete fSetVolumetricSourceSpectrumFilenameCmd;
+    delete fSetVolumetricSourceSpectrumHistNameCmd;
+    delete fSetVolumetricSourceMonoEnergyCmd;
 }
 
 void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
     //Geometry
     if (command == fSetGeometryMacroCmd) {
-		G4String messengerPath = __FILE__;
-		G4String sourceDir = messengerPath.substr(0, messengerPath.find_last_of("/"));
-		G4String geomPath = sourceDir + "/.." + newValue;
-		G4cout << "Opening geometry file from " << geomPath << "\n" << G4endl;
+        G4String geomPath;
+        G4String messengerPath = __FILE__;
+        G4String sourceDir = messengerPath.substr(0, messengerPath.find_last_of("/"));
+        geomPath = sourceDir + "/.." + newValue;
+        G4cout << "Opening geometry file from " << geomPath << "\n" << G4endl;
+
 
         std::ifstream file(geomPath);
         if (!file.good()) {
@@ -205,11 +191,11 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
     
     // Output
     else if (command == fSetPrimariesTreeStatusCmd) {
-        fPrimariesTreeStatus = newValue;
+        fPrimariesTreeStatus = fSetPrimariesTreeStatusCmd->GetNewBoolValue(newValue);
         G4cout << "Primaries tree output set in macro to: " << newValue << G4endl;
     }
-    else if (command == fSetMINTreeStatusCmd) {
-        fMINTreeStatus = newValue;
+    else if (command == fSetMINTreeStatusCmd) {    
+        fMINTreeStatus = fSetMINTreeStatusCmd->GetNewBoolValue(newValue);
         G4cout << "Muon-induced neutron tree output set in macro to: " << newValue << G4endl;
     }
     else if (command == fSetNeutronTallyTreeVolumeCmd) {
@@ -225,7 +211,7 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
         G4cout << "NPS set in macro to: " << newValue << G4endl;
     }
     else if (command == fSetVRMLStatusCmd) {
-        fVRMLStatus = newValue;
+        fVRMLStatus = fSetVRMLStatusCmd->GetNewBoolValue(newValue);
         G4cout << "VRML file will be written in current directory"<< G4endl;
     }
     
@@ -260,55 +246,46 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
                         "/generator/cry/setCRYFilename needs an argument");
         }
     }
-    //Disk source
-    else if (command == fSetDiskSourcePDGCodeCmd) {
-        fDiskSourcePDGCode = fSetDiskSourcePDGCodeCmd->GetNewIntValue(newValue);
-        G4cout << "Disk source PDG code set in macro to: " << newValue << G4endl;
+    //Volumetric source
+    else if (command == fSetVolumetricSourceVolumeNameCmd) {
+        fVolumetricSourceVolumeName = newValue;
+        G4cout << "Volumetric source volume set in macro to: " << newValue << G4endl;
     }
-    else if (command == fSetDiskSourceTypeCmd) {
-        fDiskSourceType = newValue;
-        if (fDiskSourceType.empty()) {
-            G4Exception("SetNewValue", "EmptyDiskSourceCmd", FatalException,
-                        "/generator/diskSource/setDiskSourceType needs an argument ('mono' or 'hist')");
+    else if (command == fSetVolumetricSourcePDGCodeCmd) {
+        fVolumetricSourcePDGCode = fSetVolumetricSourcePDGCodeCmd->GetNewIntValue(newValue);
+        G4cout << "Volumetric source PDG code set in macro to: " << newValue << G4endl;
+    }
+    else if (command == fSetVolumetricSourceTypeCmd) {
+        fVolumetricSourceType = newValue;
+        if (fVolumetricSourceType.empty()) {
+            G4Exception("SetNewValue", "EmptyVolumetricSourceCmd", FatalException,
+                        "/generator/VolumetricSource/setVolumetricSourceType needs an argument ('mono' or 'hist')");
         }
-        if (fDiskSourceType!="mono" && fDiskSourceType!="hist") {
-            G4Exception("SetNewValue", "BadDiskSourceType", FatalException,
-                        "/generator/diskSource/setDiskSourceType acceptable commands are 'mono' or 'hist'");
+        if (fVolumetricSourceType!="mono" && fVolumetricSourceType!="hist") {
+            G4Exception("SetNewValue", "BadVolumetricSourceType", FatalException,
+                        "/generator/VolumetricSource/setVolumetricSourceType acceptable commands are 'mono' or 'hist'");
         }
-        G4cout << "Disk source type set in macro to: " << newValue << G4endl;
+        G4cout << "Volumetric source type set in macro to: " << newValue << G4endl;
     }
-    else if (command == fSetDiskSourceSpectrumFilenameCmd) {
-        fDiskSourceSpectrumFilename = newValue;
-        if (fDiskSourceSpectrumFilename.empty()) {
-            G4Exception("SetNewValue", "EmtpyDiskSourceFilename", FatalException,
-                        "/generator/diskSource/setDiskSourceFilename needs an argument");
+    else if (command == fSetVolumetricSourceSpectrumFilenameCmd) {
+        fVolumetricSourceSpectrumFilename = newValue;
+        if (fVolumetricSourceSpectrumFilename.empty()) {
+            G4Exception("SetNewValue", "EmtpyVolumetricSourceFilename", FatalException,
+                        "/generator/VolumetricSource/setVolumetricSourceFilename needs an argument");
         }
-        G4cout << "Disk source filename set in macro to: " << newValue << G4endl;
+        G4cout << "Volumetric source filename set in macro to: " << newValue << G4endl;
     }
-    else if (command == fSetDiskSourceSpectrumHistNameCmd) {
-        fDiskSourceSpectrumHistName = newValue;
-        if (fDiskSourceSpectrumHistName.empty()) {
-            G4Exception("SetNewValue", "EmtpyDiskSourceHistName", FatalException,
-                        "/generator/diskSource/setDiskSourceHistName needs an argument");
+    else if (command == fSetVolumetricSourceSpectrumHistNameCmd) {
+        fVolumetricSourceSpectrumHistName = newValue;
+        if (fVolumetricSourceSpectrumHistName.empty()) {
+            G4Exception("SetNewValue", "EmtpyVolumetricSourceHistName", FatalException,
+                        "/generator/VolumetricSource/setVolumetricSourceHistName needs an argument");
         }
-        G4cout << "Disk source hist name set in macro to: " << newValue << G4endl;
+        G4cout << "Volumetric source hist name set in macro to: " << newValue << G4endl;
     }
-    else if (command == fSetDiskSourceMonoEnergyCmd) {
-        fDiskSourceMonoEnergy = fSetDiskSourceMonoEnergyCmd->GetNewDoubleValue(newValue);
-        G4cout << "Disk source energy set in macro to: " << newValue << G4endl;
-    }
-    else if (command == fSetDiskSourceRadiusCmd) {
-        fDiskSourceRadius = fSetDiskSourceRadiusCmd->GetNewDoubleValue(newValue);
-        G4cout << "Disk source radius set in macro to: " << newValue << G4endl;
-    }
-    else if (command == fSetDiskSourcePositionCmd) {
-        fDiskSourcePosition = fSetDiskSourcePositionCmd->GetNew3VectorValue(newValue);
-    }
-    else if (command == fSetDiskSourceAxisCmd) {
-        fDiskSourceAxis = fSetDiskSourceAxisCmd->GetNew3VectorValue(newValue);
-    }
-    else if (command == fSetDiskSourceDirectionCmd) {
-        fDiskSourceDirection = fSetDiskSourceDirectionCmd->GetNew3VectorValue(newValue);
+    else if (command == fSetVolumetricSourceMonoEnergyCmd) {
+        fVolumetricSourceMonoEnergy = fSetVolumetricSourceMonoEnergyCmd->GetNewDoubleValue(newValue);
+        G4cout << "Volumetric source energy set in macro to: " << newValue << G4endl;
     }
 }
 
@@ -367,7 +344,7 @@ void PaleoSimMessenger::CheckForMacroErrors() {
                     "Multiple root volumes found. Only one world volume is allowed.");
     }
 
-    //Check parent volumes actualyl exist, and not set as its own parent
+    //Check parent volumes actually exist, and not set as its own parent
     for (const auto& volume : fVolumes) {
         const G4String& parent = volume->parentName;
 
@@ -396,7 +373,7 @@ void PaleoSimMessenger::CheckForMacroErrors() {
     }
 }
 
-//Relative coordinates are pretty insane. We supply them in absolute coordinate
+//Relative coordinates are pretty insane to deal with. We supply them in absolute coordinate
 //in our geometry file because that makes sense. This function converts from
 //supplied absolute coordinates to relative ones, continuing up the parent
 //chain until we get the world, which cannot have a rotation/translation
@@ -413,36 +390,36 @@ void PaleoSimMessenger::ComputeCoordinates() {
         ComputeRelativeCoordinatesRecursive(vol);
     }
 
-    //Compute rotations because of the whole cylinder definition scheme in geant4
+    //Compute rotations because of the whole awkward cylinder definition scheme in geant4
     for (auto* vol : fVolumes) {
         ComputeCumulativeRotationsRecursive(vol);
     }
 }
 
-void PaleoSimMessenger::ComputeAbsoluteCoordinatesRecursive(VolumeDefinition* vol) {
+void PaleoSimMessenger::ComputeAbsoluteCoordinatesRecursive(PaleoSimVolumeDefinition* vol) {
     if (vol->parentName =="None" || vol->positionType =="absolute") return;
     if (vol->absolutePosition != G4ThreeVector(0, 0, 0)) return;
 
-    VolumeDefinition* parent = GetVolumeByName(vol->parentName);    
+    PaleoSimVolumeDefinition* parent = GetVolumeByName(vol->parentName);    
     
     ComputeAbsoluteCoordinatesRecursive(parent); 
 
     vol->absolutePosition = parent->absolutePosition + vol->relativePosition;
 }
 
-void PaleoSimMessenger::ComputeRelativeCoordinatesRecursive(VolumeDefinition* vol) {
+void PaleoSimMessenger::ComputeRelativeCoordinatesRecursive(PaleoSimVolumeDefinition* vol) {
     if (vol->parentName == "None") return;
     if (vol->positionType == "relative") return;
 
-    VolumeDefinition* parent = GetVolumeByName(vol->parentName);
+    PaleoSimVolumeDefinition* parent = GetVolumeByName(vol->parentName);
 
     vol->relativePosition = vol->absolutePosition - parent->absolutePosition;
 }
 
-void PaleoSimMessenger::ComputeCumulativeRotationsRecursive(VolumeDefinition* vol) {
+void PaleoSimMessenger::ComputeCumulativeRotationsRecursive(PaleoSimVolumeDefinition* vol) {
     if (vol->parentName == "None") return;  
 
-    VolumeDefinition* parent = GetVolumeByName(vol->parentName);
+    PaleoSimVolumeDefinition* parent = GetVolumeByName(vol->parentName);
     ComputeCumulativeRotationsRecursive(parent); // ensure parent's rotation is set
 
     vol->cumulativeRotationMatrix = parent->cumulativeRotationMatrix;

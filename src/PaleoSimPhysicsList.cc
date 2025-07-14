@@ -34,8 +34,8 @@ PaleoSimPhysicsList::PaleoSimPhysicsList() {
   RegisterPhysics(new G4DecayPhysics());
 
   // Hadronic physics
-  RegisterPhysics(new G4HadronPhysicsQGSP_BERT_HP());
-  //RegisterPhysics(new G4HadronPhysicsQGSP_BIC_HP());
+  //RegisterPhysics(new G4HadronPhysicsQGSP_BERT_HP());
+  RegisterPhysics(new G4HadronPhysicsQGSP_BIC_HP()); //Pranav's study showed this may be more accurate, but slower
   RegisterPhysics(new G4HadronElasticPhysicsHP());
   RegisterPhysics(new G4NeutronTrackingCut());
 
