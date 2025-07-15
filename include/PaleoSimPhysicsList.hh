@@ -8,6 +8,7 @@ public:
     PaleoSimPhysicsList();
     ~PaleoSimPhysicsList() override = default;
     
+    void ConstructProcess() override;
 };
 
 #endif

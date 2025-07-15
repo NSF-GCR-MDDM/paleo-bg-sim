@@ -68,15 +68,16 @@ PaleoSimPhysicsList::PaleoSimPhysicsList() {
 
       targetRegion->SetProductionCuts(cuts);
   }
+}
 
-  // Add muon-nuclear process
-  auto* muNuclearModel = new G4MuonVDNuclearModel(); // or G4MuonNuclearInteractionModel
-  auto* muNuclearProc  = new G4MuonNuclearProcess(); 
-  muNuclearProc->RegisterMe(muNuclearModel);
+void PaleoSimPhysicsList::ConstructProcess() {
+  G4VModularPhysicsList::ConstructProcess(); 
 
-  G4ProcessManager* muPlusPM  = G4MuonPlus::MuonPlus()->GetProcessManager();
-  G4ProcessManager* muMinusPM = G4MuonMinus::MuonMinus()->GetProcessManager();
+  // Custom muon nuclear process
+  auto* model = new G4MuonVDNuclearModel(); // or G4MuonNuclearInteractionModel
+  auto* proc  = new G4MuonNuclearProcess();
+  proc->RegisterMe(model);
 
-  muPlusPM->AddDiscreteProcess(muNuclearProc);
-  muMinusPM->AddDiscreteProcess(muNuclearProc);
+  G4MuonPlus::MuonPlus()->GetProcessManager()->AddDiscreteProcess(proc);
+  G4MuonMinus::MuonMinus()->GetProcessManager()->AddDiscreteProcess(proc);
 }
