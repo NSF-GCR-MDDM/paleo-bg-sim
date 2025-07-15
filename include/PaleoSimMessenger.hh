@@ -72,6 +72,16 @@ public:
     void SetVolumetricSourceSpectrumFilename(G4String val) { fVolumetricSourceSpectrumFilename = val; };
     void SetVolumetricSourceSpectrumHistName(G4String val) { fVolumetricSourceSpectrumHistName = val; };
     void SetVolumetricSourceMonoEnergy(double val) { fVolumetricSourceMonoEnergy = val;};
+    //Flat disk source generator
+    void SetDiskSourcePDGCode(int val) { fDiskSourcePDGCode = val; };
+    void SetDiskSourceType(G4String val) { fDiskSourceType = val; };
+    void SetDiskSourceSpectrumFilename(G4String val) { fDiskSourceSpectrumFilename = val; };
+    void SetDiskSourceSpectrumHistName(G4String val) { fDiskSourceSpectrumHistName = val; };
+    void SetDiskSourceMonoEnergy(double val) { fDiskSourceMonoEnergy = val;};
+    void SetDiskSourceRadius(double val) { fDiskSourceRadius = val;};
+    void SetDiskSourcePosition(G4ThreeVector val) { fDiskSourcePosition = val;};
+    void SetDiskSourceAxis(G4ThreeVector val) { fDiskSourceAxis = val;};
+    void SetDiskSourceDirection(G4ThreeVector val) { fDiskSourceDirection = val;};
     
     //Geometric calculations
     void ComputeCoordinates();
@@ -138,7 +148,8 @@ private:
           "meiHimeMuonGenerator", //Mei & Hime muon generator, with TF1s
           "muteGenerator", //Mute, samples from 2D histogram of muon energy and thetas (root file)
           "CRYGenerator", //Samples root file containing list of events
-          "volumetricSource" //Samples particles from a flat Volumetric with supplied direction and spectrum 
+          "volumetricSource", //Samples particles from a flat Volumetric with supplied direction and spectrum 
+          "diskSource"
       };
     
     G4String fSourceType = "meiHimeMuonGenerator";
@@ -179,6 +190,27 @@ private:
     G4String fVolumetricSourceSpectrumFilename = "";
     G4String fVolumetricSourceSpectrumHistName = "";
     G4double fVolumetricSourceMonoEnergy = 1.*MeV;
+    //
+    //Disk source
+    G4UIdirectory* fDiskSourceGeneratorDirectory = nullptr;
+    G4UIcmdWithAnInteger* fSetDiskSourcePDGCodeCmd = nullptr;
+    G4UIcmdWithAString* fSetDiskSourceTypeCmd = nullptr;
+    G4UIcmdWithAString* fSetDiskSourceSpectrumFilenameCmd = nullptr;
+    G4UIcmdWithAString* fSetDiskSourceSpectrumHistNameCmd = nullptr;
+    G4UIcmdWithADoubleAndUnit* fSetDiskSourceMonoEnergyCmd = nullptr;
+    G4UIcmdWithADoubleAndUnit* fSetDiskSourceRadiusCmd = nullptr;
+    G4UIcmdWith3VectorAndUnit* fSetDiskSourcePositionCmd = nullptr;
+    G4UIcmdWith3Vector* fSetDiskSourceAxisCmd = nullptr;
+    G4UIcmdWith3Vector* fSetDiskSourceDirectionCmd = nullptr;
+    G4int fDiskSourcePDGCode = 2112;
+    G4String fDiskSourceType = "mono";
+    G4String fDiskSourceSpectrumFilename = "";
+    G4String fDiskSourceSpectrumHistName = "";
+    G4double fDiskSourceMonoEnergy = 1.*MeV;
+    G4double fDiskSourceRadius = 1.*m;
+    G4ThreeVector fDiskSourcePosition = G4ThreeVector(0,0,0);
+    G4ThreeVector fDiskSourceAxis = G4ThreeVector(0,0,1);
+    G4ThreeVector fDiskSourceDirection = G4ThreeVector(0,0,1);
 };
 
 #endif

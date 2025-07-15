@@ -162,9 +162,9 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
                 fOutputManager.PushRecoilEventEnergy(energy);
                 fOutputManager.PushRecoilEventTime(secTime);
                 fOutputManager.PushRecoilEventCode(mtCode);
-                //fOutputManager.PushRecoilEventX(position.x());
-                //fOutputManager.PushRecoilEventY(position.y());
-                //fOutputManager.PushRecoilEventZ(position.z());
+                fOutputManager.PushRecoilEventX(position.x());
+                fOutputManager.PushRecoilEventY(position.y());
+                fOutputManager.PushRecoilEventZ(position.z());
                 //G4ThreeVector postStepPos = stepPoint->GetPosition();
                 //fOutputManager.PushRecoilEventX(postStepPos.x());
                 //fOutputManager.PushRecoilEventY(postStepPos.y());

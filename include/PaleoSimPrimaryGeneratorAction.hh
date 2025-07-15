@@ -77,6 +77,16 @@ private:
     PaleoSimVolumeDefinition* fSourceVolumeDefinition = nullptr;
     void InitializeVolumetricSourceGenerator();
     void GenerateVolumetricSourcePrimaries(G4Event*);
+    //Disk source generator
+    TFile* diskSourceSpectrumFile = nullptr;
+    bool diskSourceSpectrumFileLoaded = false;
+    TH1D* diskSourceSpectrumHist = nullptr;
+    int diskSourcePDGCode;
+    G4ThreeVector diskSourcePosition;
+    G4String diskSourceType;
+    void InitializeDiskSourceGenerator();
+    void GenerateDiskSourcePrimaries(G4Event*);
+    G4ThreeVector SamplePointOnDisk(double radius,const G4ThreeVector& position, const G4ThreeVector& axis);
 };
 
 #endif

@@ -50,6 +50,9 @@ PaleoSimPrimaryGeneratorAction::PaleoSimPrimaryGeneratorAction(PaleoSimMessenger
   else if (sourceType == "volumetricSource") {
     InitializeVolumetricSourceGenerator();
   }
+  else if (sourceType == "diskSource") {
+    InitializeDiskSourceGenerator();
+  }
   else {
     G4Exception("PaleoSimPrimaryGeneratorAction::PaleoSimPrimaryGeneratorAction", "001", FatalException,
                 ("Source not valid: " + sourceType).c_str());
@@ -64,6 +67,10 @@ PaleoSimPrimaryGeneratorAction::~PaleoSimPrimaryGeneratorAction() {
     if (fVolumetricSourceSpectrumFileLoaded) {
       fVolumetricSourceSpectrumFile->Close();
       delete fVolumetricSourceSpectrumFile;
+    }
+    if (diskSourceSpectrumFileLoaded) {
+      diskSourceSpectrumFile->Close();
+      delete diskSourceSpectrumFile;
     }
 }
 
@@ -87,6 +94,10 @@ void PaleoSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
   //Volumetric source
   else if (sourceType == "volumetricSource") {
     GenerateVolumetricSourcePrimaries(anEvent);
+  }
+  //Disk source
+  else if (sourceType == "diskSource") {
+    GenerateDiskSourcePrimaries(anEvent);
   }
   else {
     G4Exception("PaleoSimPrimaryGeneratorAction::GeneratePrimaries", "GeneratePrimaries001", FatalException,
@@ -429,6 +440,74 @@ void PaleoSimPrimaryGeneratorAction::GenerateVolumetricSourcePrimaries(G4Event* 
   vertex->SetPrimary(primary);
   anEvent->AddPrimaryVertex(vertex);
 }
+///////////////
+//Disk source//
+///////////////
+
+///////////////////////////
+// Disk source generator //
+///////////////////////////
+void PaleoSimPrimaryGeneratorAction::InitializeDiskSourceGenerator() {
+  //Try to get histogram if requested
+  if (fMessenger.GetDiskSourceType() == "hist") {
+    //Load file
+    G4String filename = fMessenger.GetDiskSourceSpectrumFilename();
+  
+    //Check and open root file
+    std::ifstream testFile(filename);
+    if (!testFile.good()) {
+      G4Exception("InitializeDiskSourceGenerator", "DISK001", FatalException,
+                  ("Cannot open disk source spectrum file: " + filename).c_str());
+    }
+    testFile.close();
+    diskSourceSpectrumFile = TFile::Open(filename);
+    if (!diskSourceSpectrumFile || diskSourceSpectrumFile->IsZombie()) {
+      G4Exception("InitializeDiskSourceGenerator", "DISK002", FatalException,
+                  ("Failed to open Disk source file: " + filename).c_str());
+    }
+  
+    //Read in hist
+    G4String histName = fMessenger.GetDiskSourceSpectrumHistName();
+    diskSourceSpectrumHist = dynamic_cast<TH1D*>(diskSourceSpectrumFile->Get(histName));
+    if (!diskSourceSpectrumHist) {
+      G4Exception("InitializeDiskSourceGenerator", "DISK003", FatalException,
+                  ("Hist '" + histName + "' was not found in ROOT file.").c_str());
+    }
+  }
+}
+
+void PaleoSimPrimaryGeneratorAction::GenerateDiskSourcePrimaries(G4Event* anEvent) {
+
+  //Set particle type
+  int pdgCode = fMessenger.GetDiskSourcePDGCode();
+  G4ParticleDefinition* particleDef = G4ParticleTable::GetParticleTable()->FindParticle(pdgCode);
+  if (!particleDef) {
+    G4String msg = "Unknown PDG code in Disk Source Generator: " + std::to_string(pdgCode);
+    G4Exception("PaleoSimPrimaryGeneratorAction::GenerateDiskSourcePrimaries",
+                "DiskSource001", FatalException, msg.c_str());
+  }
+  fGPS->SetParticleDefinition(particleDef);
+
+  //Sample random position on disk, set position
+  G4ThreeVector pos = SamplePointOnDisk(fMessenger.GetDiskSourceRadius(),fMessenger.GetDiskSourcePosition(),fMessenger.GetDiskSourceAxis());
+  fGPS->GetCurrentSource()->GetPosDist()->SetCentreCoords(pos);
+
+  //Set energy
+  double energy=0;
+  if (fMessenger.GetDiskSourceType()=="hist") {
+    energy = diskSourceSpectrumHist->GetRandom()*MeV;
+  }
+  else {
+    energy = fMessenger.GetDiskSourceMonoEnergy();
+  }
+  fGPS->GetCurrentSource()->GetEneDist()->SetMonoEnergy(energy);
+  
+  fGPS->GetCurrentSource()->GetAngDist()->SetParticleMomentumDirection(fMessenger.GetDiskSourceDirection());
+
+  //Generate vertex
+  fGPS->GeneratePrimaryVertex(anEvent);
+}
+
 
 //////////////////
 //Other function//
@@ -499,7 +578,7 @@ G4bool PaleoSimPrimaryGeneratorAction::IsWithinTopSurface(const G4ThreeVector& p
   return false;
 }
 
-//Sample point on Volumetric via MC.  
+//Sample point in volume via MC.  
 G4ThreeVector PaleoSimPrimaryGeneratorAction::SamplePointInVolume(const PaleoSimVolumeDefinition* def,const G4ThreeVector& minBounds,const G4ThreeVector& maxBounds) {
   G4ThreeVector sampled_point;
   int maxTries = 10000;
@@ -524,4 +603,21 @@ G4ThreeVector PaleoSimPrimaryGeneratorAction::SamplePointInVolume(const PaleoSim
   
   //Shouldn't be reached
   return G4ThreeVector();
+}
+
+//Sample point on disk via MC.
+G4ThreeVector PaleoSimPrimaryGeneratorAction::SamplePointOnDisk(double radius, const G4ThreeVector& center, const G4ThreeVector& axis) {
+    G4ThreeVector n = axis.unit();
+    //If almost completely oriented along z-axis, use z-axis
+    G4ThreeVector temp = (std::fabs(n.z()) < 0.99999) ? G4ThreeVector(0,0,1) : G4ThreeVector(1,0,0);
+    G4ThreeVector u = n.cross(temp).unit();
+    G4ThreeVector v = n.cross(u).unit();
+    
+    double r = radius * std::sqrt(G4UniformRand());
+    double theta = 2 * CLHEP::pi * G4UniformRand();
+    double x_local = r * std::cos(theta);
+    double y_local = r * std::sin(theta);
+
+    // Transform to global coordinates
+    return center + x_local * u + y_local * v;
 }

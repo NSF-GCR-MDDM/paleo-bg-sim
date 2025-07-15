@@ -125,6 +125,52 @@ PaleoSimMessenger::PaleoSimMessenger() {
     fSetVolumetricSourceMonoEnergyCmd->SetRange("fVolumetricSourceMonoEnergy >= 0.");
     fSetVolumetricSourceMonoEnergyCmd->SetDefaultUnit("MeV");
     fSetVolumetricSourceMonoEnergyCmd->SetDefaultValue(fVolumetricSourceMonoEnergy);
+
+    //Disk Source Generator
+    fDiskSourceGeneratorDirectory = new G4UIdirectory("/generator/diskSource/");
+    fDiskSourceGeneratorDirectory->SetGuidance("Controls for Disk Source Generator");
+    //
+    fSetDiskSourcePDGCodeCmd = new G4UIcmdWithAnInteger("/generator/diskSource/pdgCode",this);
+    fSetDiskSourcePDGCodeCmd->SetGuidance("Input PDG code of particle to throw");
+    fSetDiskSourcePDGCodeCmd->SetParameterName("fDiskSourcePDGCode", true);
+    fSetDiskSourcePDGCodeCmd->SetDefaultValue(fDiskSourcePDGCode);
+    fSetDiskSourceTypeCmd = new G4UIcmdWithAString("/generator/diskSource/setDiskSourceType",this);
+    fSetDiskSourceTypeCmd->SetGuidance("Set disk source type: 'mono' or 'hist'");
+    fSetDiskSourceTypeCmd->SetParameterName("fDiskSourceType", true);
+    fSetDiskSourceTypeCmd->SetDefaultValue(fDiskSourceType);
+    //Root 'hist'
+    fSetDiskSourceSpectrumFilenameCmd = new G4UIcmdWithAString("/generator/diskSource/setDiskSourceSpectrumFilename",this);
+    fSetDiskSourceSpectrumFilenameCmd->SetGuidance("Input name of root file with spectrum TH1D or TH1F and energy in MeV");
+    fSetDiskSourceSpectrumFilenameCmd->SetParameterName("fDiskSourceSpectrumFilename", true);
+    fSetDiskSourceSpectrumFilenameCmd->SetDefaultValue(fDiskSourceSpectrumFilename);
+    fSetDiskSourceSpectrumHistNameCmd = new G4UIcmdWithAString("/generator/diskSource/setDiskSourceSpectrumHistName",this);
+    fSetDiskSourceSpectrumHistNameCmd->SetGuidance("Input name of TH1D or TH1F with energy in MeV!");
+    fSetDiskSourceSpectrumHistNameCmd->SetParameterName("fDiskSourceSpectrumHistName", true);
+    fSetDiskSourceSpectrumHistNameCmd->SetDefaultValue(fDiskSourceSpectrumHistName);
+    //'mono'
+    fSetDiskSourceMonoEnergyCmd = new G4UIcmdWithADoubleAndUnit("/generator/diskSource/setDiskSourceMonoEnergy", this);
+    fSetDiskSourceMonoEnergyCmd->SetGuidance("Set energy and unit of particles");
+    fSetDiskSourceMonoEnergyCmd->SetParameterName("fDiskSourceMonoEnergy", true);
+    fSetDiskSourceMonoEnergyCmd->SetRange("fDiskSourceMonoEnergy >= 0.");
+    fSetDiskSourceMonoEnergyCmd->SetDefaultUnit("MeV");
+    fSetDiskSourceMonoEnergyCmd->SetDefaultValue(fDiskSourceMonoEnergy);
+    //Geometric properties
+    fSetDiskSourceRadiusCmd = new G4UIcmdWithADoubleAndUnit("/generator/diskSource/setDiskSourceRadius", this);
+    fSetDiskSourceRadiusCmd->SetGuidance("Set radius of disk");
+    fSetDiskSourceRadiusCmd->SetParameterName("fDiskSourceRadius", true);
+    fSetDiskSourceRadiusCmd->SetRange("fDiskSourceRadius >= 0.");
+    fSetDiskSourceRadiusCmd->SetDefaultUnit("cm");
+    fSetDiskSourceRadiusCmd->SetDefaultValue(fDiskSourceRadius);
+    fSetDiskSourcePositionCmd = new G4UIcmdWith3VectorAndUnit("/generator/diskSource/setDiskSourcePositionCmd", this);
+    fSetDiskSourcePositionCmd->SetGuidance("Set position of center of disk");
+    fSetDiskSourcePositionCmd->SetDefaultUnit("cm");
+    fSetDiskSourcePositionCmd->SetDefaultValue(fDiskSourcePosition);
+    fSetDiskSourceAxisCmd = new G4UIcmdWith3Vector("/generator/diskSource/setDiskSourceAxis", this);
+    fSetDiskSourceAxisCmd->SetGuidance("Set axis of the disk.");
+    fSetDiskSourceAxisCmd->SetDefaultValue(fDiskSourceAxis);
+    fSetDiskSourceDirectionCmd = new G4UIcmdWith3Vector("/generator/diskSource/setDiskSourceDirection", this);
+    fSetDiskSourceDirectionCmd->SetGuidance("Set direction of particles emergying from the disk");
+    fSetDiskSourceDirectionCmd->SetDefaultValue(fDiskSourceDirection);
 }
 
 PaleoSimMessenger::~PaleoSimMessenger() {
@@ -168,6 +214,18 @@ PaleoSimMessenger::~PaleoSimMessenger() {
     delete fSetVolumetricSourceSpectrumFilenameCmd;
     delete fSetVolumetricSourceSpectrumHistNameCmd;
     delete fSetVolumetricSourceMonoEnergyCmd;
+    //
+    //Disk source
+    delete fDiskSourceGeneratorDirectory;
+    delete fSetDiskSourcePDGCodeCmd;
+    delete fSetDiskSourceTypeCmd;
+    delete fSetDiskSourceSpectrumFilenameCmd;
+    delete fSetDiskSourceSpectrumHistNameCmd;
+    delete fSetDiskSourceMonoEnergyCmd;
+    delete fSetDiskSourceRadiusCmd;
+    delete fSetDiskSourcePositionCmd;
+    delete fSetDiskSourceAxisCmd;
+    delete fSetDiskSourceDirectionCmd;
 }
 
 void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
@@ -286,6 +344,56 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
     else if (command == fSetVolumetricSourceMonoEnergyCmd) {
         fVolumetricSourceMonoEnergy = fSetVolumetricSourceMonoEnergyCmd->GetNewDoubleValue(newValue);
         G4cout << "Volumetric source energy set in macro to: " << newValue << G4endl;
+    }
+    //Disk source
+    else if (command == fSetDiskSourcePDGCodeCmd) {
+        fDiskSourcePDGCode = fSetDiskSourcePDGCodeCmd->GetNewIntValue(newValue);
+        G4cout << "Disk source PDG code set in macro to: " << newValue << G4endl;
+    }
+    else if (command == fSetDiskSourceTypeCmd) {
+        fDiskSourceType = newValue;
+        if (fDiskSourceType.empty()) {
+            G4Exception("SetNewValue", "EmptyDiskSourceCmd", FatalException,
+                        "/generator/diskSource/setDiskSourceType needs an argument ('mono' or 'hist')");
+        }
+        if (fDiskSourceType!="mono" && fDiskSourceType!="hist") {
+            G4Exception("SetNewValue", "BadDiskSourceType", FatalException,
+                        "/generator/diskSource/setDiskSourceType acceptable commands are 'mono' or 'hist'");
+        }
+        G4cout << "Disk source type set in macro to: " << newValue << G4endl;
+    }
+    else if (command == fSetDiskSourceSpectrumFilenameCmd) {
+        fDiskSourceSpectrumFilename = newValue;
+        if (fDiskSourceSpectrumFilename.empty()) {
+            G4Exception("SetNewValue", "EmtpyDiskSourceFilename", FatalException,
+                        "/generator/diskSource/setDiskSourceFilename needs an argument");
+        }
+        G4cout << "Disk source filename set in macro to: " << newValue << G4endl;
+    }
+    else if (command == fSetDiskSourceSpectrumHistNameCmd) {
+        fDiskSourceSpectrumHistName = newValue;
+        if (fDiskSourceSpectrumHistName.empty()) {
+            G4Exception("SetNewValue", "EmtpyDiskSourceHistName", FatalException,
+                        "/generator/diskSource/setDiskSourceHistName needs an argument");
+        }
+        G4cout << "Disk source hist name set in macro to: " << newValue << G4endl;
+    }
+    else if (command == fSetDiskSourceMonoEnergyCmd) {
+        fDiskSourceMonoEnergy = fSetDiskSourceMonoEnergyCmd->GetNewDoubleValue(newValue);
+        G4cout << "Disk source energy set in macro to: " << newValue << G4endl;
+    }
+    else if (command == fSetDiskSourceRadiusCmd) {
+        fDiskSourceRadius = fSetDiskSourceRadiusCmd->GetNewDoubleValue(newValue);
+        G4cout << "Disk source radius set in macro to: " << newValue << G4endl;
+    }
+    else if (command == fSetDiskSourcePositionCmd) {
+        fDiskSourcePosition = fSetDiskSourcePositionCmd->GetNew3VectorValue(newValue);
+    }
+    else if (command == fSetDiskSourceAxisCmd) {
+        fDiskSourceAxis = fSetDiskSourceAxisCmd->GetNew3VectorValue(newValue);
+    }
+    else if (command == fSetDiskSourceDirectionCmd) {
+        fDiskSourceDirection = fSetDiskSourceDirectionCmd->GetNew3VectorValue(newValue);
     }
 }
 
