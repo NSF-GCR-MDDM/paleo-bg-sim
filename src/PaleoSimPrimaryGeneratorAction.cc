@@ -486,11 +486,9 @@ void PaleoSimPrimaryGeneratorAction::GenerateDiskSourcePrimaries(G4Event* anEven
     G4Exception("PaleoSimPrimaryGeneratorAction::GenerateDiskSourcePrimaries",
                 "DiskSource001", FatalException, msg.c_str());
   }
-  fGPS->SetParticleDefinition(particleDef);
 
   //Sample random position on disk, set position
   G4ThreeVector pos = SamplePointOnDisk(fMessenger.GetDiskSourceRadius(),fMessenger.GetDiskSourcePosition(),fMessenger.GetDiskSourceAxis());
-  fGPS->GetCurrentSource()->GetPosDist()->SetCentreCoords(pos);
 
   //Set energy
   double energy=0;
@@ -500,12 +498,26 @@ void PaleoSimPrimaryGeneratorAction::GenerateDiskSourcePrimaries(G4Event* anEven
   else {
     energy = fMessenger.GetDiskSourceMonoEnergy();
   }
-  fGPS->GetCurrentSource()->GetEneDist()->SetMonoEnergy(energy);
-  
-  fGPS->GetCurrentSource()->GetAngDist()->SetParticleMomentumDirection(fMessenger.GetDiskSourceDirection());
+
+  //Set direction
+  G4ThreeVector direction = fMessenger.GetDiskSourceDirection();
+  direction = direction.unit();
+
+  //Compute momentum
+  double mass = particleDef->GetPDGMass();
+  double totalEnergy = energy + mass;
+  double momentumMag = std::sqrt(totalEnergy*totalEnergy - mass*mass);
+  G4ThreeVector momentum = momentumMag * direction;
 
   //Generate vertex
-  fGPS->GeneratePrimaryVertex(anEvent);
+  G4PrimaryParticle* particle = new G4PrimaryParticle(particleDef, momentum.x(), momentum.y(), momentum.z());
+  particle->SetMass(mass);
+  particle->SetKineticEnergy(energy);
+
+  G4PrimaryVertex* vertex = new G4PrimaryVertex(pos, 0.0); // time = 0
+  vertex->SetPrimary(particle);
+
+  anEvent->AddPrimaryVertex(vertex);
 }
 
 

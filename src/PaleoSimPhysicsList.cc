@@ -23,6 +23,12 @@
 #include "G4ProductionCuts.hh"
 #include "G4LogicalVolumeStore.hh"
 
+// Muon nuclear interaction
+#include "G4MuonNuclearProcess.hh"
+#include "G4MuonVDNuclearModel.hh"
+#include "G4MuonMinus.hh"
+#include "G4MuonPlus.hh"
+
 PaleoSimPhysicsList::PaleoSimPhysicsList() {
   SetVerboseLevel(0);
 
@@ -62,4 +68,15 @@ PaleoSimPhysicsList::PaleoSimPhysicsList() {
 
       targetRegion->SetProductionCuts(cuts);
   }
+
+  // Add muon-nuclear process
+  auto* muNuclearModel = new G4MuonVDNuclearModel(); // or G4MuonNuclearInteractionModel
+  auto* muNuclearProc  = new G4MuonNuclearProcess(); 
+  muNuclearProc->RegisterMe(muNuclearModel);
+
+  G4ProcessManager* muPlusPM  = G4MuonPlus::MuonPlus()->GetProcessManager();
+  G4ProcessManager* muMinusPM = G4MuonMinus::MuonMinus()->GetProcessManager();
+
+  muPlusPM->AddDiscreteProcess(muNuclearProc);
+  muMinusPM->AddDiscreteProcess(muNuclearProc);
 }

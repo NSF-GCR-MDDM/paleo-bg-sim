@@ -73,6 +73,15 @@ public:
     void SetVolumetricSourceSpectrumHistName(G4String val) { fVolumetricSourceSpectrumHistName = val; };
     void SetVolumetricSourceMonoEnergy(double val) { fVolumetricSourceMonoEnergy = val;};
     //Flat disk source generator
+    G4int GetDiskSourcePDGCode() const { return fDiskSourcePDGCode; };
+    G4String GetDiskSourceType() const { return fDiskSourceType; };
+    G4String GetDiskSourceSpectrumFilename() const { return fDiskSourceSpectrumFilename; };
+    G4String GetDiskSourceSpectrumHistName() const { return fDiskSourceSpectrumHistName; };
+    G4double GetDiskSourceMonoEnergy() const { return fDiskSourceMonoEnergy; };
+    G4double GetDiskSourceRadius() const { return fDiskSourceRadius; };
+    G4ThreeVector GetDiskSourcePosition() const { return fDiskSourcePosition; };
+    G4ThreeVector GetDiskSourceAxis() const { return fDiskSourceAxis; };
+    G4ThreeVector GetDiskSourceDirection() const { return fDiskSourceDirection; };
     void SetDiskSourcePDGCode(int val) { fDiskSourcePDGCode = val; };
     void SetDiskSourceType(G4String val) { fDiskSourceType = val; };
     void SetDiskSourceSpectrumFilename(G4String val) { fDiskSourceSpectrumFilename = val; };
