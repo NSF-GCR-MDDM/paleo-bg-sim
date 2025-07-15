@@ -40,8 +40,10 @@ G4VPhysicalVolume* PaleoSimDetectorConstruction::Construct() {
         }
 
         G4LogicalVolume* logical = new G4LogicalVolume(solid, mat, def->name);
-        def->logical = logical;
+        fLogicalVolumes[def->name] = logical;
+
         def->solid = solid;
+        def->logical = logical;
 
         // Visualization attributes
         G4VisAttributes* vis = new G4VisAttributes(G4Colour(def->rgb.x(), def->rgb.y(), def->rgb.z(), def->alpha));
@@ -51,11 +53,10 @@ G4VPhysicalVolume* PaleoSimDetectorConstruction::Construct() {
 
     // Place physical volumes
     for (const auto& def : volumes) {
-        //Get parent volume--nullptr for world volume
+        //Get parrent volume--nullptr for world volume
         G4LogicalVolume* mother = nullptr;
         if (def->parentName != "None") {
-            PaleoSimVolumeDefinition* parent = fMessenger.GetVolumeByName(def->parentName);
-            mother = parent->logical;
+            mother = fLogicalVolumes.at(def->parentName);
         }
 
         //Cylinders are all created relative to the z-axis. We want to
@@ -66,7 +67,7 @@ G4VPhysicalVolume* PaleoSimDetectorConstruction::Construct() {
         if (def->shape == "cylinder") {
             rot = new G4RotationMatrix(def->rotationMatrix); // apply user-specified rotation
         }
-        else if (def->parentName != "None") {
+        else {
             // Undo the rotation of the parent (if any)
             PaleoSimVolumeDefinition* parent = fMessenger.GetVolumeByName(def->parentName);
             if (parent) {
@@ -78,7 +79,7 @@ G4VPhysicalVolume* PaleoSimDetectorConstruction::Construct() {
         auto* placed = new G4PVPlacement(
             rot,
             def->relativePosition,
-            def->logical,
+            fLogicalVolumes.at(def->name),
             def->name,
             mother,
             false,
@@ -89,7 +90,6 @@ G4VPhysicalVolume* PaleoSimDetectorConstruction::Construct() {
         if (def->parentName == "None") {
             physWorld = placed;
         }
-        delete rot;
     }
 
     return physWorld;

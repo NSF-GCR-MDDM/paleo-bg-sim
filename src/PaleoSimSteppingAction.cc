@@ -123,6 +123,7 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
         G4VPhysicalVolume* stepVolume = stepPoint->GetPhysicalVolume();
         if (!stepVolume) return;
     
+        //The post-step action is in the target volume--this still doesn't guarantee secondaries are.
         if (stepVolume->GetName() == fMessenger.GetRecoilTreeVolume())  {
             auto secondaries = step->GetSecondaryInCurrentStep();
             if (secondaries->empty()) return;
@@ -161,9 +162,13 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
                 fOutputManager.PushRecoilEventEnergy(energy);
                 fOutputManager.PushRecoilEventTime(secTime);
                 fOutputManager.PushRecoilEventCode(mtCode);
-                fOutputManager.PushRecoilEventX(position.x());
-                fOutputManager.PushRecoilEventY(position.y());
-                fOutputManager.PushRecoilEventZ(position.z());
+                //fOutputManager.PushRecoilEventX(position.x());
+                //fOutputManager.PushRecoilEventY(position.y());
+                //fOutputManager.PushRecoilEventZ(position.z());
+                //G4ThreeVector postStepPos = stepPoint->GetPosition();
+                //fOutputManager.PushRecoilEventX(postStepPos.x());
+                //fOutputManager.PushRecoilEventY(postStepPos.y());
+                //fOutputManager.PushRecoilEventZ(postStepPos.z());
                 fOutputManager.PushRecoilEventU(momentumDirection.x());
                 fOutputManager.PushRecoilEventV(momentumDirection.y());
                 fOutputManager.PushRecoilEventW(momentumDirection.z());
