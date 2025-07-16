@@ -30,6 +30,7 @@
 #include "G4MuonPlus.hh"
 
 PaleoSimPhysicsList::PaleoSimPhysicsList() {
+
   SetVerboseLevel(0);
 
   // Core EM physics
