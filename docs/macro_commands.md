@@ -2,7 +2,7 @@
 
 Automatically generated from PaleoSimMessenger.hh and PaleoSimMessenger.cc with genMacroDoc.py
 
-Last generated on: 2025-07-15 08:41
+Last generated on: 2025-08-07 12:38
 
 ## /geom/
 
@@ -20,13 +20,11 @@ Last generated on: 2025-07-15 08:41
   - Description: Enable tracking of muon-induced neutrons
   - Default: `false`
 
-- **/output/setNeutronTallyTreeVolume** (optional) — `fNeutronTallyTreeVolume`
-  - Description: Set to track particles entering volume in neutronTallyTree
-  - Default: `""`
+- **/output/setNeutronTallyTreeVolumes** (optional) — `fNeutronTallyTreeVolumes`
+  - Description: List of names of volumes to track neutrons entering, separated by spaces
 
-- **/output/setRecoilTreeVolume** (optional) — `fRecoilTreeVolume`
-  - Description: Set to track heavy secondaries in volume in recoilTree
-  - Default: `""`
+- **/output/setRecoilTreeVolumes** (optional) — `fRecoilTreeVolumes`
+  - Description: List of names of volumes to track nuclear recoils in, separated by spaces
 
 - **/output/setVRMLOutputStatus** (optional) — `fVRMLStatus`
   - Description: If true, will save vrml file of geometry in current folder with same name as geometry macro.

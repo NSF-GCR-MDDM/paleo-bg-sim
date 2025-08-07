@@ -2,15 +2,15 @@
 
 Automatically generated from PaleoSimGeometryMessenger.hh and PaleoSimGeometryMessenger.cc with genGeomDoc.py
 
-Last generated on: 2025-05-01 17:23
+Last generated on: 2025-08-07 12:38
 
 ## /volume/
 
 - **/volume/new** (optional) — `name`
   - Description: Define a new volume with the passed in (case-sensitive) name.
 
-- **/volume/setParent** (optional) — `parentName`
-  - Description: Set the parent volume by name. Omit or 'None' if this is the world volume
+- **/volume/setParent** (required) — `parentName`
+  - Description: Set the parent volume by name. 'None' if this is the world volume
 
 - **/volume/setShape** (required) — `shape`
   - Description: Set the shape: box, cylinder, sphere
@@ -18,11 +18,14 @@ Last generated on: 2025-05-01 17:23
 - **/volume/setMaterial** (required) — `materialName`
   - Description: Set the material name. Case-sensitive name must be defined in PaleoSimMaterialManager.
 
-- **/volume/setPosition** (optional) — `x`
+- **/volume/setVolumeNumber** (required) — `volumeNumber`
+  - Description: Set the volume number. Non-duplicates required, will be used in output trees to identify this volume.
+
+- **/volume/setPosition** (required) — `x`
   - Description: Set position in parent frame, with units!
   - Units: `mm`
 
-- **/volume/setPositionType** (optional) — `positionType`
+- **/volume/setPositionType** (required) — `positionType`
   - Description: Set whether provided position is 'relative' to parent coordinates or 'absolute'
 
 - **/volume/setRGB** (optional) — `r`
@@ -50,7 +53,7 @@ Last generated on: 2025-05-01 17:23
   - Valid range: `halfHeight > 0.`
 
 - **/volume/cylinder/setCylinderAxis** (optional) — `xVec`
-  - Description: Set the cylinder axis 3-vector
+  - Description: Set the cylinder axis 3-vector in ABSOLUTE coords
 
 - **/volume/finalize** (required) — ``
   - Description: Finalize volume and add to list, no args.
