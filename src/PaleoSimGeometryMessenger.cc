@@ -318,7 +318,10 @@ void PaleoSimGeometryMessenger::ValidateGeometry() {
     // 7. Compute cumulative rotation matrix
     PaleoSimGeometryMessenger::ComputeCumulativeRotationMatrix();
     
-    // 8. Check
+    // 8. Populate children vectors
+    PaleoSimGeometryMessenger::PopulateChildrenVector();
+
+    // 9. Check
     for (auto& vol: fMessenger->GetVolumes()) {
         std::cout<<vol->name<<" positioned at absolute coordinates ("<<vol->absolutePosition.x()<<","<<vol->absolutePosition.y()<<","<<vol->absolutePosition.z()<<",)"<<std::endl;
         std::cout<<vol->name<<" positioned at relative coordinates ("<<vol->relativePosition.x()<<","<<vol->relativePosition.y()<<","<<vol->relativePosition.z()<<",)"<<std::endl;
@@ -454,6 +457,18 @@ void PaleoSimGeometryMessenger::ComputeCumulativeRotationMatrix() {
                 G4RotationMatrix parentInverse = parentCumRot.inverse();
                 vol->rotationMatrix = parentInverse;
             }
+        }
+    }
+}
+
+// Populates vectors of parents immediate children
+void PaleoSimGeometryMessenger::PopulateChildrenVector() {
+    auto& volumes = fMessenger->GetVolumes();
+
+    for (auto* vol : volumes) {
+        if (vol->parentName != "None") {
+            auto* parent = fMessenger->GetVolumeByName(vol->parentName);
+            parent->children.push_back(vol); 
         }
     }
 }

@@ -151,11 +151,13 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     geomXs.clear();
     geomYs.clear();
     geomZs.clear();
-    for (int pointNum=0; pointNum<nPoints; pointNum++) {
-      G4ThreeVector randPos = vol->GenerateRandomPointInside();
-      geomXs.push_back(randPos.x());
-      geomYs.push_back(randPos.y());
-      geomZs.push_back(randPos.z());
+    if (vol->parentName != "None") {
+      for (int pointNum=0; pointNum<nPoints; pointNum++) {
+        G4ThreeVector randPos = vol->GenerateRandomPointInside();
+        geomXs.push_back(randPos.x());
+        geomYs.push_back(randPos.y());
+        geomZs.push_back(randPos.z());
+      }
     }
     fGeometryTree->Fill();
   }

@@ -28,6 +28,7 @@ public:
     void SortVolumesByHierarchy(); 
     void ComputeMissingCoordinates(); 
     void ComputeCumulativeRotationMatrix();
+    void PopulateChildrenVector();
 
 private:
     PaleoSimMessenger* fMessenger;                         
