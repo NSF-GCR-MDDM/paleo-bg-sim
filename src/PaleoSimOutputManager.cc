@@ -225,6 +225,7 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     fNeutronTallyTree->Branch("entry_w", &fNeutron_entryW);
     fNeutronTallyTree->Branch("angleRelMuon", &fNeutron_angle);
     fNeutronTallyTree->Branch("distanceToMuonTrack", &fNeutron_distance);
+    fNeutronTallyTree->Branch("volumeNumbers", &fNeutronTallyVolumeNumbers);
   }
 
   //////////////////////
@@ -246,6 +247,7 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     fRecoilTree->Branch("time", &fRecoilEventTime);
     fRecoilTree->Branch("code", &fRecoilEventCode);
     fRecoilTree->Branch("nRecoils", &fNRecoils);
+    fRecoilTree->Branch("volumeNumbers", &fRecoilVolumeNumbers);
   }
 }
 
@@ -309,6 +311,7 @@ void PaleoSimOutputManager::ClearNeutronTallyTreeEvent() {
   fNeutron_entryW.clear();
   fNeutron_angle.clear();
   fNeutron_distance.clear();
+  fNeutronTallyVolumeNumbers.clear();
 }
 
 void PaleoSimOutputManager::ClearRecoilTreeEvent() {
@@ -325,6 +328,7 @@ void PaleoSimOutputManager::ClearRecoilTreeEvent() {
   fRecoilEventW.clear();
   fRecoilEventTime.clear();
   fRecoilEventCode.clear();
+  fRecoilVolumeNumbers.clear();
 }
 
 void PaleoSimOutputManager::WriteVRMLGeometry(const G4String& vrmlFilename)

@@ -70,6 +70,7 @@ public:
     void PushNeutronTallyEventAngleRelMuon(double val) {fNeutron_angle.push_back(val); };
     void PushNeutronTallyEventDistanceToMuonTrack(double val) {fNeutron_distance.push_back(val); };
     void IncrementNeutronTallyEventMultiplicity() { fNeutronEntryMultiplicity++;};
+    void PushNeutronTallyVolumeNumber(int val) {fNeutronTallyVolumeNumbers.push_back(val); };
 
     //RECOIL TREE
     void FillRecoilTreeEvent();
@@ -87,6 +88,7 @@ public:
     void PushRecoilEventTime(double val) { fRecoilEventTime.push_back(val); };
     void PushRecoilEventCode(double val) { fRecoilEventCode.push_back(val); };
     void IncrementNRecoils() { fNRecoils++;};
+    void PushRecoilVolumeNumber(int val) {fRecoilVolumeNumbers.push_back(val); };
 
     //Writing output
     void WriteVRMLGeometry(const G4String& vrmlFilename);
@@ -133,6 +135,7 @@ private:
     std::vector<double> fNeutron_entryX, fNeutron_entryY, fNeutron_entryZ;
     std::vector<double> fNeutron_entryU, fNeutron_entryV, fNeutron_entryW;
     std::vector<double> fNeutron_angle, fNeutron_distance;
+    std::vector<int> fNeutronTallyVolumeNumbers;
 
     // Recoil Tree variables
     int fRecoilEventID = -1;
@@ -143,6 +146,7 @@ private:
     std::vector<double> fRecoilEventX, fRecoilEventY, fRecoilEventZ;
     std::vector<double> fRecoilEventU, fRecoilEventV, fRecoilEventW;
     std::vector<double> fRecoilEventCode;
+    std::vector<int> fRecoilVolumeNumbers;
 };
 
 #endif

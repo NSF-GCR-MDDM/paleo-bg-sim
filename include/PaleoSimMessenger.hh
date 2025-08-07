@@ -30,9 +30,9 @@ public:
     bool GetPrimariesTreeStatus() const { return fPrimariesTreeStatus; };
     bool GetNeutronTallyTreeStatus() const { return fNeutronTallyTreeStatus; };
     bool GetMINTreeStatus() const { return fMINTreeStatus; };
-    G4String GetNeutronTallyTreeVolume() const { return fNeutronTallyTreeVolume; };
+    const std::vector<G4String>& GetNeutronTallyTreeVolumes() const { return fNeutronTallyTreeVolumes; };
     bool GetRecoilTreeStatus() const { return fRecoilTreeStatus; };
-    G4String GetRecoilTreeVolume() const { return fRecoilTreeVolume; };
+    const std::vector<G4String>& GetRecoilTreeVolumes() const { return fRecoilTreeVolumes; };
     bool GetVRMLStatus() const { return fVRMLStatus; };
 
     //Generator
@@ -134,18 +134,18 @@ private:
     G4UIcmdWithABool* fSetVRMLStatusCmd = nullptr;
     G4UIcmdWithABool* fSetPrimariesTreeStatusCmd = nullptr;
     G4UIcmdWithABool* fSetMINTreeStatusCmd = nullptr;
-    G4UIcmdWithAString* fSetNeutronTallyTreeVolumeCmd = nullptr;
-    G4UIcmdWithAString* fSetRecoilTreeVolumeCmd = nullptr;
+    G4UIcmdWithAString* fSetNeutronTallyTreeVolumesCmd = nullptr;
+    G4UIcmdWithAString* fSetRecoilTreeVolumesCmd = nullptr;
 
     G4String fOutputFile = "outputFiles/output.root";
     G4bool fPrimariesTreeStatus = true;
 
     G4bool fMINTreeStatus = false;
 
-    G4String fNeutronTallyTreeVolume = "";
+    std::vector<G4String> fNeutronTallyTreeVolumes;
     G4bool fNeutronTallyTreeStatus = false;
     
-    G4String fRecoilTreeVolume = "";
+    std::vector<G4String> fRecoilTreeVolumes;
     G4bool fRecoilTreeStatus = false;
     
     G4bool fVRMLStatus = false;

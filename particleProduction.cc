@@ -126,7 +126,7 @@ int main(int argc, char** argv) {
   auto* outputManager  = new PaleoSimOutputManager(*messenger);
 
   // 8. Physics list
-  runManager->SetUserInitialization(new PaleoSimPhysicsList());
+  runManager->SetUserInitialization(new PaleoSimPhysicsList(*messenger));
 
   // 9. Register actions (via ActionInitialization). Generator is built in here.
   runManager->SetUserInitialization(new PaleoSimActionInitialization(*messenger, *outputManager));

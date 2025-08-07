@@ -79,8 +79,13 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
         
             if (!preVol || !postVol) return;  // Safety check for particles leaving the world volume
 
-            if ((preVol != postVol)
-				&& (postVol->GetName() == fMessenger.GetNeutronTallyTreeVolume())) { 
+            const G4String& postName = postVol->GetName();
+            const auto& tallyVolumes = fMessenger.GetNeutronTallyTreeVolumes();
+            if ((preVol != postVol) && (std::find(tallyVolumes.begin(), tallyVolumes.end(), postName) != tallyVolumes.end())) {
+
+                PaleoSimVolumeDefinition* vol = fMessenger.GetVolumeByName(postName);
+                fOutputManager.PushNeutronTallyVolumeNumber(vol->volumeNumber);
+
                 G4int eventID = event->GetEventID();
                 fOutputManager.PushNeutronTallyEventID(eventID);
 
@@ -122,9 +127,12 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
         G4StepPoint* stepPoint = step->GetPostStepPoint();
         G4VPhysicalVolume* stepVolume = stepPoint->GetPhysicalVolume();
         if (!stepVolume) return;
-    
-        //The post-step action is in the target volume--this still doesn't guarantee secondaries are.
-        if (stepVolume->GetName() == fMessenger.GetRecoilTreeVolume())  {
+
+        G4String stepVolumeName = stepVolume->GetName();
+        const auto& recoilVolumes = fMessenger.GetRecoilTreeVolumes();
+
+        if (std::find(recoilVolumes.begin(), recoilVolumes.end(), stepVolumeName) != recoilVolumes.end()) {
+            
             auto secondaries = step->GetSecondaryInCurrentStep();
             if (secondaries->empty()) return;
     
@@ -156,6 +164,9 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
                     mtCode = MapProcessToMT(type, subtype);
                 }
                 
+                PaleoSimVolumeDefinition* vol = fMessenger.GetVolumeByName(stepVolumeName);
+                fOutputManager.PushRecoilVolumeNumber(vol->volumeNumber);
+
                 fOutputManager.PushRecoilEventID(eventID);
                 fOutputManager.PushRecoilEventPDG(pdgCode);
                 fOutputManager.PushRecoilEventParentPDG(parentPdg);

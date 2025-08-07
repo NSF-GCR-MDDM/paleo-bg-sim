@@ -29,7 +29,7 @@
 #include "G4MuonMinus.hh"
 #include "G4MuonPlus.hh"
 
-PaleoSimPhysicsList::PaleoSimPhysicsList() {
+PaleoSimPhysicsList::PaleoSimPhysicsList(PaleoSimMessenger& messenger): fMessenger(messenger)  {
 
   SetVerboseLevel(0);
 
@@ -58,16 +58,19 @@ PaleoSimPhysicsList::PaleoSimPhysicsList() {
   }
 
   // Specialized cuts for "Target" volume
-  G4LogicalVolume* target = G4LogicalVolumeStore::GetInstance()->GetVolume("Target", false);
-  if (target) {
-      auto* targetRegion = new G4Region("TargetRegion");
-      targetRegion->AddRootLogicalVolume(target);
+  for (auto volume: fMessenger.GetVolumes()) {
+    G4String name = volume->name;
+    G4LogicalVolume* trackingVolume = G4LogicalVolumeStore::GetInstance()->GetVolume(name, false);
+    if (trackingVolume) {
+        auto* trackingRegion = new G4Region(name+"Region");
+        trackingRegion->AddRootLogicalVolume(trackingVolume);
 
-      auto* cuts = new G4ProductionCuts();
-      cuts->SetProductionCut(10*nanometer, "proton");
-      cuts->SetProductionCut(10*nanometer, "alpha");
+        auto* cuts = new G4ProductionCuts();
+        cuts->SetProductionCut(10*nanometer, "proton"); //Sets for all charged hadrons
+        cuts->SetProductionCut(10*nanometer, "alpha");
 
-      targetRegion->SetProductionCuts(cuts);
+        trackingRegion->SetProductionCuts(cuts);
+    }
   }
 }
 

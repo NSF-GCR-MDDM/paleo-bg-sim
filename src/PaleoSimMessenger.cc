@@ -30,15 +30,13 @@ PaleoSimMessenger::PaleoSimMessenger() {
     fSetMINTreeStatusCmd->SetParameterName("fMINTreeStatus", true);
     fSetMINTreeStatusCmd->SetDefaultValue(fMINTreeStatus);
 
-    fSetNeutronTallyTreeVolumeCmd = new G4UIcmdWithAString("/output/setNeutronTallyTreeVolume", this);
-    fSetNeutronTallyTreeVolumeCmd->SetGuidance("Set to track particles entering volume in neutronTallyTree");
-    fSetNeutronTallyTreeVolumeCmd->SetParameterName("fNeutronTallyTreeVolume", true);
-    fSetNeutronTallyTreeVolumeCmd->SetDefaultValue(fNeutronTallyTreeVolume);
+    fSetNeutronTallyTreeVolumesCmd = new G4UIcmdWithAString("/output/setNeutronTallyTreeVolumes", this);
+    fSetNeutronTallyTreeVolumesCmd->SetGuidance("List of names of volumes to track neutrons entering, separated by spaces");
+    fSetNeutronTallyTreeVolumesCmd->SetParameterName("fNeutronTallyTreeVolumes", true);
 
-    fSetRecoilTreeVolumeCmd = new G4UIcmdWithAString("/output/setRecoilTreeVolume", this);
-    fSetRecoilTreeVolumeCmd->SetGuidance("Set to track heavy secondaries in volume in recoilTree");
-    fSetRecoilTreeVolumeCmd->SetParameterName("fRecoilTreeVolume", true);
-    fSetRecoilTreeVolumeCmd->SetDefaultValue(fRecoilTreeVolume);
+    fSetRecoilTreeVolumesCmd = new G4UIcmdWithAString("/output/setRecoilTreeVolumes", this);
+    fSetRecoilTreeVolumesCmd->SetGuidance("List of names of volumes to track nuclear recoils in, separated by spaces");
+    fSetRecoilTreeVolumesCmd->SetParameterName("fRecoilTreeVolumes", true);
 
     fSetVRMLStatusCmd = new G4UIcmdWithABool("/output/setVRMLOutputStatus", this);
     fSetVRMLStatusCmd->SetGuidance("If true, will save vrml file of geometry in current folder with same name as geometry macro.");
@@ -185,8 +183,8 @@ PaleoSimMessenger::~PaleoSimMessenger() {
     delete fOutputDirectory;
     delete fSetPrimariesTreeStatusCmd;
     delete fSetMINTreeStatusCmd;
-    delete fSetNeutronTallyTreeVolumeCmd;
-    delete fSetRecoilTreeVolumeCmd;
+    delete fSetNeutronTallyTreeVolumesCmd;
+    delete fSetRecoilTreeVolumesCmd;
     delete fSetVRMLStatusCmd;
 
     delete fGeneratorDirectory;
@@ -256,13 +254,23 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
         fMINTreeStatus = fSetMINTreeStatusCmd->GetNewBoolValue(newValue);
         G4cout << "Muon-induced neutron tree output set in macro to: " << newValue << G4endl;
     }
-    else if (command == fSetNeutronTallyTreeVolumeCmd) {
-        fNeutronTallyTreeVolume = newValue;
-        G4cout << "Neutron tally tree will track neutrons entering volume: " << newValue << G4endl;
+    else if (command == fSetNeutronTallyTreeVolumesCmd) {
+        std::istringstream iss(newValue);
+        G4String name;
+        G4cout << "Neutron tally tree will track neutrons entering volumes: " << G4endl;
+        while (iss >> name) {
+            fNeutronTallyTreeVolumes.push_back(name);
+            G4cout << "\t" << name << G4endl;
+        }
     }
-    else if (command == fSetRecoilTreeVolumeCmd) {
-        fRecoilTreeVolume = newValue;        
-        G4cout << "Recoil tally tree will track heavy aprticles in volume: " << newValue << G4endl;
+    else if (command == fSetRecoilTreeVolumesCmd) {
+        std::istringstream iss(newValue);
+        G4String name;
+        G4cout << "Recoil tree will track nuclear recoils in volumes: " << G4endl;
+        while (iss >> name) {
+            fRecoilTreeVolumes.push_back(name);
+            G4cout << "\t" << name << G4endl;
+        }
     }
     else if (command == fNPSCmd) {
         fNPS = fNPSCmd->GetNewIntValue(newValue);
@@ -402,20 +410,26 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
 /////////////////////////////
 void PaleoSimMessenger::CheckForMacroErrors() {
     //Check the user-specified volume for neutronTallyTree exists. If so, enable output
-    if (PaleoSimMessenger::VolumeNameExists(fNeutronTallyTreeVolume)) {
+    for (auto volumeName: fNeutronTallyTreeVolumes) {
+        if (!PaleoSimMessenger::VolumeNameExists(volumeName)) {
+            G4Exception("PaleoSimMessenger", "BadNeutronTallyTreeVolume", FatalException,
+            ("Tried to track neutrons entering "+volumeName+" but volume not found in geometry!").c_str());
+        }
+    }
+    if (fNeutronTallyTreeVolumes.size()>0) {
         fNeutronTallyTreeStatus = true;
     }
-    else if (!fNeutronTallyTreeVolume.empty()){
-        G4Exception("PaleoSimMessenger", "BadNeutronTallyTreeVolume", FatalException,
-            ("Tried to track neutrons entering "+fNeutronTallyTreeVolume+" but volume not found in geometry!").c_str());
-    }
+
     //Check the user-specified volume for neutronTallyTree exists. If so, enable output
-    if (PaleoSimMessenger::VolumeNameExists(fRecoilTreeVolume)){
-        fRecoilTreeStatus = true;
+
+    for (auto volumeName: fRecoilTreeVolumes) {
+        if (!PaleoSimMessenger::VolumeNameExists(volumeName)) {
+            G4Exception("PaleoSimMessenger", "BadRecoilTreeVolume", FatalException,
+            ("Tried to track recoils in "+volumeName+" but volume not found in geometry!").c_str());
+        }
     }
-    else if (!fRecoilTreeVolume.empty()){
-        G4Exception("PaleoSimMessenger", "BadRecoilTreeVolume", FatalException,
-            ("Tried to track heavy particles in "+fRecoilTreeVolume+" but volume not found in geometry!").c_str());
+    if (fRecoilTreeVolumes.size()>0) {
+        fRecoilTreeStatus = true;
     }
 
     //Make sure we have at least one volume
