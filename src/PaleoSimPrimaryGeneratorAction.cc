@@ -389,7 +389,7 @@ void PaleoSimPrimaryGeneratorAction::InitializeVolumetricSourceGenerator() {
 }
 
 void PaleoSimPrimaryGeneratorAction::GenerateVolumetricSourcePrimaries(G4Event* anEvent) {
-  //Set particle type
+  // Set particle type
   int pdgCode = fMessenger.GetVolumetricSourcePDGCode();
   G4ParticleDefinition* particleDef = G4ParticleTable::GetParticleTable()->FindParticle(pdgCode);
   if (!particleDef) {
@@ -398,27 +398,22 @@ void PaleoSimPrimaryGeneratorAction::GenerateVolumetricSourcePrimaries(G4Event* 
                 "VolumetricSource001", FatalException, msg.c_str());
   }
 
-  //Get solid specified by volume name, get bounds
-
-  // Compute global bounding box
-  if (!fBoundingBoxInitialized) {
+  // Initialize volume definition (once)
+  if (!fSourceVolumeDefinition) {
     G4String volumeName = fMessenger.GetVolumetricSourceVolumeName();
-    PaleoSimVolumeDefinition* volDef = fMessenger.GetVolumeByName(volumeName);
+    fSourceVolumeDefinition = fMessenger.GetVolumeByName(volumeName);
 
-    if (!volDef) {
-      G4Exception("InitializeVolumetricSourceGenerator", "Volumetric004", FatalException,
+    if (!fSourceVolumeDefinition) {
+      G4Exception("PaleoSimPrimaryGeneratorAction::GenerateVolumetricSourcePrimaries",
+                  "Volumetric004", FatalException,
                   ("PaleoSimVolumeDefinition '" + volumeName + "' not found!").c_str());
     }
-    fSourceVolumeDefinition = volDef;
-
-    auto bounds = volDef->GetGlobalBounds();
-    fVolumetricBoundsMin = bounds.first;
-    fVolumetricBoundsMax = bounds.second;
-    fBoundingBoxInitialized = true;
   }
 
-  G4ThreeVector pos = SamplePointInVolume(fSourceVolumeDefinition, fVolumetricBoundsMin, fVolumetricBoundsMax);
-  //Set energy
+  // Sample a position using the geometry-aware method
+  G4ThreeVector pos = fSourceVolumeDefinition->GenerateRandomPointInside();
+  
+  // Set energy
   double energy = 0;
   if (fMessenger.GetVolumetricSourceType() == "hist") {
     energy = fVolumetricSourceSpectrumHist->GetRandom() * MeV;
@@ -426,20 +421,21 @@ void PaleoSimPrimaryGeneratorAction::GenerateVolumetricSourcePrimaries(G4Event* 
     energy = fMessenger.GetVolumetricSourceMonoEnergy();
   }
 
+  // Compute momentum
   double mass = particleDef->GetPDGMass();
   double Etot = energy + mass;
   double p = std::sqrt(Etot * Etot - mass * mass);
 
-  // Isotropic direction
   G4ThreeVector direction = G4RandomDirection();
   G4ThreeVector momentum = direction * p;
 
-  //Create primary particle and vertex
-  G4PrimaryParticle* primary = new G4PrimaryParticle(particleDef,momentum.x(),momentum.y(),momentum.z());
+  // Create primary particle and vertex
+  G4PrimaryParticle* primary = new G4PrimaryParticle(particleDef, momentum.x(), momentum.y(), momentum.z());
   G4PrimaryVertex* vertex = new G4PrimaryVertex(pos, 0.0);
   vertex->SetPrimary(primary);
   anEvent->AddPrimaryVertex(vertex);
 }
+
 ///////////////
 //Disk source//
 ///////////////
@@ -588,33 +584,6 @@ G4bool PaleoSimPrimaryGeneratorAction::IsWithinTopSurface(const G4ThreeVector& p
   }
 
   return false;
-}
-
-//Sample point in volume via MC.  
-G4ThreeVector PaleoSimPrimaryGeneratorAction::SamplePointInVolume(const PaleoSimVolumeDefinition* def,const G4ThreeVector& minBounds,const G4ThreeVector& maxBounds) {
-  G4ThreeVector sampled_point;
-  int maxTries = 10000;
-  int triesAttempted = 0;
-
-  while (triesAttempted < maxTries) {
-    double x = minBounds.x() + G4UniformRand() * (maxBounds.x() - minBounds.x());
-    double y = minBounds.y() + G4UniformRand() * (maxBounds.y() - minBounds.y());
-    double z = minBounds.z() + G4UniformRand() * (maxBounds.z() - minBounds.z());
-    sampled_point = G4ThreeVector(x, y, z);
-
-    // Check if inside solid (must be in local frame)
-    if (def->CheckPointInside(sampled_point)) {
-      return sampled_point;
-    }
-    triesAttempted++;
-  }
-
-  G4Exception("PaleoSimPrimaryGeneratorAction::SamplePointInVolume",
-              "SampleVolume001", FatalException,
-              "Failed to sample a point inside the requested volume after many tries.");
-  
-  //Shouldn't be reached
-  return G4ThreeVector();
 }
 
 //Sample point on disk via MC.

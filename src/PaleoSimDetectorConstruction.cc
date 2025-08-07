@@ -53,7 +53,7 @@ G4VPhysicalVolume* PaleoSimDetectorConstruction::Construct() {
 
     // Place physical volumes
     for (const auto& def : volumes) {
-        //Get parrent volume--nullptr for world volume
+        //Get parent volume--nullptr for world volume
         G4LogicalVolume* mother = nullptr;
         if (def->parentName != "None") {
             mother = fLogicalVolumes.at(def->parentName);

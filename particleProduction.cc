@@ -95,7 +95,7 @@ int main(int argc, char** argv) {
   // 3. Messenger FIRST — must exist before reading macro
   auto* messenger = new PaleoSimMessenger();
 
-  // 4a. Load macro BEFORE creating detector, output manager
+  // 4a. Load main macro BEFORE creating detector, output manager
   G4UImanager* ui = G4UImanager::GetUIpointer();
   ui->ApplyCommand("/control/execute " + G4String(macroFilename));
   if (outputFilename != "") {
@@ -103,7 +103,6 @@ int main(int argc, char** argv) {
   }
 
   //4b. Load the geometry macro
-  // If user set a geometry macro, load it now
   G4String geomMacro = messenger->GetGeometryMacroPath();
   auto* geoMessenger = new PaleoSimGeometryMessenger(messenger);
   if (!geomMacro.empty()) {
@@ -113,31 +112,33 @@ int main(int argc, char** argv) {
     G4Exception("main", "NoGeometryMacro", FatalException, "Geometry macro file is required.");
   }
 
-  //4c. Check for errors in macro files
-  messenger->CheckForMacroErrors();
-  messenger->ComputeCoordinates();
+  //5a. Check geometry for err
+  geoMessenger->ValidateGeometry();
 
-  // 5. Create detector, register, create output manager
+  //5b. Check for errors in macro files
+  messenger->CheckForMacroErrors();
+
+  // 6. Create detector, register, create output manager
   auto* detector       = new PaleoSimDetectorConstruction(*messenger);
   runManager->SetUserInitialization(detector);  
 
-  // 6. Create output manager
+  // 7. Create output manager
   auto* outputManager  = new PaleoSimOutputManager(*messenger);
 
-  // 7. Physics list
+  // 8. Physics list
   runManager->SetUserInitialization(new PaleoSimPhysicsList());
 
-  // 8. Register actions (via ActionInitialization). Generator is built in here.
+  // 9. Register actions (via ActionInitialization). Generator is built in here.
   runManager->SetUserInitialization(new PaleoSimActionInitialization(*messenger, *outputManager));
 
-  // 8. Initialize run manager AFTER all setup is complete
+  // 10. Initialize run manager AFTER all setup is complete
   runManager->Initialize();  // or RunInitialization if directly used
 
-  // 9. BeamOn loop (manual, from messenger)
+  // 11. BeamOn loop (manual, from messenger)
   G4int nps = messenger->GetNPS();
   runManager->BeamOn(nps);
 
-  // 10. Write geometry if requested
+  // 12. Write geometry VRML if requested
   if (messenger->GetVRMLStatus()) { 
     G4String geoMacroPath = messenger->GetGeometryMacroPath();
 
@@ -149,7 +150,7 @@ int main(int argc, char** argv) {
     outputManager->WriteVRMLGeometry(vrmlFilename);
   }
 
-  // 11. Clean up
+  // 13. Clean up
   delete runManager;
   delete messenger;
   return 0;

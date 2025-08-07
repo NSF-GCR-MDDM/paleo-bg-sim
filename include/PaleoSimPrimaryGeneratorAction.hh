@@ -34,7 +34,6 @@ private:
     //Helper functions - could be used by any class
     G4ThreeVector SamplePointOnTopOfWorldVolume();
     G4bool IsWithinTopSurface(const G4ThreeVector& point);
-    G4ThreeVector SamplePointInVolume(const PaleoSimVolumeDefinition* vol,const G4ThreeVector& minBounds,const G4ThreeVector& maxBounds);
 
     //CUSTOM_GENERATOR_HOOK
     // Add private state and methods for your generator implementation here

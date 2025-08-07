@@ -21,6 +21,7 @@ void PaleoSimOutputManager::WriteAndClose() {
   if (fFile) {
       fFile->cd();
       fHeaderTree->Write("headerTree", TFile::kOverwrite); 
+      fGeometryTree->Write("geometryTree", TFile::kOverwrite); 
       if (fMessenger.GetPrimariesTreeStatus() && fPrimariesTree) {
           fPrimariesTree->Write("primariesTree", TFile::kOverwrite); 
       }
@@ -38,6 +39,7 @@ void PaleoSimOutputManager::WriteAndClose() {
       fFile = nullptr;
   }
   fHeaderTree = nullptr;
+  fGeometryTree = nullptr;
   fMINTree = nullptr;
   fPrimariesTree = nullptr;
   fNeutronTallyTree = nullptr;
@@ -108,6 +110,56 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
   }
   // Fill once when we make the tree, we aren't ever updating this
   fHeaderTree->Fill();
+
+  ////////////////////////
+  // MAKE GEOMETRY TREE //
+  ////////////////////////
+  fGeometryTree = new TTree("fGeometryTree","Run geometry");
+
+  //Branch vars
+  char volumeName[256] = "";
+  char volumeShape[256] = "";
+  char parentName[256] = "";
+  char materialName[256] = "";
+  int geomNumber;
+  double geomAbsX, geomAbsY, geomAbsZ;
+  std::vector<double> geomXs, geomYs, geomZs;
+
+  // Set branches
+  fGeometryTree->Branch("name", &volumeName, "name/C");
+  fGeometryTree->Branch("shape", &volumeShape, "shape/C");
+  fGeometryTree->Branch("parent", &parentName, "parent/C");
+  fGeometryTree->Branch("material", &materialName, "material/C");
+  fGeometryTree->Branch("number", &geomNumber, "number/I");
+  fGeometryTree->Branch("abs_x", &geomAbsX, "abs_x/D");
+  fGeometryTree->Branch("abs_y", &geomAbsY, "abs_y/D");
+  fGeometryTree->Branch("abs_z", &geomAbsZ, "abs_z/D");
+  fGeometryTree->Branch("pointCloud_xs", &geomXs);
+  fGeometryTree->Branch("pointCloud_ys", &geomYs);
+  fGeometryTree->Branch("pointCloud_zs", &geomZs);
+
+  for (auto* vol : fMessenger.GetVolumes()) {
+    strcpy(volumeName, vol->name.substr(0, std::min<size_t>(255, vol->name.length())).c_str());
+    strcpy(volumeShape, vol->shape.substr(0, std::min<size_t>(255, vol->shape.length())).c_str());
+    strcpy(parentName, vol->parentName.substr(0, std::min<size_t>(255, vol->parentName.length())).c_str());
+    strcpy(materialName, vol->materialName.substr(0, std::min<size_t>(255, vol->materialName.length())).c_str());
+    geomAbsX = vol->absolutePosition.x();
+    geomAbsY = vol->absolutePosition.y();
+    geomAbsZ = vol->absolutePosition.z();
+    geomNumber = vol->volumeNumber;
+    int nPoints = 5000;
+    geomXs.clear();
+    geomYs.clear();
+    geomZs.clear();
+    for (int pointNum=0; pointNum<nPoints; pointNum++) {
+      G4ThreeVector randPos = vol->GenerateRandomPointInside();
+      geomXs.push_back(randPos.x());
+      geomYs.push_back(randPos.y());
+      geomZs.push_back(randPos.z());
+    }
+    fGeometryTree->Fill();
+  }
+
 
   /////////////////////////
   // MAKE PRIMARIES TREE //

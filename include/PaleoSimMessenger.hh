@@ -114,6 +114,11 @@ public:
         }
         return nullptr;
     }
+    //For overwriting the volume list with one sorted by hierarchy (guarantee parents placed before children)
+    void OverwriteVolumes(const std::vector<PaleoSimVolumeDefinition*>& newVolumes) {
+        fVolumes = newVolumes;
+    }
+
 
 
 private:

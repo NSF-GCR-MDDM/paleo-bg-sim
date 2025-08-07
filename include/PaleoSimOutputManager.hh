@@ -96,6 +96,7 @@ private:
 
     TFile* fFile = nullptr;
     TTree* fHeaderTree = nullptr;
+    TTree* fGeometryTree = nullptr;
     TTree* fPrimariesTree = nullptr;
     TTree* fMINTree = nullptr;
     TTree* fNeutronTallyTree = nullptr;
