@@ -23,7 +23,14 @@
 #include "G4ProductionCuts.hh"
 #include "G4LogicalVolumeStore.hh"
 
-PaleoSimPhysicsList::PaleoSimPhysicsList() {
+// Muon nuclear interaction
+#include "G4MuonNuclearProcess.hh"
+#include "G4MuonVDNuclearModel.hh"
+#include "G4MuonMinus.hh"
+#include "G4MuonPlus.hh"
+
+PaleoSimPhysicsList::PaleoSimPhysicsList(PaleoSimMessenger& messenger): fMessenger(messenger)  {
+
   SetVerboseLevel(0);
 
   // Core EM physics
@@ -34,8 +41,8 @@ PaleoSimPhysicsList::PaleoSimPhysicsList() {
   RegisterPhysics(new G4DecayPhysics());
 
   // Hadronic physics
-  RegisterPhysics(new G4HadronPhysicsQGSP_BERT_HP());
-  //RegisterPhysics(new G4HadronPhysicsQGSP_BIC_HP());
+  //RegisterPhysics(new G4HadronPhysicsQGSP_BERT_HP());
+  RegisterPhysics(new G4HadronPhysicsQGSP_BIC_HP()); //Pranav's study showed this may be more accurate, but slower
   RegisterPhysics(new G4HadronElasticPhysicsHP());
   RegisterPhysics(new G4NeutronTrackingCut());
 
@@ -51,15 +58,30 @@ PaleoSimPhysicsList::PaleoSimPhysicsList() {
   }
 
   // Specialized cuts for "Target" volume
-  G4LogicalVolume* target = G4LogicalVolumeStore::GetInstance()->GetVolume("Target", false);
-  if (target) {
-      auto* targetRegion = new G4Region("TargetRegion");
-      targetRegion->AddRootLogicalVolume(target);
+  for (auto volume: fMessenger.GetVolumes()) {
+    G4String name = volume->name;
+    G4LogicalVolume* trackingVolume = G4LogicalVolumeStore::GetInstance()->GetVolume(name, false);
+    if (trackingVolume) {
+        auto* trackingRegion = new G4Region(name+"Region");
+        trackingRegion->AddRootLogicalVolume(trackingVolume);
 
-      auto* cuts = new G4ProductionCuts();
-      cuts->SetProductionCut(10*nanometer, "proton");
-      cuts->SetProductionCut(10*nanometer, "alpha");
+        auto* cuts = new G4ProductionCuts();
+        cuts->SetProductionCut(10*nanometer, "proton"); //Sets for all charged hadrons
+        cuts->SetProductionCut(10*nanometer, "alpha");
 
-      targetRegion->SetProductionCuts(cuts);
+        trackingRegion->SetProductionCuts(cuts);
+    }
   }
+}
+
+void PaleoSimPhysicsList::ConstructProcess() {
+  G4VModularPhysicsList::ConstructProcess(); 
+
+  // Custom muon nuclear process
+  auto* model = new G4MuonVDNuclearModel(); // or G4MuonNuclearInteractionModel
+  auto* proc  = new G4MuonNuclearProcess();
+  proc->RegisterMe(model);
+
+  G4MuonPlus::MuonPlus()->GetProcessManager()->AddDiscreteProcess(proc);
+  G4MuonMinus::MuonMinus()->GetProcessManager()->AddDiscreteProcess(proc);
 }

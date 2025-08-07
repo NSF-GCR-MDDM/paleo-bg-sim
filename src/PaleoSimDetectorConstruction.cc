@@ -42,6 +42,9 @@ G4VPhysicalVolume* PaleoSimDetectorConstruction::Construct() {
         G4LogicalVolume* logical = new G4LogicalVolume(solid, mat, def->name);
         fLogicalVolumes[def->name] = logical;
 
+        def->solid = solid;
+        def->logical = logical;
+
         // Visualization attributes
         G4VisAttributes* vis = new G4VisAttributes(G4Colour(def->rgb.x(), def->rgb.y(), def->rgb.z(), def->alpha));
         vis->SetForceSolid(true);
@@ -50,7 +53,7 @@ G4VPhysicalVolume* PaleoSimDetectorConstruction::Construct() {
 
     // Place physical volumes
     for (const auto& def : volumes) {
-        //Get parrent volume--nullptr for world volume
+        //Get parent volume--nullptr for world volume
         G4LogicalVolume* mother = nullptr;
         if (def->parentName != "None") {
             mother = fLogicalVolumes.at(def->parentName);
@@ -66,7 +69,7 @@ G4VPhysicalVolume* PaleoSimDetectorConstruction::Construct() {
         }
         else {
             // Undo the rotation of the parent (if any)
-            VolumeDefinition* parent = fMessenger.GetVolumeByName(def->parentName);
+            PaleoSimVolumeDefinition* parent = fMessenger.GetVolumeByName(def->parentName);
             if (parent) {
                 G4RotationMatrix undo = parent->cumulativeRotationMatrix.inverse();
                 rot = new G4RotationMatrix(undo);

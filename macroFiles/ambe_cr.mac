@@ -4,11 +4,11 @@
 #Source commands
 /generator/setSourceType CRYGenerator 
 /generator/cry/setCRYFilename /home/sch52/code/paleo-bg-sim/data/cry_vt.root
-/generator/setNPS 2000
+/generator/setNPS 20000
 
 #Output commands
 /output/setPrimariesTreeStatus 1
-/output/setNeutronTallyTreeVolume Collimator
+/output/setNeutronTallyTreeVolume Target
 /output/setRecoilTreeVolume Target
 /output/setVRMLOutputStatus 0
 

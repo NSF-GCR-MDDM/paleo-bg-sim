@@ -2,6 +2,7 @@
 #define PALEO_SIM_GEOMETRY_MESSENGER_HH
 
 #include "PaleoSimMessenger.hh"
+#include "PaleoSimVolumeDefinition.hh"
 
 #include "G4UImessenger.hh"
 #include "G4UIdirectory.hh"
@@ -11,9 +12,9 @@
 #include "G4UIcmdWithADoubleAndUnit.hh"
 #include "G4UIcmdWithADouble.hh"
 #include "G4UIcmdWithoutParameter.hh"
-#include "PaleoSimVolumeDefinition.hh"
-
-#include <memory>
+#include "G4UIcmdWithAnInteger.hh"
+#include <string>
+#include <vector>
 
 class PaleoSimGeometryMessenger : public G4UImessenger {
 public:
@@ -22,9 +23,16 @@ public:
 
     void SetNewValue(G4UIcommand* command, G4String newValue) override;
 
+    //Geometry checks
+    void ValidateGeometry();
+    void SortVolumesByHierarchy(); 
+    void ComputeMissingCoordinates(); 
+    void ComputeCumulativeRotationMatrix();
+    void PopulateChildrenVector();
+
 private:
     PaleoSimMessenger* fMessenger;                         
-    VolumeDefinition* fCurrentVolume = nullptr; // actively-constructed volume
+    PaleoSimVolumeDefinition* fCurrentVolume = nullptr;
     
     // Directories
     G4UIdirectory* fVolumeDirectory = nullptr;
@@ -40,6 +48,7 @@ private:
     G4UIcmdWithAString* fSetParentCmd = nullptr;
     G4UIcmdWithAString* fSetShapeCmd = nullptr;
     G4UIcmdWithAString* fSetMaterialCmd = nullptr;
+    G4UIcmdWithAnInteger* fSetVolumeNumberCmd = nullptr; 
     //Positions/orientation
     G4UIcmdWith3VectorAndUnit* fSetPositionCmd = nullptr;
     G4UIcmdWithAString* fSetPositionTypeCmd = nullptr;
@@ -53,7 +62,7 @@ private:
     G4UIcmdWithADouble* fSetAlphaCmd = nullptr;
     
     // Valid shape names - These are all we are coding messenger/builders for (for now)
-    std::vector<G4String> fAllowedShapes = {"box", "cylinder", "sphere"};
+    std::vector<std::string> fAllowedShapes = {"box", "cylinder", "sphere"};
 };
 
 #endif

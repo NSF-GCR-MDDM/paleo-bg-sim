@@ -7,13 +7,16 @@
 #include "G4GeneralParticleSource.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4ThreeVector.hh"
+#include "G4VSolid.hh"
 
 #include "TF1.h"
 #include "TH2D.h"
+#include "TH1D.h"
 #include "TTree.h"
 
 #include "PaleoSimMessenger.hh"
 #include "PaleoSimOutputManager.hh"
+#include "PaleoSimVolumeDefinition.hh"
 
 class PaleoSimPrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction {
 public:
@@ -21,10 +24,10 @@ public:
                                             PaleoSimOutputManager& manager);
     virtual ~PaleoSimPrimaryGeneratorAction() override;
 
+    void InitializeSource();
     virtual void GeneratePrimaries(G4Event*);
 
 private:
-    G4GeneralParticleSource* fGPS;
     PaleoSimMessenger& fMessenger;
     PaleoSimOutputManager& fManager;
 
@@ -61,6 +64,18 @@ private:
     void InitializeCRYGenerator();
     void GenerateCRYPrimaries(G4Event*);
     //
+    //Volumetric source generator
+    TFile* fVolumetricSourceSpectrumFile = nullptr;
+    bool fVolumetricSourceSpectrumFileLoaded = false;
+    TH1D* fVolumetricSourceSpectrumHist = nullptr;
+    int fVolumetricSourcePDGCode;
+    bool fBoundingBoxInitialized = false;
+    G4String fVolumetricSourceType;
+    G4ThreeVector fVolumetricBoundsMin;
+    G4ThreeVector fVolumetricBoundsMax;
+    PaleoSimVolumeDefinition* fSourceVolumeDefinition = nullptr;
+    void InitializeVolumetricSourceGenerator();
+    void GenerateVolumetricSourcePrimaries(G4Event*);
     //Disk source generator
     TFile* diskSourceSpectrumFile = nullptr;
     bool diskSourceSpectrumFileLoaded = false;
@@ -71,14 +86,6 @@ private:
     void InitializeDiskSourceGenerator();
     void GenerateDiskSourcePrimaries(G4Event*);
     G4ThreeVector SamplePointOnDisk(double radius,const G4ThreeVector& position, const G4ThreeVector& axis);
-
 };
 
 #endif
-
-
-
-
-
-
-

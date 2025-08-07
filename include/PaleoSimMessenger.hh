@@ -30,9 +30,9 @@ public:
     bool GetPrimariesTreeStatus() const { return fPrimariesTreeStatus; };
     bool GetNeutronTallyTreeStatus() const { return fNeutronTallyTreeStatus; };
     bool GetMINTreeStatus() const { return fMINTreeStatus; };
-    G4String GetNeutronTallyTreeVolume() const { return fNeutronTallyTreeVolume; };
+    const std::vector<G4String>& GetNeutronTallyTreeVolumes() const { return fNeutronTallyTreeVolumes; };
     bool GetRecoilTreeStatus() const { return fRecoilTreeStatus; };
-    G4String GetRecoilTreeVolume() const { return fRecoilTreeVolume; };
+    const std::vector<G4String>& GetRecoilTreeVolumes() const { return fRecoilTreeVolumes; };
     bool GetVRMLStatus() const { return fVRMLStatus; };
 
     //Generator
@@ -59,7 +59,20 @@ public:
     G4double GetCRYAltitude() const { return fCRYAltitude;};  
     G4double GetCRYLatitude() const { return fCRYLatitude;};
     G4double GetCRYNorm() const { return fCRYNorm;};
-    //(flat) Disk source generator
+    //Volumetric source generator
+    G4String GetVolumetricSourceVolumeName() const { return fVolumetricSourceVolumeName; };
+    G4int GetVolumetricSourcePDGCode() const { return fVolumetricSourcePDGCode; };
+    G4String GetVolumetricSourceType() const { return fVolumetricSourceType; };
+    G4String GetVolumetricSourceSpectrumFilename() const { return fVolumetricSourceSpectrumFilename; };
+    G4String GetVolumetricSourceSpectrumHistName() const { return fVolumetricSourceSpectrumHistName; };
+    G4double GetVolumetricSourceMonoEnergy() const { return fVolumetricSourceMonoEnergy; };
+    void SetVolumetricSourceVolumeName(G4String val) { fVolumetricSourceVolumeName = val; };
+    void SetVolumetricSourcePDGCode(int val) { fVolumetricSourcePDGCode = val; };
+    void SetVolumetricSourceType(G4String val) { fVolumetricSourceType = val; };
+    void SetVolumetricSourceSpectrumFilename(G4String val) { fVolumetricSourceSpectrumFilename = val; };
+    void SetVolumetricSourceSpectrumHistName(G4String val) { fVolumetricSourceSpectrumHistName = val; };
+    void SetVolumetricSourceMonoEnergy(double val) { fVolumetricSourceMonoEnergy = val;};
+    //Flat disk source generator
     G4int GetDiskSourcePDGCode() const { return fDiskSourcePDGCode; };
     G4String GetDiskSourceType() const { return fDiskSourceType; };
     G4String GetDiskSourceSpectrumFilename() const { return fDiskSourceSpectrumFilename; };
@@ -78,36 +91,41 @@ public:
     void SetDiskSourcePosition(G4ThreeVector val) { fDiskSourcePosition = val;};
     void SetDiskSourceAxis(G4ThreeVector val) { fDiskSourceAxis = val;};
     void SetDiskSourceDirection(G4ThreeVector val) { fDiskSourceDirection = val;};
-
+    
     //Geometric calculations
     void ComputeCoordinates();
-    void ComputeAbsoluteCoordinatesRecursive(VolumeDefinition* vol);
-    void ComputeRelativeCoordinatesRecursive(VolumeDefinition* vol);
-    void ComputeCumulativeRotationsRecursive(VolumeDefinition* vol);
+    void ComputeAbsoluteCoordinatesRecursive(PaleoSimVolumeDefinition* vol);
+    void ComputeRelativeCoordinatesRecursive(PaleoSimVolumeDefinition* vol);
+    void ComputeCumulativeRotationsRecursive(PaleoSimVolumeDefinition* vol);
 
     //New geometry helper functions
     G4String GetGeometryMacroPath() const { return fGeometryMacroPath; }
-    void AddVolume(VolumeDefinition* vol) {fVolumes.push_back(vol); };
-    const std::vector<VolumeDefinition*>& GetVolumes() const { return fVolumes; };
+    void AddVolume(PaleoSimVolumeDefinition* vol) {fVolumes.push_back(vol); };
+    const std::vector<PaleoSimVolumeDefinition*>& GetVolumes() const { return fVolumes; };
     bool VolumeNameExists(const G4String& name) const {
         for (const auto& vol : fVolumes) {
             if (vol->name == name) return true;
         }
         return false;
     };
-    VolumeDefinition* GetVolumeByName(const std::string& name) const {
+    PaleoSimVolumeDefinition* GetVolumeByName(const std::string& name) const {
         for (auto* vol : fVolumes) {
             if (vol->name == name) return vol;
         }
         return nullptr;
     }
+    //For overwriting the volume list with one sorted by hierarchy (guarantee parents placed before children)
+    void OverwriteVolumes(const std::vector<PaleoSimVolumeDefinition*>& newVolumes) {
+        fVolumes = newVolumes;
+    }
+
 
 
 private:
     //New geometry configuration
     G4UIdirectory* fGeomDirectory = nullptr;
     
-    std::vector<VolumeDefinition*> fVolumes;
+    std::vector<PaleoSimVolumeDefinition*> fVolumes;
     G4UIcmdWithAString* fSetGeometryMacroCmd = nullptr;
     G4String fGeometryMacroPath = "";
 
@@ -116,18 +134,18 @@ private:
     G4UIcmdWithABool* fSetVRMLStatusCmd = nullptr;
     G4UIcmdWithABool* fSetPrimariesTreeStatusCmd = nullptr;
     G4UIcmdWithABool* fSetMINTreeStatusCmd = nullptr;
-    G4UIcmdWithAString* fSetNeutronTallyTreeVolumeCmd = nullptr;
-    G4UIcmdWithAString* fSetRecoilTreeVolumeCmd = nullptr;
+    G4UIcmdWithAString* fSetNeutronTallyTreeVolumesCmd = nullptr;
+    G4UIcmdWithAString* fSetRecoilTreeVolumesCmd = nullptr;
 
     G4String fOutputFile = "outputFiles/output.root";
     G4bool fPrimariesTreeStatus = true;
 
     G4bool fMINTreeStatus = false;
 
-    G4String fNeutronTallyTreeVolume = "";
+    std::vector<G4String> fNeutronTallyTreeVolumes;
     G4bool fNeutronTallyTreeStatus = false;
     
-    G4String fRecoilTreeVolume = "";
+    std::vector<G4String> fRecoilTreeVolumes;
     G4bool fRecoilTreeStatus = false;
     
     G4bool fVRMLStatus = false;
@@ -144,7 +162,8 @@ private:
           "meiHimeMuonGenerator", //Mei & Hime muon generator, with TF1s
           "muteGenerator", //Mute, samples from 2D histogram of muon energy and thetas (root file)
           "CRYGenerator", //Samples root file containing list of events
-          "diskSourceGenerator" //Samples particles from a flat disk with supplied direction and spectrum 
+          "volumetricSource", //Samples particles from a flat Volumetric with supplied direction and spectrum 
+          "diskSource"
       };
     
     G4String fSourceType = "meiHimeMuonGenerator";
@@ -171,7 +190,22 @@ private:
     G4double fCRYAltitude, fCRYLatitude;
     G4double fCRYNorm;
     //
-    // "diskSourceGenerator"
+    // "VolumetricSourceGenerator"
+    G4UIdirectory* fVolumetricSourceDirectory = nullptr;
+    G4UIcmdWithAString* fSetVolumetricSourceVolumeNameCmd = nullptr;
+    G4UIcmdWithAnInteger* fSetVolumetricSourcePDGCodeCmd = nullptr;
+    G4UIcmdWithAString* fSetVolumetricSourceTypeCmd = nullptr; //"hist" or "mono"
+    G4UIcmdWithAString* fSetVolumetricSourceSpectrumFilenameCmd = nullptr;
+    G4UIcmdWithAString* fSetVolumetricSourceSpectrumHistNameCmd = nullptr;
+    G4UIcmdWithADoubleAndUnit* fSetVolumetricSourceMonoEnergyCmd = nullptr;
+    G4int fVolumetricSourcePDGCode = 2112; //Neutron
+    G4String fVolumetricSourceType = "mono";
+    G4String fVolumetricSourceVolumeName = "";
+    G4String fVolumetricSourceSpectrumFilename = "";
+    G4String fVolumetricSourceSpectrumHistName = "";
+    G4double fVolumetricSourceMonoEnergy = 1.*MeV;
+    //
+    //Disk source
     G4UIdirectory* fDiskSourceGeneratorDirectory = nullptr;
     G4UIcmdWithAnInteger* fSetDiskSourcePDGCodeCmd = nullptr;
     G4UIcmdWithAString* fSetDiskSourceTypeCmd = nullptr;

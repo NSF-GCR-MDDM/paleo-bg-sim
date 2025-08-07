@@ -3,6 +3,8 @@
 #+Y is toward the mesoSpim table
 # World volume (concrete shell)
 /volume/new World
+/volume/setParent None
+/volume/setVolumeNumber 0
 /volume/setShape box
 /volume/setMaterial concrete
 /volume/setPosition  0 0 0 mm
@@ -15,6 +17,7 @@
 # Air cavity (10 ft cube)
 /volume/new Room
 /volume/setParent World
+/volume/setVolumeNumber 1
 /volume/setShape box
 /volume/setMaterial air
 /volume/setPosition 0 0 0 mm
@@ -27,6 +30,7 @@
 # HDPE collimator block
 /volume/new Collimator
 /volume/setParent Room
+/volume/setVolumeNumber 2
 /volume/setShape box
 /volume/setMaterial borated_hdpe
 /volume/setPosition 0 -1218.2 -1218.2 mm
@@ -39,6 +43,7 @@
 # Iron throat
 /volume/new SSThroat
 /volume/setParent Collimator
+/volume/setVolumeNumber 10
 /volume/setShape box
 /volume/setMaterial stainless_steel
 /volume/setPosition 0 143.66875 -25.4 mm
@@ -51,6 +56,7 @@
 # Throat Air
 /volume/new ThroatAir
 /volume/setParent SSThroat
+/volume/setVolumeNumber 3
 /volume/setShape box
 /volume/setMaterial air
 /volume/setPosition 0 0 0 mm
@@ -62,6 +68,7 @@
 # Source Nook
 /volume/new SourceNook
 /volume/setParent Collimator
+/volume/setVolumeNumber 4
 /volume/setShape box
 /volume/setMaterial air
 /volume/setPosition 44.45 1.5875 -25.4 mm
@@ -74,6 +81,7 @@
 # Source Lead
 /volume/new SourceLead
 /volume/setParent SourceNook
+/volume/setVolumeNumber 5
 /volume/setShape box
 /volume/setMaterial lead
 /volume/setPosition -6.35 6.35 0 mm
@@ -86,10 +94,12 @@
 # Lead Air Cavity
 /volume/new LeadAirCavity
 /volume/setParent SourceLead
+/volume/setVolumeNumber 6
 /volume/setShape cylinder
 /volume/setMaterial air
 /volume/setPosition 0 0 9.398 mm
 /volume/setPositionType relative
+/volume/cylinder/setCylinderAxis 0 0 1
 /volume/cylinder/setRadius 8.89 mm
 /volume/cylinder/setHalfHeight 0.762 mm
 /volume/setRGB 0 1 1
@@ -99,10 +109,12 @@
 # Source SS
 /volume/new SourceSS
 /volume/setParent SourceLead
+/volume/setVolumeNumber 7
 /volume/setShape cylinder
 /volume/setMaterial stainless_steel
 /volume/setPosition 0 0 -0.889 mm
 /volume/setPositionType relative
+/volume/cylinder/setCylinderAxis 0 0 1
 /volume/cylinder/setRadius 8.89 mm
 /volume/cylinder/setHalfHeight 9.525 mm
 /volume/setRGB 0.7 0.7 0.7
@@ -112,10 +124,12 @@
 # AmBe Source
 /volume/new AmBeSource
 /volume/setParent SourceSS
+/volume/setVolumeNumber 8
 /volume/setShape cylinder
 /volume/setMaterial air
 /volume/setPosition 0 0 0 mm
 /volume/setPositionType relative
+/volume/cylinder/setCylinderAxis 0 0 1
 /volume/cylinder/setRadius 5.08 mm
 /volume/cylinder/setHalfHeight 5.715 mm
 /volume/setRGB 0.2 1.0 0.2
@@ -125,6 +139,7 @@
 # Target
 /volume/new Target
 /volume/setParent ThroatAir
+/volume/setVolumeNumber 9
 /volume/setShape box
 /volume/setMaterial lif
 /volume/setPosition 15 -129.91875 -15 mm

@@ -10,7 +10,10 @@
 #include "G4SystemOfUnits.hh"
 #include "Randomize.hh"
 #include "G4Exception.hh"
+#include "G4RandomDirection.hh"
+#include "G4LogicalVolumeStore.hh"
 #include "PaleoSimUserEventInformation.hh"
+#include "PaleoSimVolumeDefinition.hh"
 
 #include "TF1.h"
 #include <algorithm>
@@ -18,8 +21,7 @@
 
 PaleoSimPrimaryGeneratorAction::PaleoSimPrimaryGeneratorAction(PaleoSimMessenger& messenger,
                                                                                  PaleoSimOutputManager& manager)
-: G4VUserPrimaryGeneratorAction(), 
-  fGPS(new G4GeneralParticleSource()), 
+: G4VUserPrimaryGeneratorAction(),  
   fMessenger(messenger),
   fManager(manager)
 {
@@ -45,17 +47,26 @@ PaleoSimPrimaryGeneratorAction::PaleoSimPrimaryGeneratorAction(PaleoSimMessenger
   else if (sourceType == "CRYGenerator") {
     InitializeCRYGenerator();
   }
-  else if (sourceType == "diskSourceGenerator") {
+  else if (sourceType == "volumetricSource") {
+    InitializeVolumetricSourceGenerator();
+  }
+  else if (sourceType == "diskSource") {
     InitializeDiskSourceGenerator();
   }
-
+  else {
+    G4Exception("PaleoSimPrimaryGeneratorAction::PaleoSimPrimaryGeneratorAction", "001", FatalException,
+                ("Source not valid: " + sourceType).c_str());
+  }
 }
 
 PaleoSimPrimaryGeneratorAction::~PaleoSimPrimaryGeneratorAction() {
-    delete fGPS;
     if (cryFileLoaded) {
       cryFile->Close();
       delete cryFile;
+    }
+    if (fVolumetricSourceSpectrumFileLoaded) {
+      fVolumetricSourceSpectrumFile->Close();
+      delete fVolumetricSourceSpectrumFile;
     }
     if (diskSourceSpectrumFileLoaded) {
       diskSourceSpectrumFile->Close();
@@ -80,9 +91,17 @@ void PaleoSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
   else if (sourceType == "CRYGenerator") {
     GenerateCRYPrimaries(anEvent);
   }
+  //Volumetric source
+  else if (sourceType == "volumetricSource") {
+    GenerateVolumetricSourcePrimaries(anEvent);
+  }
   //Disk source
-  else if (sourceType == "diskSourceGenerator") {
+  else if (sourceType == "diskSource") {
     GenerateDiskSourcePrimaries(anEvent);
+  }
+  else {
+    G4Exception("PaleoSimPrimaryGeneratorAction::GeneratePrimaries", "GeneratePrimaries001", FatalException,
+                ("Invalid source: " + sourceType).c_str());
   }
 }
 
@@ -126,32 +145,35 @@ void PaleoSimPrimaryGeneratorAction::GenerateMeiHimeMuonPrimaries(G4Event* anEve
   G4double h0_km = h0 / km;
 
   G4ParticleDefinition* muonDef = G4ParticleTable::GetParticleTable()->FindParticle("mu-");
-  fGPS->SetParticleDefinition(muonDef);
 
   G4double theta = fMuonThetaDist->GetRandom();
   G4double phi = (2.0 * M_PI - 0.001) * G4UniformRand();
 
   G4double h_km = h0_km / std::cos(theta);
-  fMuonEnergyDist->SetParameter(1, h_km);
 
   G4double E_GeV = fMuonEnergyDist->GetRandom();
-  fGPS->GetCurrentSource()->GetEneDist()->SetMonoEnergy(E_GeV*GeV);
+  G4double Ekin = E_GeV * GeV;
+  G4double mass = muonDef->GetPDGMass();
+  G4double Etot = Ekin + mass;
+  G4double p = std::sqrt(Etot*Etot - mass*mass);
 
   G4ThreeVector position = SamplePointOnTopOfWorldVolume();
+
   G4ThreeVector direction(std::sin(theta) * std::cos(phi),
                           std::sin(theta) * std::sin(phi),
                           -std::cos(theta)); // downward
-  fGPS->GetCurrentSource()->GetAngDist()->SetParticleMomentumDirection(direction);
-  fGPS->GetCurrentSource()->GetPosDist()->SetCentreCoords(position);
+  G4ThreeVector momentum = direction * p;
 
-  fGPS->GeneratePrimaryVertex(anEvent);
+  G4PrimaryParticle* primary = new G4PrimaryParticle(muonDef, momentum.x(), momentum.y(), momentum.z());
+  G4PrimaryVertex* vertex = new G4PrimaryVertex(position, /*time=*/0.0);
+  vertex->SetPrimary(primary);
+  anEvent->AddPrimaryVertex(vertex);
 
-  //We store custom variables in a UserEventInfo to pass them to beginningOfEventAction to load into trees
   auto* info = new PaleoSimUserEventInformation();
-  info->muonTheta=theta;
-  info->muonPhi=phi;
-  info->muonSlantDepth=h_km*km;
-  anEvent->SetUserInformation(info); 
+  info->muonTheta = theta;
+  info->muonPhi = phi;
+  info->muonSlantDepth = h_km*km;
+  anEvent->SetUserInformation(info);
 }
 
 //////////////////
@@ -189,26 +211,35 @@ void PaleoSimPrimaryGeneratorAction::InitializeMuteMuons() {
 void PaleoSimPrimaryGeneratorAction::GenerateMutePrimaries(G4Event* anEvent) {
   
   G4ParticleDefinition* muonDef = G4ParticleTable::GetParticleTable()->FindParticle("mu-");
-  fGPS->SetParticleDefinition(muonDef);
 
   //Get random energy, theta from fMuteHist
   double E_GeV = -1, theta = -1;
   fMuteHist->GetRandom2(E_GeV, theta);  
-  fGPS->GetCurrentSource()->GetEneDist()->SetMonoEnergy(E_GeV*GeV);
 
   //Get random phi
   G4double phi = (2.0 * M_PI - 0.001) * G4UniformRand();
+
+  //Kinematics
+  double Ekin = E_GeV * GeV;
+  double mass = muonDef->GetPDGMass();
+  double Etot = Ekin + mass;
+  double p = std::sqrt(Etot * Etot - mass * mass);
 
   //Calculate position, direction, set those
   G4ThreeVector position = SamplePointOnTopOfWorldVolume();
   G4ThreeVector direction(std::sin(theta) * std::cos(phi),
                           std::sin(theta) * std::sin(phi),
                           -std::cos(theta)); // downward
-  fGPS->GetCurrentSource()->GetAngDist()->SetParticleMomentumDirection(direction);
-  fGPS->GetCurrentSource()->GetPosDist()->SetCentreCoords(position);
+  G4ThreeVector momentum = direction * p;
 
-  //Generate vertex
-  fGPS->GeneratePrimaryVertex(anEvent);
+  //Create primary particle and vertex
+  G4PrimaryParticle* primary = new G4PrimaryParticle(muonDef,
+                                                     momentum.x(),
+                                                     momentum.y(),
+                                                     momentum.z());
+  G4PrimaryVertex* vertex = new G4PrimaryVertex(position, 0.0);
+  vertex->SetPrimary(primary);
+  anEvent->AddPrimaryVertex(vertex);
 
   //We store custom variables in a UserEventInfo to pass them to beginningOfEventAction to load into trees
   auto* info = new PaleoSimUserEventInformation();
@@ -325,6 +356,90 @@ void PaleoSimPrimaryGeneratorAction::GenerateCRYPrimaries(G4Event* anEvent) {
   anEvent->SetUserInformation(info); //G4 takes ownership, no need to delete
 }
 
+///////////////////////////////
+//Volumetric source generator//
+///////////////////////////////
+void PaleoSimPrimaryGeneratorAction::InitializeVolumetricSourceGenerator() {
+  //Try to get histogram if requested
+  if (fMessenger.GetVolumetricSourceType() == "hist") {
+    //Load file
+    G4String filename = fMessenger.GetVolumetricSourceSpectrumFilename();
+  
+    //Check and open root file
+    std::ifstream testFile(filename);
+    if (!testFile.good()) {
+      G4Exception("InitializeVolumetricSourceGenerator", "Volumetric001", FatalException,
+                  ("Cannot open Volumetric source spectrum file: " + filename).c_str());
+    }
+    testFile.close();
+    fVolumetricSourceSpectrumFile = TFile::Open(filename.c_str());
+    if (!fVolumetricSourceSpectrumFile || fVolumetricSourceSpectrumFile->IsZombie()) {
+      G4Exception("InitializeVolumetricSourceGenerator", "Volumetric002", FatalException,
+                  ("Failed to open Volumetric source file: " + filename).c_str());
+    }
+  
+    //Read in hist
+    G4String histName = fMessenger.GetVolumetricSourceSpectrumHistName();
+    fVolumetricSourceSpectrumHist = dynamic_cast<TH1D*>(fVolumetricSourceSpectrumFile->Get(histName));
+    if (!fVolumetricSourceSpectrumHist) {
+      G4Exception("InitializeVolumetricSourceGenerator", "Volumetric003", FatalException,
+                  ("Hist '" + histName + "' was not found in ROOT file.").c_str());
+    }
+  }
+}
+
+void PaleoSimPrimaryGeneratorAction::GenerateVolumetricSourcePrimaries(G4Event* anEvent) {
+  // Set particle type
+  int pdgCode = fMessenger.GetVolumetricSourcePDGCode();
+  G4ParticleDefinition* particleDef = G4ParticleTable::GetParticleTable()->FindParticle(pdgCode);
+  if (!particleDef) {
+    G4String msg = "Unknown PDG code in Volumetric Source Generator: " + std::to_string(pdgCode);
+    G4Exception("PaleoSimPrimaryGeneratorAction::GenerateVolumetricSourcePrimaries",
+                "VolumetricSource001", FatalException, msg.c_str());
+  }
+
+  // Initialize volume definition (once)
+  if (!fSourceVolumeDefinition) {
+    G4String volumeName = fMessenger.GetVolumetricSourceVolumeName();
+    fSourceVolumeDefinition = fMessenger.GetVolumeByName(volumeName);
+
+    if (!fSourceVolumeDefinition) {
+      G4Exception("PaleoSimPrimaryGeneratorAction::GenerateVolumetricSourcePrimaries",
+                  "Volumetric004", FatalException,
+                  ("PaleoSimVolumeDefinition '" + volumeName + "' not found!").c_str());
+    }
+  }
+
+  // Sample a position using the geometry-aware method
+  G4ThreeVector pos = fSourceVolumeDefinition->GenerateRandomPointInside();
+  
+  // Set energy
+  double energy = 0;
+  if (fMessenger.GetVolumetricSourceType() == "hist") {
+    energy = fVolumetricSourceSpectrumHist->GetRandom() * MeV;
+  } else {
+    energy = fMessenger.GetVolumetricSourceMonoEnergy();
+  }
+
+  // Compute momentum
+  double mass = particleDef->GetPDGMass();
+  double Etot = energy + mass;
+  double p = std::sqrt(Etot * Etot - mass * mass);
+
+  G4ThreeVector direction = G4RandomDirection();
+  G4ThreeVector momentum = direction * p;
+
+  // Create primary particle and vertex
+  G4PrimaryParticle* primary = new G4PrimaryParticle(particleDef, momentum.x(), momentum.y(), momentum.z());
+  G4PrimaryVertex* vertex = new G4PrimaryVertex(pos, 0.0);
+  vertex->SetPrimary(primary);
+  anEvent->AddPrimaryVertex(vertex);
+}
+
+///////////////
+//Disk source//
+///////////////
+
 ///////////////////////////
 // Disk source generator //
 ///////////////////////////
@@ -367,11 +482,9 @@ void PaleoSimPrimaryGeneratorAction::GenerateDiskSourcePrimaries(G4Event* anEven
     G4Exception("PaleoSimPrimaryGeneratorAction::GenerateDiskSourcePrimaries",
                 "DiskSource001", FatalException, msg.c_str());
   }
-  fGPS->SetParticleDefinition(particleDef);
 
   //Sample random position on disk, set position
   G4ThreeVector pos = SamplePointOnDisk(fMessenger.GetDiskSourceRadius(),fMessenger.GetDiskSourcePosition(),fMessenger.GetDiskSourceAxis());
-  fGPS->GetCurrentSource()->GetPosDist()->SetCentreCoords(pos);
 
   //Set energy
   double energy=0;
@@ -381,13 +494,28 @@ void PaleoSimPrimaryGeneratorAction::GenerateDiskSourcePrimaries(G4Event* anEven
   else {
     energy = fMessenger.GetDiskSourceMonoEnergy();
   }
-  fGPS->GetCurrentSource()->GetEneDist()->SetMonoEnergy(energy);
-  
-  fGPS->GetCurrentSource()->GetAngDist()->SetParticleMomentumDirection(fMessenger.GetDiskSourceDirection());
+
+  //Set direction
+  G4ThreeVector direction = fMessenger.GetDiskSourceDirection();
+  direction = direction.unit();
+
+  //Compute momentum
+  double mass = particleDef->GetPDGMass();
+  double totalEnergy = energy + mass;
+  double momentumMag = std::sqrt(totalEnergy*totalEnergy - mass*mass);
+  G4ThreeVector momentum = momentumMag * direction;
 
   //Generate vertex
-  fGPS->GeneratePrimaryVertex(anEvent);
+  G4PrimaryParticle* particle = new G4PrimaryParticle(particleDef, momentum.x(), momentum.y(), momentum.z());
+  particle->SetMass(mass);
+  particle->SetKineticEnergy(energy);
+
+  G4PrimaryVertex* vertex = new G4PrimaryVertex(pos, 0.0); // time = 0
+  vertex->SetPrimary(particle);
+
+  anEvent->AddPrimaryVertex(vertex);
 }
+
 
 //////////////////
 //Other function//
@@ -396,7 +524,7 @@ void PaleoSimPrimaryGeneratorAction::GenerateDiskSourcePrimaries(G4Event* anEven
 G4ThreeVector PaleoSimPrimaryGeneratorAction::SamplePointOnTopOfWorldVolume() {
   //Find the world volume
   const auto& volumes = fMessenger.GetVolumes();
-  const VolumeDefinition* worldDef = nullptr;
+  const PaleoSimVolumeDefinition* worldDef = nullptr;
   for (const auto* vol : volumes) {
       if (vol->parentName == "None") {
           worldDef = vol;
@@ -431,7 +559,7 @@ G4ThreeVector PaleoSimPrimaryGeneratorAction::SamplePointOnTopOfWorldVolume() {
 //Checks if a point is on the top surface or not
 G4bool PaleoSimPrimaryGeneratorAction::IsWithinTopSurface(const G4ThreeVector& point) {
   const auto& volumes = fMessenger.GetVolumes();
-  const VolumeDefinition* worldDef = nullptr;
+  const PaleoSimVolumeDefinition* worldDef = nullptr;
   for (const auto* vol : volumes) {
       if (vol->parentName == "None") {
           worldDef = vol;

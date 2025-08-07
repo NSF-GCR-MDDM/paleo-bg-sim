@@ -2,7 +2,7 @@
 
 Automatically generated from PaleoSimMessenger.hh and PaleoSimMessenger.cc with genMacroDoc.py
 
-Last generated on: 2025-07-13 13:15
+Last generated on: 2025-08-07 12:38
 
 ## /geom/
 
@@ -20,13 +20,11 @@ Last generated on: 2025-07-13 13:15
   - Description: Enable tracking of muon-induced neutrons
   - Default: `false`
 
-- **/output/setNeutronTallyTreeVolume** (optional) — `fNeutronTallyTreeVolume`
-  - Description: Set to track particles entering volume in neutronTallyTree
-  - Default: `""`
+- **/output/setNeutronTallyTreeVolumes** (optional) — `fNeutronTallyTreeVolumes`
+  - Description: List of names of volumes to track neutrons entering, separated by spaces
 
-- **/output/setRecoilTreeVolume** (optional) — `fRecoilTreeVolume`
-  - Description: Set to track heavy secondaries in volume in recoilTree
-  - Default: `""`
+- **/output/setRecoilTreeVolumes** (optional) — `fRecoilTreeVolumes`
+  - Description: List of names of volumes to track nuclear recoils in, separated by spaces
 
 - **/output/setVRMLOutputStatus** (optional) — `fVRMLStatus`
   - Description: If true, will save vrml file of geometry in current folder with same name as geometry macro.
@@ -61,6 +59,34 @@ Last generated on: 2025-07-13 13:15
 - **/generator/cry/setCRYFilename** (optional) — `fCRYFilename`
   - Description: Pass in output of cryGenerator code (root file)
   - Default: `""`
+
+### /generator/VolumetricSource/
+
+- **/generator/VolumetricSource/setVolumeName** (optional) — `fVolumetricSourceVolumeName`
+  - Description: Set Volumetric source name, must be defined in geometry file
+  - Default: `val; }`
+
+- **/generator/VolumetricSource/setPDGCode** (optional) — `fVolumetricSourcePDGCode`
+  - Description: Input PDG code of particle to throw
+  - Default: `val; }`
+
+- **/generator/VolumetricSource/setVolumetricSourceType** (optional) — `fVolumetricSourceType`
+  - Description: Set Volumetric source type: 'mono' or 'hist'
+  - Default: `val; }`
+
+- **/generator/VolumetricSource/setVolumetricSourceSpectrumFilename** (optional) — `fVolumetricSourceSpectrumFilename`
+  - Description: Input name of root file with spectrum TH1D or TH1F and energy in MeV
+  - Default: `val; }`
+
+- **/generator/VolumetricSource/setVolumetricSourceSpectrumHistName** (optional) — `fVolumetricSourceSpectrumHistName`
+  - Description: Input name of TH1D or TH1F with energy in MeV!
+  - Default: `val; }`
+
+- **/generator/VolumetricSource/setVolumetricSourceMonoEnergy** (optional) — `fVolumetricSourceMonoEnergy`
+  - Description: Set energy and unit of particles
+  - Default: `val;}`
+  - Units: `MeV`
+  - Valid range: `fVolumetricSourceMonoEnergy >= 0.`
 
 ### /generator/diskSource/
 
