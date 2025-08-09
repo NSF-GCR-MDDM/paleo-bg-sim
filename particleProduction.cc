@@ -12,6 +12,7 @@
 #include "PaleoSimGeometryMessenger.hh"
 #include "PaleoSimOutputManager.hh"
 #include "PaleoSimCmdLineParser.hh"
+#include "TRandom.h"
 
 #include "time.h"
 #include <unistd.h>
@@ -73,14 +74,16 @@ int main(int argc, char** argv) {
     G4long seed = std::stol(parsedArgs["--seed"]);
     std::cout<<"Random seed is "<<seed<<std::endl;
     G4Random::setTheSeed(seed);
+    gRandom->SetSeed(seed);
   }
   else{
-      G4Random::setTheEngine(new CLHEP::RanecuEngine);
+    G4Random::setTheEngine(new CLHEP::RanecuEngine);
     G4long pid = getpid();
     time_t systime = time(nullptr);
     G4long seed = (systime << 16) ^ pid;    
     std::cout<<"Random seed is "<<seed<<std::endl;
     G4Random::setTheSeed(seed);
+    gRandom->SetSeed(seed);
   }
   
   //

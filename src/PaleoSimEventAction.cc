@@ -10,8 +10,9 @@ PaleoSimEventAction::~PaleoSimEventAction() {}
 
 
 void PaleoSimEventAction::BeginOfEventAction(const G4Event* event) {
-  if (event->GetEventID() % 100 == 0) {
-      G4cout << "Event # " << event->GetEventID() << " of " << fMessenger.GetNPS() << G4endl;
+  if (event->GetEventID() % 1000 == 0) {
+    double percent = (100.0 * event->GetEventID() / static_cast<double>(fMessenger.GetNPS()));
+    G4cout << "Event # " << event->GetEventID() << " of " << fMessenger.GetNPS() << ", " << std::fixed << std::setprecision(4) << percent << "% done" <<G4endl;
   }
 
   //We calculate the position and momentum of events. For single particle sources

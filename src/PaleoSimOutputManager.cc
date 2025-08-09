@@ -83,7 +83,7 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
   ////////////////////
   fHeaderTree = new TTree("headerTree","Run meta information");
 
-  int nps = fMessenger.GetNPS();
+  long long nps = fMessenger.GetNPS();
   char sourceType[256] = "";
   strcpy(sourceType, fMessenger.GetSourceType().substr(0, std::min<size_t>(255, fMessenger.GetSourceType().length())).c_str());
 

@@ -1,0 +1,24 @@
+#Geometry commands
+/geom/setGeometry /macroFiles/geometry/ambe.geo
+
+#Source commands
+/generator/setSourceType volumetricSource 
+/generator/VolumetricSource/setPDGCode 2112
+/generator/VolumetricSource/setVolumeName AmBeSource
+/generator/VolumetricSource/setVolumetricSourceType hist
+/generator/VolumetricSource/setVolumetricSourceSpectrumFilename /home/sch52/code/paleo-bg-sim/auxillaryCodes/histGenerator/ambe_neutrons.root
+/generator/VolumetricSource/setVolumetricSourceSpectrumHistName hist
+
+/generator/setNPS 2000
+
+#Output commands
+/output/setPrimariesTreeStatus 1
+/output/setNeutronTallyTreeVolumes Collimator Target
+/output/setRecoilTreeVolumes Target SourceSS
+/output/setVRMLOutputStatus 1
+
+#Verbosity settings
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
