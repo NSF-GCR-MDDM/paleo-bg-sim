@@ -18,6 +18,7 @@
 #include "TF1.h"
 #include <algorithm>
 #include <vector>
+#include <chrono>
 
 PaleoSimPrimaryGeneratorAction::PaleoSimPrimaryGeneratorAction(PaleoSimMessenger& messenger,
                                                                                  PaleoSimOutputManager& manager)
@@ -274,7 +275,7 @@ void PaleoSimPrimaryGeneratorAction::InitializeCRYGenerator() {
       G4Exception("InitializeCRY", "CRY003", FatalException,
                   "Tree 'cryTree' not found in ROOT file.");
     }
-
+    //cryTree->SetBranchStatus("*", 0); 
     cryTree->SetBranchAddress("pdgCode",    &cry_pdgcode);
     cryTree->SetBranchAddress("energy_MeV", &cry_energy);
     cryTree->SetBranchAddress("u",          &cry_u);
@@ -282,9 +283,26 @@ void PaleoSimPrimaryGeneratorAction::InitializeCRYGenerator() {
     cryTree->SetBranchAddress("w",          &cry_w);
     cryTree->SetBranchAddress("x_mm",       &cry_x);
     cryTree->SetBranchAddress("y_mm",       &cry_y);
+
     nCryEntries = cryTree->GetEntries();
     std::cout<<"Number of CRY particles to sample is "<<nCryEntries<<std::endl;
     cryFileLoaded = true;
+
+    //Preload into memory
+    for (Long64_t i = 0; i < nCryEntries; ++i) {
+        cryTree->GetEntry(i); // fills cry_* branch buffers for one event
+
+        all_cry_pdgcodes.push_back(*cry_pdgcode); // copy vector
+        all_cry_energy.push_back(*cry_energy);
+        all_cry_u.push_back(*cry_u);
+        all_cry_v.push_back(*cry_v);
+        all_cry_w.push_back(*cry_w);
+        all_cry_x.push_back(*cry_x);
+        all_cry_y.push_back(*cry_y);
+        if (i%1000000 ==0 ) {
+          std::cout<<"On entry "<<i<<" of "<<nCryEntries<<std::endl;
+        }
+    }
 
     //Get header info
     TTree * headerTree = dynamic_cast<TTree*>(cryFile->Get("headerTree"));
@@ -301,9 +319,20 @@ void PaleoSimPrimaryGeneratorAction::InitializeCRYGenerator() {
 }
 
 void PaleoSimPrimaryGeneratorAction::GenerateCRYPrimaries(G4Event* anEvent) {
+  //using Clock = std::chrono::steady_clock;
+  //const auto t0 = Clock::now();  // start timing
   //Get random event
   Long64_t entry = G4RandFlat::shootInt(nCryEntries);
-  cryTree->GetEntry(entry);
+  //cryTree->GetEntry(entry);
+
+  const auto& pdgCodes = all_cry_pdgcodes[entry];
+  const auto& energies = all_cry_energy[entry];
+  const auto& u        = all_cry_u[entry];
+  const auto& v        = all_cry_v[entry];
+  const auto& w        = all_cry_w[entry];
+  const auto& x        = all_cry_x[entry];
+  const auto& y        = all_cry_y[entry];
+
 
   // Sample a position on the top of the world volume
   G4ThreeVector basePosition = SamplePointOnTopOfWorldVolume();
@@ -354,6 +383,10 @@ void PaleoSimPrimaryGeneratorAction::GenerateCRYPrimaries(G4Event* anEvent) {
   info->CRYTotalEnergy = totalEnergy;  // MeV
   info->CRYCorePosition = basePosition;
   anEvent->SetUserInformation(info); //G4 takes ownership, no need to delete
+
+  //const auto t1 = Clock::now();
+  //double dt_us = std::chrono::duration<double, std::micro>(t1 - t0).count();
+  //std::cout<<dt_us<<std::endl;
 }
 
 ///////////////////////////////
