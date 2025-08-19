@@ -19,6 +19,11 @@ PaleoSimSteppingAction::~PaleoSimSteppingAction() {}
 void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
 
     G4Track* track = step->GetTrack();
+
+    //If first track in step, reset prevVolume
+    if (track->GetCurrentStepNumber() == 1) {
+        prevVolume = nullptr;
+    }
     G4ParticleDefinition* particleDef = track->GetDefinition();
     auto* event = G4EventManager::GetEventManager()->GetConstCurrentEvent();
     auto* info = dynamic_cast<const PaleoSimUserEventInformation*>(event->GetUserInformation());
@@ -68,53 +73,77 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
     ////////////////////////
     // NEUTRON TALLY TREE //
     ////////////////////////
+    //Updated based on https://geant4.web.cern.ch/documentation/dev/faq_html/FAQ/tracksAndSteps.html
+    //
     if (fMessenger.GetNeutronTallyTreeStatus()) {
         // Check if the particle is a neutron
         if (particleDef->GetPDGEncoding() == 2112) {
-            G4StepPoint* preStepPoint = step->GetPreStepPoint();
-            G4StepPoint* postStepPoint = step->GetPostStepPoint();
+            const G4StepPoint* preStepPoint = step->GetPreStepPoint();
+            const G4StepPoint* postStepPoint = step->GetPostStepPoint();
 
-            G4VPhysicalVolume* preVol = preStepPoint->GetPhysicalVolume();
-            G4VPhysicalVolume* postVol = postStepPoint->GetPhysicalVolume();
-        
+            const G4VPhysicalVolume* preVol = preStepPoint->GetPhysicalVolume();
+            const G4VPhysicalVolume* postVol = postStepPoint->GetPhysicalVolume();
             if (!preVol || !postVol) return;  // Safety check for particles leaving the world volume
 
-            const G4String& postName = postVol->GetName();
-            const auto& tallyVolumes = fMessenger.GetNeutronTallyTreeVolumes();
-            if ((preVol != postVol) && (std::find(tallyVolumes.begin(), tallyVolumes.end(), postName) != tallyVolumes.end())) {
+            //This means particle just entered a cell
+            if (preStepPoint->GetStepStatus() == fGeomBoundary) {
 
-                PaleoSimVolumeDefinition* vol = fMessenger.GetVolumeByName(postName);
-                fOutputManager.PushNeutronTallyVolumeNumber(vol->volumeNumber);
+                //Get the name of the current volume
+                const G4TouchableHandle& preStepTouch = preStepPoint->GetTouchableHandle();
+                const G4VPhysicalVolume* volume = preStepTouch->GetVolume();
+                const G4String& name = volume->GetName();
 
-                G4int eventID = event->GetEventID();
-                fOutputManager.PushNeutronTallyEventID(eventID);
+                //Get our list of volumes to check if we should track this particle
+                const auto& tallyVolumes = fMessenger.GetNeutronTallyTreeVolumes();
 
-                G4double energy = track->GetKineticEnergy();
-                fOutputManager.PushNeutronTallyEventEntryEnergy(energy);
+                //See if we should track this particle
+                if (std::find(tallyVolumes.begin(), tallyVolumes.end(), name) != tallyVolumes.end()) {
 
-                G4ThreeVector position = track->GetPosition();
-                fOutputManager.PushNeutronTallyEventEntryX(position.x());
-                fOutputManager.PushNeutronTallyEventEntryY(position.y());
-                fOutputManager.PushNeutronTallyEventEntryZ(position.z());
+                    //If so, get the volume number, and push that to the tree
+                    PaleoSimVolumeDefinition* vol = fMessenger.GetVolumeByName(name);
+                    fOutputManager.PushNeutronTallyVolumeNumber(vol->volumeNumber);
 
-                G4ThreeVector momentumDirection = track->GetMomentumDirection();
-                fOutputManager.PushNeutronTallyEventEntryU(momentumDirection.x());
-                fOutputManager.PushNeutronTallyEventEntryV(momentumDirection.y());
-                fOutputManager.PushNeutronTallyEventEntryW(momentumDirection.z());
+                    //Push the event ID 
+                    const G4int& eventID = event->GetEventID();
+                    fOutputManager.PushNeutronTallyEventID(eventID);
 
-                // Zenith angle:
-                if ((fMessenger.GetSourceType()=="meiHimeMuonGenerator") || (fMessenger.GetSourceType()=="muteGenerator") || (fMessenger.GetSourceType()=="CRYGenerator")) { 
-                    G4ThreeVector muDir = info->primaryDirection;
-                    G4ThreeVector neutronDir = track->GetMomentumDirection();
-                    fOutputManager.PushNeutronTallyEventAngleRelMuon(neutronDir.angle(muDir));
+                    G4double energy = preStepPoint->GetKineticEnergy();
+                    fOutputManager.PushNeutronTallyEventEntryEnergy(energy);
 
-                    // Distance from muon track:
-                    G4ThreeVector muPos = info->primaryGenerationPosition;
-                    G4ThreeVector displacement = position - muPos;
-                    G4double distToTrack = (displacement.cross(muDir)).mag();
-                    fOutputManager.PushNeutronTallyEventDistanceToMuonTrack(distToTrack);
+                    G4ThreeVector position = preStepPoint->GetPosition();
+                    fOutputManager.PushNeutronTallyEventEntryX(position.x());
+                    fOutputManager.PushNeutronTallyEventEntryY(position.y());
+                    fOutputManager.PushNeutronTallyEventEntryZ(position.z());
+
+                    G4ThreeVector momentumDirection = preStepPoint->GetMomentumDirection();
+                    fOutputManager.PushNeutronTallyEventEntryU(momentumDirection.x());
+                    fOutputManager.PushNeutronTallyEventEntryV(momentumDirection.y());
+                    fOutputManager.PushNeutronTallyEventEntryW(momentumDirection.z());
+
+                    if (prevVolume) {
+                        const G4String& prevName = prevVolume->GetName();
+                        //TODO check not null
+                        PaleoSimVolumeDefinition* prevVol = fMessenger.GetVolumeByName(prevName);
+                        fOutputManager.PushPrevNeutronTallyVolumeNumber(prevVol->volumeNumber);
+                    }
+                    else {
+                        fOutputManager.PushPrevNeutronTallyVolumeNumber(-1); //To avoid de-syncing
+                    }
+
+                    // Zenith angle:
+                    if ((fMessenger.GetSourceType()=="meiHimeMuonGenerator") || (fMessenger.GetSourceType()=="muteGenerator") || (fMessenger.GetSourceType()=="CRYGenerator")) { 
+                        const G4ThreeVector& muDir = info->primaryDirection;
+                        const G4ThreeVector& neutronDir = preStepPoint->GetMomentumDirection();
+                        fOutputManager.PushNeutronTallyEventAngleRelMuon(neutronDir.angle(muDir));
+
+                        // Distance from muon track:
+                        const G4ThreeVector& muPos = info->primaryGenerationPosition;
+                        const G4ThreeVector& displacement = position - muPos;
+                        const G4double& distToTrack = (displacement.cross(muDir)).mag();
+                        fOutputManager.PushNeutronTallyEventDistanceToMuonTrack(distToTrack);
+                    }
+                    fOutputManager.IncrementNeutronTallyEventMultiplicity();
                 }
-                fOutputManager.IncrementNeutronTallyEventMultiplicity();
             }
         }
     }
@@ -141,7 +170,6 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
             G4int parentPdg = parentTrack->GetParticleDefinition()->GetPDGEncoding();
             if (!(parentPdg == 2112 || parentPdg == 22 || parentPdg == 13 || parentPdg == -13)) return;
                 
-            auto* event = G4EventManager::GetEventManager()->GetConstCurrentEvent();
             G4int eventID = event->GetEventID();
             
             // Now record all secondaries
@@ -149,8 +177,9 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
 
                 G4int pdgCode = sec->GetParticleDefinition()->GetPDGEncoding();
                 //Ignore gamma, electron, and neutron, 
-                if (std::abs(pdgCode) == 11 || pdgCode == 22 || pdgCode == 2112 ) continue;
-
+                //if (std::abs(pdgCode) == 11 || pdgCode == 22 || pdgCode == 2112 ) continue;
+                if (std::abs(pdgCode) <= 2112) continue;
+                
                 G4ThreeVector position = sec->GetPosition();
                 G4ThreeVector momentumDirection = sec->GetMomentumDirection();
                 G4double energy = sec->GetKineticEnergy();
@@ -176,10 +205,6 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
                 fOutputManager.PushRecoilEventX(position.x());
                 fOutputManager.PushRecoilEventY(position.y());
                 fOutputManager.PushRecoilEventZ(position.z());
-                //G4ThreeVector postStepPos = stepPoint->GetPosition();
-                //fOutputManager.PushRecoilEventX(postStepPos.x());
-                //fOutputManager.PushRecoilEventY(postStepPos.y());
-                //fOutputManager.PushRecoilEventZ(postStepPos.z());
                 fOutputManager.PushRecoilEventU(momentumDirection.x());
                 fOutputManager.PushRecoilEventV(momentumDirection.y());
                 fOutputManager.PushRecoilEventW(momentumDirection.z());
@@ -187,6 +212,9 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
             }
         }
     }
+
+    G4StepPoint* preStepPoint = step->GetPreStepPoint();
+    prevVolume = preStepPoint->GetPhysicalVolume();
 }
 
 //Maps G4 processes to MT codes. Needs checking

@@ -16,9 +16,8 @@ class PaleoSimEventAction : public G4UserEventAction
     virtual void EndOfEventAction(const G4Event* event);
 
   private:
-  PaleoSimMessenger& fMessenger;
-  PaleoSimOutputManager& fOutputManager;
-  
+    PaleoSimMessenger& fMessenger;
+    PaleoSimOutputManager& fOutputManager;
 };
 
 #endif

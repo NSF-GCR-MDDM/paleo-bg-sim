@@ -5,6 +5,7 @@
 #include "G4Step.hh"
 #include "G4Track.hh"
 #include "G4ParticleDefinition.hh"
+#include "G4VPhysicalVolume.hh"
 
 #include "PaleoSimMessenger.hh" 
 #include "PaleoSimOutputManager.hh" 
@@ -22,6 +23,7 @@ private:
     PaleoSimOutputManager& fOutputManager;
     
     G4int MapProcessToMT(G4int processType, G4int processSubType);
+    G4VPhysicalVolume* prevVolume = nullptr;
 };
 
 #endif

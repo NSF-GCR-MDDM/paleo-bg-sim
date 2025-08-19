@@ -225,6 +225,7 @@ private:
     G4ThreeVector fDiskSourcePosition = G4ThreeVector(0,0,0);
     G4ThreeVector fDiskSourceAxis = G4ThreeVector(0,0,1);
     G4ThreeVector fDiskSourceDirection = G4ThreeVector(0,0,1);
+
 };
 
 #endif
