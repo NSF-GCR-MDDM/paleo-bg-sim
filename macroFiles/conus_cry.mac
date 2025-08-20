@@ -1,0 +1,22 @@
+#Geometry commands
+/geom/setGeometry /macroFiles/geometry/conus.geo
+
+#Source commands
+/generator/setSourceType CRYGenerator 
+/generator/cry/setCRYFilename /home/sch52/code/paleo-bg-sim/data/cry_leibstadt.root
+#number of muons of 5m x 5m area in 10 min
+#Cry rate is 0.0221 primaries/cm2/sec, which is 1.326 /cm2/min. Our throwing surface is 500cm x 500cm, 
+# so we need to throw 331500 to get a minute of real time. For now we're just doing 15 min per file 
+# so 4 972 500 is needed 
+/generator/setNPS 4972500
+
+#Output commands
+/output/setNeutronTallyTreeVolumes innerAir
+/output/setRecoilTreeVolumes detector1 detector2 detector3 detector4
+/output/setVRMLOutputStatus True
+
+#Verbosity settings
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0

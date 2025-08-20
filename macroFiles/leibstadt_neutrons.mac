@@ -15,8 +15,8 @@
 #We're operating at 3.6GWhr = 960.12 n/cm2/GWHr
 #Our disk is 50cm radius, so 7.54e7 n/hr
 #If we want to run for a year that's 6.60571*10^10
-#Split into 10 runs of 66 057 100
-/generator/setNPS 66057100 
+#Split into 100 runs of 660 571 000
+/generator/setNPS 66057100
 
 #Output commands
 /output/setNeutronTallyTreeVolumes WaterShielding30cm WaterShielding25cm WaterShielding20cm WaterShielding15cm WaterShielding10cm WaterShielding5cm LiF

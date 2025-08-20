@@ -18,14 +18,23 @@ PaleoSimSteppingAction::~PaleoSimSteppingAction() {}
 
 void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
 
-    G4Track* track = step->GetTrack();
+            
+    const G4Track* track = step->GetTrack();
+    const G4StepPoint* preStepPoint = step->GetPreStepPoint();
+    const G4VPhysicalVolume* preStepVolume = preStepPoint->GetPhysicalVolume();
+    const G4StepPoint* postStepPoint = step->GetPostStepPoint();
+    const G4VPhysicalVolume* postStepVolume = postStepPoint->GetPhysicalVolume();
 
-    //If first track in step, reset prevVolume
+    //If first track in step, reset prevVolume--this is the prev step point of the previous step
     if (track->GetCurrentStepNumber() == 1) {
         prevVolume = nullptr;
     }
-    G4ParticleDefinition* particleDef = track->GetDefinition();
+
+    G4ParticleDefinition* particleDef = track->GetDefinition(); //incident particle
+
     auto* event = G4EventManager::GetEventManager()->GetConstCurrentEvent();
+    G4int eventID = event->GetEventID();
+
     auto* info = dynamic_cast<const PaleoSimUserEventInformation*>(event->GetUserInformation());
 
     //////////////
@@ -38,7 +47,6 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
             G4int particlePDG = particleDef->GetPDGEncoding();
 
             //Add event ID
-            G4int eventID = event->GetEventID();
             fOutputManager.PushMINEventID(eventID);
 
             // Check for secondary neutrons and tally zenith angle (in radians) and
@@ -78,12 +86,8 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
     if (fMessenger.GetNeutronTallyTreeStatus()) {
         // Check if the particle is a neutron
         if (particleDef->GetPDGEncoding() == 2112) {
-            const G4StepPoint* preStepPoint = step->GetPreStepPoint();
-            const G4StepPoint* postStepPoint = step->GetPostStepPoint();
 
-            const G4VPhysicalVolume* preVol = preStepPoint->GetPhysicalVolume();
-            const G4VPhysicalVolume* postVol = postStepPoint->GetPhysicalVolume();
-            if (!preVol || !postVol) return;  // Safety check for particles leaving the world volume
+            if (!preStepVolume || !postStepVolume) return;  // Safety check for particles leaving the world volume
 
             //This means particle just entered a cell
             if (preStepPoint->GetStepStatus() == fGeomBoundary) {
@@ -104,7 +108,6 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
                     fOutputManager.PushNeutronTallyVolumeNumber(vol->volumeNumber);
 
                     //Push the event ID 
-                    const G4int& eventID = event->GetEventID();
                     fOutputManager.PushNeutronTallyEventID(eventID);
 
                     G4double energy = preStepPoint->GetKineticEnergy();
@@ -153,37 +156,61 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
     /////////////////
     if (fMessenger.GetRecoilTreeStatus()) {
 
-        G4StepPoint* stepPoint = step->GetPostStepPoint();
-        G4VPhysicalVolume* stepVolume = stepPoint->GetPhysicalVolume();
-        if (!stepVolume) return;
+        if (!postStepVolume) return;
 
-        G4String stepVolumeName = stepVolume->GetName();
+        G4String postStepVolumeName = postStepVolume->GetName();
         const auto& recoilVolumes = fMessenger.GetRecoilTreeVolumes();
 
-        if (std::find(recoilVolumes.begin(), recoilVolumes.end(), stepVolumeName) != recoilVolumes.end()) {
+        if (std::find(recoilVolumes.begin(), recoilVolumes.end(), postStepVolumeName) != recoilVolumes.end()) {
             
+            /////////////////
+            //Deal with ERs//
+            /////////////////
+            G4double emEnergy = step->GetTotalEnergyDeposit();
+            G4int pdgCode = track->GetParticleDefinition()->GetPDGEncoding();
+            if ((emEnergy > 0) && (std::abs(pdgCode) <= 2112)) {
+                const G4ThreeVector& position  = 0.5*(preStepPoint->GetPosition() + postStepPoint->GetPosition());
+                G4double ERTime = preStepPoint->GetGlobalTime();
+                const G4ThreeVector& momentumDirection = track->GetMomentumDirection();
+        
+                PaleoSimVolumeDefinition* vol = fMessenger.GetVolumeByName(postStepVolumeName);
+                fOutputManager.PushRecoilVolumeNumber(vol->volumeNumber);
+
+                fOutputManager.PushRecoilEventID(eventID);
+                fOutputManager.PushRecoilEventPDG(11);
+                fOutputManager.PushRecoilEventParentPDG(pdgCode);
+                fOutputManager.PushRecoilEventEnergy(emEnergy);
+                fOutputManager.PushRecoilEventTime(ERTime);
+                fOutputManager.PushRecoilEventCode(-1); //TODO
+                fOutputManager.PushRecoilEventX(position.x());
+                fOutputManager.PushRecoilEventY(position.y());
+                fOutputManager.PushRecoilEventZ(position.z());
+                fOutputManager.PushRecoilEventU(momentumDirection.x());
+                fOutputManager.PushRecoilEventV(momentumDirection.y());
+                fOutputManager.PushRecoilEventW(momentumDirection.z());
+                fOutputManager.IncrementNRecoils();
+            }
+
+            /////////////////
+            //Deal with NRs//
+            /////////////////
+            //NOTE: WARNING: NR recoil is KE of NR, NOT DEPOSITED. These are different if the ion ranges out, but we 
+            //are using TRIM for actual tracks and handling ranging out there.
             auto secondaries = step->GetSecondaryInCurrentStep();
-            if (secondaries->empty()) return;
-    
-            // Check that the parent is a neutron or gamma
-            const G4Track* parentTrack = step->GetTrack();
-            G4int parentPdg = parentTrack->GetParticleDefinition()->GetPDGEncoding();
-            if (!(parentPdg == 2112 || parentPdg == 22 || parentPdg == 13 || parentPdg == -13)) return;
-                
-            G4int eventID = event->GetEventID();
-            
+            if (!(secondaries && !secondaries->empty())) return;
+
             // Now record all secondaries
             for (const auto& sec : *secondaries) {
 
-                G4int pdgCode = sec->GetParticleDefinition()->GetPDGEncoding();
-                //Ignore gamma, electron, and neutron, 
-                //if (std::abs(pdgCode) == 11 || pdgCode == 22 || pdgCode == 2112 ) continue;
-                if (std::abs(pdgCode) <= 2112) continue;
+                G4int parentPdg = track->GetParticleDefinition()->GetPDGEncoding();
+                G4int pdgCode = sec->GetParticleDefinition()->GetPDGEncoding(); //NR target nucleus
+
+                if (std::abs(pdgCode) <= 2112) continue; //We only record secondaries whose PDG is greater than a neutron, i.e. Nuclear Recoils
                 
-                G4ThreeVector position = sec->GetPosition();
-                G4ThreeVector momentumDirection = sec->GetMomentumDirection();
+                const G4ThreeVector& position = sec->GetPosition();
+                const G4ThreeVector& momentumDirection = sec->GetMomentumDirection();
                 G4double energy = sec->GetKineticEnergy();
-                G4double secTime = sec->GetGlobalTime();
+                G4double NRTime = sec->GetGlobalTime();
         
                 const G4VProcess* proc = sec->GetCreatorProcess();
                 G4int mtCode = -1;
@@ -193,14 +220,14 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
                     mtCode = MapProcessToMT(type, subtype);
                 }
                 
-                PaleoSimVolumeDefinition* vol = fMessenger.GetVolumeByName(stepVolumeName);
+                PaleoSimVolumeDefinition* vol = fMessenger.GetVolumeByName(postStepVolumeName);
                 fOutputManager.PushRecoilVolumeNumber(vol->volumeNumber);
 
                 fOutputManager.PushRecoilEventID(eventID);
                 fOutputManager.PushRecoilEventPDG(pdgCode);
                 fOutputManager.PushRecoilEventParentPDG(parentPdg);
                 fOutputManager.PushRecoilEventEnergy(energy);
-                fOutputManager.PushRecoilEventTime(secTime);
+                fOutputManager.PushRecoilEventTime(NRTime);
                 fOutputManager.PushRecoilEventCode(mtCode);
                 fOutputManager.PushRecoilEventX(position.x());
                 fOutputManager.PushRecoilEventY(position.y());
@@ -213,7 +240,6 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
         }
     }
 
-    G4StepPoint* preStepPoint = step->GetPreStepPoint();
     prevVolume = preStepPoint->GetPhysicalVolume();
 }
 

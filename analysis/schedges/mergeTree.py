@@ -27,7 +27,9 @@ outputFile = ROOT.TFile(outputFilename, 'RECREATE')
 # === Containers ===
 inputFiles = []
 inputSimHeaderTrees = []
-treeNames = ["primariesTree", "MINTree", "neutronTallyTree"]
+#treeNames = ["primariesTree", "recoilTree", "neutronTallyTree"]
+treesToMerge = ["neutronTallyTree","recoilTree"]
+treeNames = treesToMerge
 treeLists = {name: ROOT.TList() for name in treeNames}
 eventNums = {name: [] for name in treeNames}
 offset = 0
@@ -46,7 +48,7 @@ for i, inpFilename in enumerate(inpFilenames):
 
     # Get headerTree and nps
     inputSimHeaderTrees.append(inputFiles[-1].Get('headerTree'))
-    nps_array = array.array("i", [0])
+    nps_array = array.array("q", [0])
     inputSimHeaderTrees[-1].SetBranchAddress("nps", nps_array)
     inputSimHeaderTrees[-1].GetEntry(0)
     nps = nps_array[0]
@@ -56,12 +58,23 @@ for i, inpFilename in enumerate(inpFilenames):
     ##########################
     for name in treeNames:
         tree = inputFiles[-1].Get(name)
-        branch = tree.GetBranch("eventID")
-        leaf = branch.GetLeaf("eventID")
-        for entry in range(tree.GetEntries()):
-            tree.GetEntry(entry)
-            eventNums[name].append(int(leaf.GetValue()) + offset)
-        tree.SetBranchStatus("eventID", 0)  # Disable original branch
+        if "eventID" in tree.GetListOfBranches():
+            branch = tree.GetBranch("eventID")
+            leaf = branch.GetLeaf("eventID")
+            for entry in range(tree.GetEntries()):
+                tree.GetEntry(entry)
+                eventNums[name].append(int(leaf.GetValue()) + offset)
+            tree.SetBranchStatus("eventID", 0)  # Disable original branch
+        elif "historyNum" in tree.GetListOfBranches():
+            branch = tree.GetBranch("historyNum")
+            leaf = branch.GetLeaf("historyNum")
+            for entry in range(tree.GetEntries()):
+                tree.GetEntry(entry)
+                eventNums[name].append(int(leaf.GetValue()) + offset)
+            tree.SetBranchStatus("historyNum", 0)  # Disable original branch
+        else:
+            print("Error")
+            sys.exit(-1)
         treeLists[name].Add(tree)
         # Just for copying structure
         if i == 0 and name not in globals():
@@ -72,14 +85,14 @@ for i, inpFilename in enumerate(inpFilenames):
     offset += nps
 
 # === Merge and replace eventID for each tree ===
-eventID = array.array("i", [0])
+eventID = array.array("l", [0])
 for name in treeNames:
     ######################
     # Merge current tree #
     ######################
     outputFile.cd()
     mergedTree = ROOT.TTree.MergeTrees(treeLists[name])
-    eventIDBranch = mergedTree.Branch("eventID", eventID, "eventID/i")
+    eventIDBranch = mergedTree.Branch("eventID", eventID, "eventID/l")
     for idx in range(mergedTree.GetEntries()):
         eventID[0] = eventNums[name][idx]
         eventIDBranch.Fill()
@@ -90,8 +103,8 @@ headerTree = inputSimHeaderTrees[0]
 headerTree.SetBranchStatus("nps", 0)  # Disable original branch
 headerTreeCopy = headerTree.CloneTree(0)
 headerTree.GetEntry(0)
-nps_arr = array.array("i", [0])
-new_npsBranch = headerTreeCopy.Branch("nps",nps_arr,"nps/i")
+nps_arr = array.array("q", [0])
+new_npsBranch = headerTreeCopy.Branch("nps",nps_arr,"nps/l")
 print(offset)
 nps_arr[0] = offset
 headerTreeCopy.Fill()
