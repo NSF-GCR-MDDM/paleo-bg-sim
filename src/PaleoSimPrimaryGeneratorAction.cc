@@ -323,15 +323,14 @@ void PaleoSimPrimaryGeneratorAction::GenerateCRYPrimaries(G4Event* anEvent) {
   //const auto t0 = Clock::now();  // start timing
   //Get random event
   Long64_t entry = G4RandFlat::shootInt(nCryEntries);
-  //cryTree->GetEntry(entry);
-
-  const auto& pdgCodes = all_cry_pdgcodes[entry];
-  const auto& energies = all_cry_energy[entry];
-  const auto& u        = all_cry_u[entry];
-  const auto& v        = all_cry_v[entry];
-  const auto& w        = all_cry_w[entry];
-  const auto& x        = all_cry_x[entry];
-  const auto& y        = all_cry_y[entry];
+    
+  cry_pdgcode = &all_cry_pdgcodes.at(entry);
+  cry_energy  = &all_cry_energy.at(entry);
+  cry_u       = &all_cry_u.at(entry);
+  cry_v       = &all_cry_v.at(entry);
+  cry_w       = &all_cry_w.at(entry);
+  cry_x       = &all_cry_x.at(entry);
+  cry_y       = &all_cry_y.at(entry);
 
 
   // Sample a position on the top of the world volume
@@ -351,7 +350,7 @@ void PaleoSimPrimaryGeneratorAction::GenerateCRYPrimaries(G4Event* anEvent) {
     double Etot = Ekin + mass;
     double p = std::sqrt(Etot * Etot - mass * mass);
 
-    G4ThreeVector position = basePosition + G4ThreeVector(cry_x->at(i) * cm, cry_y->at(i) * cm, 0);
+    G4ThreeVector position = basePosition + G4ThreeVector(cry_x->at(i) * mm, cry_y->at(i) * mm, 0);
     if (IsWithinTopSurface(position)) {
       G4ThreeVector direction(cry_u->at(i), cry_v->at(i), cry_w->at(i));
       G4ThreeVector momentum = direction * p;
