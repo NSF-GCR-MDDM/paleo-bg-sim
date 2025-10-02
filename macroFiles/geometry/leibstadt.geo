@@ -51,16 +51,68 @@
 /volume/finalize
 
 #Water shielding
-/volume/new WaterShielding30cm
+/volume/new WaterShielding50cm
 /volume/setParent AirCavity
 /volume/setShape box
 /volume/setMaterial water
-/volume/setPosition 0 0 -1.0758 m
+/volume/setPosition 0 0 -0.8758 m
+/volume/setPositionType relative
+/volume/box/setHalfLengths 0.5362 0.5362 0.5362 m
+/volume/setRGB 0 0 1
+/volume/setAlpha 0.1
+/volume/setVolumeNumber 4
+/volume/finalize
+
+#Water shielding
+/volume/new WaterShielding45cm
+/volume/setParent WaterShielding50cm
+/volume/setShape box
+/volume/setMaterial water
+/volume/setPosition 0 0 0 m
+/volume/setPositionType relative
+/volume/box/setHalfLengths 0.4862 0.4862 0.4862 m
+/volume/setRGB 0 0 1
+/volume/setAlpha 0.1
+/volume/setVolumeNumber 5
+/volume/finalize
+
+#Water shielding
+/volume/new WaterShielding40cm
+/volume/setParent WaterShielding45cm
+/volume/setShape box
+/volume/setMaterial water
+/volume/setPosition 0 0 0 m
+/volume/setPositionType relative
+/volume/box/setHalfLengths 0.4362 0.4362 0.4362 m
+/volume/setRGB 0 0 1
+/volume/setAlpha 0.1
+/volume/setVolumeNumber 6
+/volume/finalize
+
+#Water shielding
+/volume/new WaterShielding35cm
+/volume/setParent WaterShielding40cm
+/volume/setShape box
+/volume/setMaterial water
+/volume/setPosition 0 0 0 m
+/volume/setPositionType relative
+/volume/box/setHalfLengths 0.3862 0.3862 0.3862 m
+/volume/setRGB 0 0 1
+/volume/setAlpha 0.1
+/volume/setVolumeNumber 7
+/volume/finalize
+
+#Water shielding
+/volume/new WaterShielding30cm
+/volume/setParent WaterShielding35cm
+/volume/setShape box
+/volume/setMaterial water
+/volume/setPosition 0 0 0 m
 /volume/setPositionType relative
 /volume/box/setHalfLengths 0.3362 0.3362 0.3362 m
 /volume/setRGB 0 0 1
 /volume/setAlpha 0.1
-/volume/setVolumeNumber 4
+/volume/setVolumeNumber 8
 /volume/finalize
 
 #Water shielding
@@ -73,7 +125,7 @@
 /volume/box/setHalfLengths 0.2862 0.2862 0.2862 m
 /volume/setRGB 0 0 1
 /volume/setAlpha 0.1
-/volume/setVolumeNumber 5
+/volume/setVolumeNumber 9
 /volume/finalize
 
 #Water shielding
@@ -86,7 +138,7 @@
 /volume/box/setHalfLengths 0.2362 0.2362 0.2362 m
 /volume/setRGB 0 0 1
 /volume/setAlpha 0.1
-/volume/setVolumeNumber 6
+/volume/setVolumeNumber 10
 /volume/finalize
 
 #Water shielding
@@ -99,7 +151,7 @@
 /volume/box/setHalfLengths 0.1862 0.1862 0.1862 m
 /volume/setRGB 0 0 1
 /volume/setAlpha 0.1
-/volume/setVolumeNumber 7
+/volume/setVolumeNumber 11
 /volume/finalize
 
 #Water shielding
@@ -112,7 +164,7 @@
 /volume/box/setHalfLengths 0.1362 0.1362 0.1362 m
 /volume/setRGB 0 0 1
 /volume/setAlpha 0.1
-/volume/setVolumeNumber 8
+/volume/setVolumeNumber 12
 /volume/finalize
 
 #Water shielding
@@ -125,7 +177,7 @@
 /volume/box/setHalfLengths 0.0862 0.0862 0.0862 m
 /volume/setRGB 0 0 1
 /volume/setAlpha 0.1
-/volume/setVolumeNumber 9
+/volume/setVolumeNumber 13
 /volume/finalize
 
 #Water LiF
@@ -138,6 +190,6 @@
 /volume/box/setHalfLengths 0.0362 0.0362 0.0362 m
 /volume/setRGB 1 0 0
 /volume/setAlpha 0.5
-/volume/setVolumeNumber 10
+/volume/setVolumeNumber 14
 /volume/finalize
 

@@ -3,16 +3,15 @@
 
 #Source commands
 /generator/setSourceType CRYGenerator 
-/generator/cry/setCRYFilename /home/sch52/code/paleo-bg-sim/data/cry_leibstadt.root
+/generator/cry/setCRYFilename /home/sch52/code/paleo-bg-sim/data/kll_muneu.root
 #number of muons of 5m x 5m area in 10 min
-#Cry rate is 0.0221 primaries/cm2/sec, which is 1.326 /cm2/min. Our throwing surface is 500cm x 500cm, 
-# so we need to throw 331500 to get a minute of real time. For now we're just doing 15 min per file 
-# so 4 972 500 is needed 
-/generator/setNPS 4972500
+#Corresponds to 6 hour runs:
+/generator/setNPS 32189906
 
 #Output commands
-/output/setNeutronTallyTreeVolumes WaterShielding30cm WaterShielding25cm WaterShielding20cm WaterShielding15cm WaterShielding10cm WaterShielding5cm LiF
+/output/setNeutronTallyTreeVolumes WaterShielding50cm WaterShielding45cm WaterShielding40cm WaterShielding35cm WaterShielding30cm WaterShielding25cm WaterShielding20cm WaterShielding15cm WaterShielding10cm WaterShielding5cm LiF
 /output/setRecoilTreeVolumes LiF
+/output/setPrimariesTreeStatus false
 /output/setVRMLOutputStatus True
 
 #Verbosity settings
