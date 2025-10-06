@@ -26,6 +26,8 @@ void PaleoSimMaterialManager::DefineMaterials() {
     G4Element* Mn = nist->FindOrBuildElement("Mn");		   // Manganese
     G4Element* Fe = nist->FindOrBuildElement("Fe");		   // Iron
     G4Element* Ti = nist->FindOrBuildElement("Ti");		   // Titanium
+    G4Element* Ge = nist->FindOrBuildElement("Ge");        // Ge
+    G4Element* Pb = nist->FindOrBuildElement("Pb");        // Pb
 
     //Begin Norite
     G4Material* Norite = new G4Material("Norite", 2.894*g/cm3, 12);
@@ -45,8 +47,12 @@ void PaleoSimMaterialManager::DefineMaterials() {
 
     G4Material* Borated_HDPE = new G4Material("Borated_HDPE", 1.04*g/cm3, 3);
     Borated_HDPE->AddElement(B, 0.0500);  // 5% Boron
-    Borated_HDPE->AddElement(H, 0.1365);  // 13.66% Air
+    Borated_HDPE->AddElement(H, 0.1365);  // 13.66% H
     Borated_HDPE->AddElement(C, 0.8135 ); // 81.3% carbon 
+
+    G4Material* HDPE = new G4Material("HDPE",0.95*g/cm3,2);
+    HDPE->AddElement(H, 0.144);  // 14.4% H
+    HDPE->AddElement(C, 0.856 ); // 85.6% carbon 
 
     G4Material* LiF = new G4Material("LiF", 2.635*g/cm3, 2);
     LiF->AddElement(Li, 0.268);  // 
@@ -60,6 +66,7 @@ void PaleoSimMaterialManager::DefineMaterials() {
     materialMap["norite"] = Norite;
     materialMap["concrete"] = nist->FindOrBuildMaterial("G4_CONCRETE");  
     materialMap["borated_hdpe"] = Borated_HDPE; 
+    materialMap["hdpe"] = HDPE; 
     materialMap["stainless_steel"] = nist->FindOrBuildMaterial("G4_STAINLESS-STEEL");  
     materialMap["lead"] = nist->FindOrBuildMaterial("G4_Pb");  
     materialMap["lif"] = LiF;
@@ -67,6 +74,8 @@ void PaleoSimMaterialManager::DefineMaterials() {
     materialMap["water"] = nist->FindOrBuildMaterial("G4_WATER");
     materialMap["concrete"] = nist->FindOrBuildMaterial("G4_CONCRETE");
     materialMap["steel"] = nist->FindOrBuildMaterial("G4_STAINLESS-STEEL");
+    materialMap["lead"]      = nist->FindOrBuildMaterial("G4_Pb");   // ρ ≈ 11.35 g/cm3
+    materialMap["germanium"] = nist->FindOrBuildMaterial("G4_Ge");   // ρ ≈ 5.323 g/cm
 }
 
 

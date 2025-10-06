@@ -54,6 +54,7 @@ private:
     bool cryFileLoaded = false;
     TTree* cryTree = nullptr;
     int nCryEntries = 0;
+
     std::vector<int>* cry_pdgcode = nullptr;
     std::vector<float>* cry_energy = nullptr;
     std::vector<float>* cry_u = nullptr;
@@ -61,6 +62,15 @@ private:
     std::vector<float>* cry_w = nullptr;
     std::vector<float>* cry_x = nullptr;
     std::vector<float>* cry_y = nullptr;
+    
+    std::vector<std::vector<int>> all_cry_pdgcodes;
+    std::vector<std::vector<float>> all_cry_energy;
+    std::vector<std::vector<float>> all_cry_u;
+    std::vector<std::vector<float>> all_cry_v;
+    std::vector<std::vector<float>> all_cry_w;
+    std::vector<std::vector<float>> all_cry_x;
+    std::vector<std::vector<float>> all_cry_y;
+
     void InitializeCRYGenerator();
     void GenerateCRYPrimaries(G4Event*);
     //

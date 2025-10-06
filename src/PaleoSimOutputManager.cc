@@ -83,7 +83,7 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
   ////////////////////
   fHeaderTree = new TTree("headerTree","Run meta information");
 
-  int nps = fMessenger.GetNPS();
+  long long nps = fMessenger.GetNPS();
   char sourceType[256] = "";
   strcpy(sourceType, fMessenger.GetSourceType().substr(0, std::min<size_t>(255, fMessenger.GetSourceType().length())).c_str());
 
@@ -226,6 +226,7 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     fNeutronTallyTree->Branch("angleRelMuon", &fNeutron_angle);
     fNeutronTallyTree->Branch("distanceToMuonTrack", &fNeutron_distance);
     fNeutronTallyTree->Branch("volumeNumbers", &fNeutronTallyVolumeNumbers);
+    fNeutronTallyTree->Branch("prevVolumeNumbers", &fPrevNeutronTallyVolumeNumbers);
   }
 
   //////////////////////
@@ -312,6 +313,7 @@ void PaleoSimOutputManager::ClearNeutronTallyTreeEvent() {
   fNeutron_angle.clear();
   fNeutron_distance.clear();
   fNeutronTallyVolumeNumbers.clear();
+  fPrevNeutronTallyVolumeNumbers.clear();
 }
 
 void PaleoSimOutputManager::ClearRecoilTreeEvent() {

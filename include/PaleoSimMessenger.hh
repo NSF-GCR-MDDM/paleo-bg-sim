@@ -38,7 +38,7 @@ public:
     //Generator
     std::vector<G4String> GetValidSourceTypes() const { return fValidSourceTypes; };
     G4String GetSourceType() const {return fSourceType;};
-    G4int GetNPS() const { return fNPS; };
+    long long GetNPS() const { return fNPS; };
 
     //Add your own generator commands here
     //CUSTOM_GENERATOR_HOOK
@@ -153,7 +153,7 @@ private:
     //Generator general
     G4UIdirectory* fGeneratorDirectory = nullptr;
     G4UIcmdWithAString* fSourceTypeCmd = nullptr;
-    G4UIcmdWithAnInteger* fNPSCmd;
+    G4UIcmdWithAString* fNPSCmd;
 
     //Source types:
     // CUSTOM_GENERATOR_HOOK
@@ -167,7 +167,7 @@ private:
       };
     
     G4String fSourceType = "meiHimeMuonGenerator";
-    int fNPS = 100;
+    long long fNPS = 100;
 
     // CUSTOM_GENERATOR_HOOK
     // Implement your own generator variables/functions here
@@ -225,6 +225,7 @@ private:
     G4ThreeVector fDiskSourcePosition = G4ThreeVector(0,0,0);
     G4ThreeVector fDiskSourceAxis = G4ThreeVector(0,0,1);
     G4ThreeVector fDiskSourceDirection = G4ThreeVector(0,0,1);
+
 };
 
 #endif

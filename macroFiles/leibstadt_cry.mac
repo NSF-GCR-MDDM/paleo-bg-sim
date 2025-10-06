@@ -1,0 +1,21 @@
+#Geometry commands
+/geom/setGeometry /macroFiles/geometry/leibstadt.geo
+
+#Source commands
+/generator/setSourceType CRYGenerator 
+/generator/cry/setCRYFilename /home/sch52/code/paleo-bg-sim/data/kll_muneu.root
+#number of muons of 5m x 5m area in 10 min
+#Corresponds to 6 hour runs:
+/generator/setNPS 32189906
+
+#Output commands
+/output/setNeutronTallyTreeVolumes WaterShielding50cm WaterShielding45cm WaterShielding40cm WaterShielding35cm WaterShielding30cm WaterShielding25cm WaterShielding20cm WaterShielding15cm WaterShielding10cm WaterShielding5cm LiF
+/output/setRecoilTreeVolumes LiF
+/output/setPrimariesTreeStatus false
+/output/setVRMLOutputStatus True
+
+#Verbosity settings
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0

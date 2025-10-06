@@ -54,10 +54,10 @@ PaleoSimMessenger::PaleoSimMessenger() {
     fSourceTypeCmd->SetParameterName("fSourceType", true);
     fSourceTypeCmd->SetDefaultValue(fSourceType);
 
-    fNPSCmd = new G4UIcmdWithAnInteger("/generator/setNPS", this);    
+    fNPSCmd = new G4UIcmdWithAString("/generator/setNPS", this);    
     fNPSCmd->SetGuidance("Set number of events to throw");
     fNPSCmd->SetParameterName("fNPS", true);
-    fNPSCmd->SetDefaultValue(fNPS);
+    fNPSCmd->SetDefaultValue(G4String(std::to_string(fNPS)));
 
     //Add your own generator commands here
     //CUSTOM_GENERATOR_HOOK
@@ -273,7 +273,7 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
         }
     }
     else if (command == fNPSCmd) {
-        fNPS = fNPSCmd->GetNewIntValue(newValue);
+        fNPS = std::stoll(newValue);
         G4cout << "NPS set in macro to: " << newValue << G4endl;
     }
     else if (command == fSetVRMLStatusCmd) {
