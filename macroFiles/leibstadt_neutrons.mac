@@ -16,7 +16,8 @@
 #Our disk is 50cm radius, so 7.54e7 n/hr
 #If we want to run for a year that's 6.60571*10^10
 #Split into 100 runs of 660 571 000
-/generator/setNPS 66057100
+#/generator/setNPS 66057100
+/generator/setNPS 10000
 
 #Output commands
 /output/setNeutronTallyTreeVolumes WaterShielding30cm WaterShielding25cm WaterShielding20cm WaterShielding15cm WaterShielding10cm WaterShielding5cm LiF

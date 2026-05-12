@@ -86,7 +86,7 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
     if (fMessenger.GetNeutronTallyTreeStatus()) {
         // Check if the particle is a neutron
         if (particleDef->GetPDGEncoding() == 2112) {
-
+            
             if (!preStepVolume || !postStepVolume) return;  // Safety check for particles leaving the world volume
 
             //This means particle just entered a cell
