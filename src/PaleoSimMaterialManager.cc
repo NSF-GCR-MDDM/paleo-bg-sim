@@ -75,7 +75,7 @@ void PaleoSimMaterialManager::DefineMaterials() {
     LiF->AddElement(Li, 0.268);  // 
     LiF->AddElement(F, 0.732);  // 
 
-    G4Material* GranSassoRock = new G4Material("Gran_Sasso_Rock", 2.71*g/cm3, 8);
+    G4Material* GranSassoRock = new G4Material("GranSassoRock", 2.71*g/cm3, 8);
     GranSassoRock->AddElement(H, 0.0003);  // 0.03% Hydrogen
     GranSassoRock->AddElement(C, 0.1218);  // 12.17% Carbon
     GranSassoRock->AddElement(O, 0.5078);  // 50.77% Oxygen
