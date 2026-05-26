@@ -75,16 +75,15 @@ void PaleoSimMaterialManager::DefineMaterials() {
     LiF->AddElement(Li, 0.268);  // 
     LiF->AddElement(F, 0.732);  // 
 
-    //Begin Gran Sasso Rock
     G4Material* GranSassoRock = new G4Material("Gran_Sasso_Rock", 2.71*g/cm3, 8);
-    Gran_Sasso_Rock->AddElement(H, 0.0003);  // 0.03% Hydrogen
-    Gran_Sasso_Rock->AddElement(C, 0.1218);  // 12.17% Carbon
-    Gran_Sasso_Rock->AddElement(O, 0.5078);  // 50.77% Oxygen
-    Gran_Sasso_Rock->AddElement(Mg, 0.0833); // 8.32% Magnesium
-    Gran_Sasso_Rock->AddElement(Al, 0.0063); // 0.63% Aluminum
-    Gran_Sasso_Rock->AddElement(Si, 0.0105); // 1.05% Silicon
-    Gran_Sasso_Rock->AddElement(K, 0.0010);  // 0.10% Potassium
-    Gran_Sasso_Rock->AddElement(Ca, 0.2690); // 26.89% Calcium
+    GranSassoRock->AddElement(H, 0.0003);  // 0.03% Hydrogen
+    GranSassoRock->AddElement(C, 0.1218);  // 12.17% Carbon
+    GranSassoRock->AddElement(O, 0.5078);  // 50.77% Oxygen
+    GranSassoRock->AddElement(Mg, 0.0833); // 8.32% Magnesium
+    GranSassoRock->AddElement(Al, 0.0063); // 0.63% Aluminum
+    GranSassoRock->AddElement(Si, 0.0105); // 1.05% Silicon
+    GranSassoRock->AddElement(K, 0.0010);  // 0.10% Potassium
+    GranSassoRock->AddElement(Ca, 0.2690); // 26.89% Calcium
 
     //https://pdg.lbl.gov/2024/AtomicNuclearProperties/HTML/standard_rock.html
     G4Material* StandardRock = new G4Material("StandardRock", 11, 22, 2.65*g/cm3);
