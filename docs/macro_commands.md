@@ -12,6 +12,10 @@ Last generated on: 2025-08-07 12:38
 
 ## /output/
 
+- **/output/setOutputFormat** (optional) — `fOutputFormat`
+  - Description: Set output format: `root` or `h5`
+  - Default: `root`
+  
 - **/output/setPrimariesTreeStatus** (optional) — `fPrimariesTreeStatus`
   - Description: Enable tracking of primary generation properties
   - Default: `true`

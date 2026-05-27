@@ -7,6 +7,7 @@
 #include "PaleoSimMessenger.hh" 
 #include "TFile.h" 
 #include "TTree.h"
+#include "H5Cpp.h"
 
 class PaleoSimOutputManager {
 public:
@@ -149,6 +150,9 @@ private:
     std::vector<double> fRecoilEventU, fRecoilEventV, fRecoilEventW;
     std::vector<double> fRecoilEventCode;
     std::vector<int> fRecoilVolumeNumbers;
+
+    void WriteRoot();
+    void WriteH5();
 };
 
 #endif
