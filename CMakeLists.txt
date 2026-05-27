@@ -17,7 +17,7 @@ if(TARGET Geant4::G4vis_management)
 endif()
 
 # Try to find ROOT via config package first. If not found, try to infer ROOT_DIR from root-config.
-find_package(ROOT QUIET COMPONENTS Core Hist MathCore)
+find_package(ROOT REQUIRED COMPONENTS Core Hist MathCore)
 
 if(NOT ROOT_FOUND)
   find_program(ROOT_CONFIG_EXECUTABLE root-config)

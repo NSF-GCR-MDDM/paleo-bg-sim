@@ -17,10 +17,11 @@
 #include "G4VisManager.hh"
 #include "G4UImanager.hh"
 
-
+// Constructor
 PaleoSimOutputManager::PaleoSimOutputManager(PaleoSimMessenger& messenger)
     : fMessenger(messenger) {}
 
+// Write and close
 void PaleoSimOutputManager::WriteAndClose() {
   const auto fmt = fMessenger.GetOutputFormat();
   if (fmt == "root") {
@@ -33,9 +34,12 @@ void PaleoSimOutputManager::WriteAndClose() {
   }
 }
 
+// Create files and trees
 void PaleoSimOutputManager::CreateOutputFileAndTrees() {
+  // Create files and trees
   G4String outputPath = fMessenger.GetOutputPath();
 
+  // Check if the specified output directory exists; if it does not, return error
   std::string outputDir;
   size_t slashPos = outputPath.find_last_of("/\\");
   if (slashPos != std::string::npos) outputDir = outputPath.substr(0, slashPos);
@@ -50,6 +54,7 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     }
   }
 
+  // Make output file
   const auto fmt = fMessenger.GetOutputFormat();
   if (fmt == "root") {
     fFile = new TFile(outputPath.c_str(), "RECREATE");
@@ -63,15 +68,23 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
                 ("Unknown output format: " + std::string(fmt)).c_str());
   }
 
+  ////////////////////
+  //Make header tree//
+  ////////////////////
   fHeaderTree = new TTree("headerTree","Run meta information");
 
   long long nps = fMessenger.GetNPS();
   char sourceType[256] = "";
   std::strncpy(sourceType, fMessenger.GetSourceType().c_str(), 255);
 
+  // Set branches
   fHeaderTree->Branch("nps", &nps);
   fHeaderTree->Branch("sourceType", &sourceType, "sourceType/C");
 
+  //Add your own generator commands here
+  //CUSTOM_GENERATOR_HOOK
+  //
+  //Mei & Hime muon generator
   if (fMessenger.GetSourceType()=="meiHimeMuonGenerator") {
     double meiHimeMuonEffectiveDepth = fMessenger.GetMeiHimeMuonEffectiveDepth();
     fHeaderTree->Branch("meiHimeMuonEffectiveDepth_mm", &meiHimeMuonEffectiveDepth);
@@ -86,10 +99,15 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     fHeaderTree->Branch("CRYLatitude", &CRYLatitude);
     fHeaderTree->Branch("primaries_per_cm2_per_s", &CRYNorm);
   }
+  // Fill once when we make the tree, we aren't ever updating this
   fHeaderTree->Fill();
 
+  ////////////////////////
+  // MAKE GEOMETRY TREE //
+  ////////////////////////
   fGeometryTree = new TTree("fGeometryTree","Run geometry");
 
+  // Branch vars
   char volumeName[256] = "";
   char volumeShape[256] = "";
   char parentName[256] = "";
@@ -98,6 +116,7 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
   double geomAbsX, geomAbsY, geomAbsZ;
   std::vector<double> geomXs, geomYs, geomZs;
 
+  // Set branches
   fGeometryTree->Branch("name", &volumeName, "name/C");
   fGeometryTree->Branch("shape", &volumeShape, "shape/C");
   fGeometryTree->Branch("parent", &parentName, "parent/C");
@@ -121,7 +140,9 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     geomNumber = vol->volumeNumber;
 
     int nPoints = 5000;
-    geomXs.clear(); geomYs.clear(); geomZs.clear();
+    geomXs.clear();
+    geomYs.clear();
+    geomZs.clear();
     if (vol->parentName != "None") {
       for (int pointNum = 0; pointNum < nPoints; pointNum++) {
         G4ThreeVector randPos = vol->GenerateRandomPointInside();
@@ -133,8 +154,12 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     fGeometryTree->Fill();
   }
 
+  /////////////////////////
+  // MAKE PRIMARIES TREE //
+  /////////////////////////
   if (fMessenger.GetPrimariesTreeStatus()) {
     fPrimariesTree = new TTree("primariesTree", "Generated primary particles");
+
     fPrimariesTree->Branch("eventID", &fPrimaryEventID);
     fPrimariesTree->Branch("pdgID", &fPrimaryPdgID);
     fPrimariesTree->Branch("energy", &fPrimaryEnergy);
@@ -144,6 +169,10 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     fPrimariesTree->Branch("px", &fPrimaryPx);
     fPrimariesTree->Branch("py", &fPrimaryPy);
     fPrimariesTree->Branch("pz", &fPrimaryPz);
+    //CUSTOM_GENERATOR_HOOK 
+    //Add branches stored to primary tree here
+    //
+    // Mei & Hime muon generator - first two also used for mute generator
     fPrimariesTree->Branch("muonTheta", &fPrimaryMuonTheta);
     fPrimariesTree->Branch("muonPhi", &fPrimaryMuonPhi);
     fPrimariesTree->Branch("muonSlant", &fPrimaryMuonSlant);
@@ -155,6 +184,9 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     fPrimariesTree->Branch("CRYTotalEnergy", &fCRYTotalEnergy);
   }
 
+  ///////////////////////////////////
+  // MAKE MUON-INDUCED NEUTRON TREE//
+  ///////////////////////////////////
   if (fMessenger.GetMINTreeStatus()) {
     fMINTree = new TTree("MINTree", "Muon-induced neutrons");
     fMINTree->Branch("eventID", &fMINEventID);
@@ -164,6 +196,9 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     fMINTree->Branch("distanceToMuonTrack", &fMINEventDistanceToMuonTrack);
   }
 
+  /////////////////////////////
+  // MAKE NEUTRON TALLY TREE //
+  ////////////////////////////
   if (fMessenger.GetNeutronTallyTreeStatus()) {
     fNeutronTallyTree = new TTree("neutronTallyTree", "Muon-induced neutrons entering cavity");
     fNeutronTallyTree->Branch("eventID", &fNeutronTallyEventID);
@@ -181,6 +216,9 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     fNeutronTallyTree->Branch("prevVolumeNumbers", &fPrevNeutronTallyVolumeNumbers);
   }
 
+  //////////////////////
+  // MAKE RECOIL TREE //
+  //////////////////////
   if (fMessenger.GetRecoilTreeStatus()) {
     fRecoilTree = new TTree("recoilTree", "Ion recoils in target");
     fRecoilTree->Branch("historyNum", &fRecoilEventID);
@@ -200,6 +238,7 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
   }
 }
 
+// Fill primaries tree
 void PaleoSimOutputManager::FillPrimariesTreeEvent() {
   if (!fMessenger.GetPrimariesTreeStatus() || !fPrimariesTree) return;
   if (fPrimaryPdgID.empty()) return;
@@ -212,12 +251,14 @@ void PaleoSimOutputManager::FillMINTreeEvent() {
   fMINTree->Fill();
 }
 
+// Fill neutron tally tree
 void PaleoSimOutputManager::FillNeutronTallyTreeEvent() {
   if (!fMessenger.GetNeutronTallyTreeStatus() || !fNeutronTallyTree) return;
   if (fNeutronEntryMultiplicity == 0) return;
   fNeutronTallyTree->Fill();
 }
 
+// Fill recoil tree
 void PaleoSimOutputManager::FillRecoilTreeEvent() {
   if (!fMessenger.GetRecoilTreeStatus() || !fRecoilTree) return;
   if (fNRecoils == 0) return;
@@ -234,6 +275,8 @@ void PaleoSimOutputManager::ClearPrimariesTreeEvent() {
   fPrimaryPx.clear();
   fPrimaryPy.clear();
   fPrimaryPz.clear();
+  //CUSTOM_GENERATOR_HOOK
+  //Clear/reset vars here
 }
 
 void PaleoSimOutputManager::ClearMINTreeEvent() {
