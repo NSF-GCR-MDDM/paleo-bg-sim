@@ -4,11 +4,10 @@
 #Source commands
 /generator/setSourceType meiHimeMuonGenerator
 /generator/meiHimeMuonGenerator/setMuonEffectiveDepth 5.993 km
-/generator/setNPS 100
+/generator/setNPS 1000000
 
 #Output commands
-/output/setMINTreeStatus 1
-/output/setNeutronTallyTreeVolume AirCavity
+/output/setNeutronTallyTreeVolumes AirCavity
 /output/setVRMLOutputStatus false
 
 #Verbosity settings
@@ -16,3 +15,5 @@
 /run/verbose 0
 /event/verbose 0
 /tracking/verbose 0
+
+/run/numberOfThreads 2

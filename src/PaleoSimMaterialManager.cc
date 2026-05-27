@@ -21,6 +21,7 @@ void PaleoSimMaterialManager::DefineMaterials() {
     G4Element* Mg = nist->FindOrBuildElement("Mg");		   // Magnesium
     G4Element* Al = nist->FindOrBuildElement("Al");		   // Aluminum
     G4Element* Si = nist->FindOrBuildElement("Si");		   // Silicon
+    G4Element* S = nist->FindOrBuildElement("S");          // Sulfur
     G4Element* K = nist->FindOrBuildElement("K");		   // Potassium
     G4Element* Ca = nist->FindOrBuildElement("Ca");		   // Calcium
     G4Element* Mn = nist->FindOrBuildElement("Mn");		   // Manganese
@@ -45,6 +46,22 @@ void PaleoSimMaterialManager::DefineMaterials() {
     Norite->AddElement(Fe, 0.061925); // 6.2% Iron
     Norite->AddElement(Ti, 0.004925); // 0.5% Titanium
 
+    G4Material* Gypsum = new G4Material("Gypsum", 2.3*g/cm3, 4);
+    Gypsum->AddElement(Ca, 0.2328); // 23.28% Calcium
+    Gypsum->AddElement(H, 0.0234);  // 2.34% Hydrogen
+    Gypsum->AddElement(S, 0.1862);  // 18.62% Sulfur
+    Gypsum->AddElement(O, 0.5576);  // 55.76% Oxygen
+
+    G4Material* Olivine = new G4Material("Olivine", 3.32*g/cm3, 4);
+    Olivine->AddElement(Mg, 0.2537); // 25.37% Magnesium
+    Olivine->AddElement(Fe, 0.1457); // 14.57% Iron
+    Olivine->AddElement(Si, 0.1832); // 18.32% Silicon
+    Olivine->AddElement(O, 0.4174);  // 41.74% Oxygen
+
+    G4Material* Quartz = new G4Material("Quartz", 2.62*g/cm3, 2);
+    Quartz->AddElement(Si, 0.4674); // 46.74% Silicon
+    Quartz->AddElement(O, 0.5326);  // 53.26% Oxygen 
+
     G4Material* Borated_HDPE = new G4Material("Borated_HDPE", 1.04*g/cm3, 3);
     Borated_HDPE->AddElement(B, 0.0500);  // 5% Boron
     Borated_HDPE->AddElement(H, 0.1365);  // 13.66% H
@@ -58,15 +75,29 @@ void PaleoSimMaterialManager::DefineMaterials() {
     LiF->AddElement(Li, 0.268);  // 
     LiF->AddElement(F, 0.732);  // 
 
+    G4Material* GranSassoRock = new G4Material("GranSassoRock", 2.71*g/cm3, 8);
+    GranSassoRock->AddElement(H, 0.0003);  // 0.03% Hydrogen
+    GranSassoRock->AddElement(C, 0.1218);  // 12.17% Carbon
+    GranSassoRock->AddElement(O, 0.5078);  // 50.77% Oxygen
+    GranSassoRock->AddElement(Mg, 0.0833); // 8.32% Magnesium
+    GranSassoRock->AddElement(Al, 0.0063); // 0.63% Aluminum
+    GranSassoRock->AddElement(Si, 0.0105); // 1.05% Silicon
+    GranSassoRock->AddElement(K, 0.0010);  // 0.10% Potassium
+    GranSassoRock->AddElement(Ca, 0.2690); // 26.89% Calcium
+
     //https://pdg.lbl.gov/2024/AtomicNuclearProperties/HTML/standard_rock.html
     G4Material* StandardRock = new G4Material("StandardRock", 11, 22, 2.65*g/cm3);
 
     //Add to map - MUST BE LOWER CASE
     materialMap["air"] = nist->FindOrBuildMaterial("G4_AIR");
     materialMap["norite"] = Norite;
+    materialMap["olivine"] = Olivine;
+    materialMap["quartz"] = Quartz;
+    materialMap["gypsum"] = Gypsum;
     materialMap["concrete"] = nist->FindOrBuildMaterial("G4_CONCRETE");  
     materialMap["borated_hdpe"] = Borated_HDPE; 
     materialMap["hdpe"] = HDPE; 
+    materialMap["gran_sasso_rock"] = GranSassoRock;
     materialMap["stainless_steel"] = nist->FindOrBuildMaterial("G4_STAINLESS-STEEL");  
     materialMap["lead"] = nist->FindOrBuildMaterial("G4_Pb");  
     materialMap["lif"] = LiF;
