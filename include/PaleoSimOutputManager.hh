@@ -9,6 +9,9 @@
 #include "TTree.h"
 #include "H5Cpp.h"
 
+class PaleoSimRootOutputWriter;
+class PaleoSimH5OutputWriter;
+
 class PaleoSimOutputManager {
 public:
     //Constructor/destructor
@@ -96,6 +99,9 @@ public:
     void WriteVRMLGeometry(const G4String& vrmlFilename);
 
 private:
+    friend class PaleoSimRootOutputWriter;
+    friend class PaleoSimH5OutputWriter;
+
     PaleoSimMessenger& fMessenger; 
 
     TFile* fFile = nullptr;
@@ -150,9 +156,6 @@ private:
     std::vector<double> fRecoilEventU, fRecoilEventV, fRecoilEventW;
     std::vector<double> fRecoilEventCode;
     std::vector<int> fRecoilVolumeNumbers;
-
-    void WriteRoot();
-    void WriteH5();
 };
 
 #endif
