@@ -9,6 +9,7 @@
 #Output commands
 /output/setNeutronTallyTreeVolumes AirCavity
 /output/setVRMLOutputStatus false
+/output/setOutputFormat root
 
 #Verbosity settings
 /control/verbose 0

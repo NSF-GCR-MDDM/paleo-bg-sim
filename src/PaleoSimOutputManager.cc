@@ -1,67 +1,49 @@
 #include "PaleoSimOutputManager.hh"
+#include "PaleoSimRootOutputWriter.hh"
+#include "PaleoSimH5OutputWriter.hh"
 
 #include "TFile.h"
 #include "TTree.h"
 #include "G4SystemOfUnits.hh"
+#include "G4Exception.hh"
 #include <stdexcept>
-#include <sys/stat.h> 
-#include <thread>
-#include <chrono>
+#include <sys/stat.h>
+#include <cstring>
+#include <algorithm>
+#include <vector>
+#include <string>
 
 #include "G4VisExecutive.hh"
 #include "G4VisManager.hh"
 #include "G4UImanager.hh"
 
-//Constructor
+// Constructor
 PaleoSimOutputManager::PaleoSimOutputManager(PaleoSimMessenger& messenger)
     : fMessenger(messenger) {}
 
-//Write and close
+// Write and close
 void PaleoSimOutputManager::WriteAndClose() {
-  if (fFile) {
-      fFile->cd();
-      fHeaderTree->Write("headerTree", TFile::kOverwrite); 
-      fGeometryTree->Write("geometryTree", TFile::kOverwrite); 
-      if (fMessenger.GetPrimariesTreeStatus() && fPrimariesTree) {
-          fPrimariesTree->Write("primariesTree", TFile::kOverwrite); 
-      }
-      if (fMessenger.GetMINTreeStatus() && fMINTree) {
-        fMINTree->Write("MINTree", TFile::kOverwrite);
-      }
-      if (fMessenger.GetNeutronTallyTreeStatus() && fNeutronTallyTree) {
-          fNeutronTallyTree->Write("neutronTallyTree", TFile::kOverwrite); 
-      }
-      if (fMessenger.GetRecoilTreeStatus() && fRecoilTree) {
-        fRecoilTree->Write("recoilTree", TFile::kOverwrite); 
-      }
-      fFile->Close();
-      delete fFile;
-      fFile = nullptr;
+  const auto fmt = fMessenger.GetOutputFormat();
+  if (fmt == "root") {
+    PaleoSimRootOutputWriter::Write(*this);
+  } else if (fmt == "h5") {
+    PaleoSimH5OutputWriter::Write(*this);
+  } else {
+    G4Exception("PaleoSimOutputManager", "UnknownOutputFormat", FatalException,
+                ("Unknown output format: " + std::string(fmt)).c_str());
   }
-  fHeaderTree = nullptr;
-  fGeometryTree = nullptr;
-  fMINTree = nullptr;
-  fPrimariesTree = nullptr;
-  fNeutronTallyTree = nullptr;
-  fRecoilTree = nullptr;
 }
 
-
-//Create files and trees
+// Create files and trees
 void PaleoSimOutputManager::CreateOutputFileAndTrees() {
-
-  // Create files
+  // Create files and trees
   G4String outputPath = fMessenger.GetOutputPath();
 
-  // Check if the specified output directory exists; if it does not, create it
-
+  // Check if the specified output directory exists; if it does not, return error
   std::string outputDir;
   size_t slashPos = outputPath.find_last_of("/\\");
-  if (slashPos != std::string::npos) {
-      outputDir = outputPath.substr(0, slashPos);
-  } else {
-      outputDir = ".";  // No slash means current directory
-  }
+  if (slashPos != std::string::npos) outputDir = outputPath.substr(0, slashPos);
+  else outputDir = ".";
 
   if (!outputDir.empty() && outputDir != ".") {
     struct stat info;
@@ -72,10 +54,18 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     }
   }
 
-  //Make output file
-  fFile = new TFile(outputPath.c_str(), "RECREATE");
-  if (!fFile || fFile->IsZombie()) {
-      throw std::runtime_error("Failed to create output file.");
+  // Make output file
+  const auto fmt = fMessenger.GetOutputFormat();
+  if (fmt == "root") {
+    fFile = new TFile(outputPath.c_str(), "RECREATE");
+    if (!fFile || fFile->IsZombie()) {
+      throw std::runtime_error("Failed to create ROOT output file.");
+    }
+  } else if (fmt == "h5") {
+    fFile = nullptr;
+  } else {
+    G4Exception("PaleoSimOutputManager", "UnknownOutputFormat", FatalException,
+                ("Unknown output format: " + std::string(fmt)).c_str());
   }
 
   ////////////////////
@@ -85,11 +75,12 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
 
   long long nps = fMessenger.GetNPS();
   char sourceType[256] = "";
-  strcpy(sourceType, fMessenger.GetSourceType().substr(0, std::min<size_t>(255, fMessenger.GetSourceType().length())).c_str());
+  std::strncpy(sourceType, fMessenger.GetSourceType().c_str(), 255);
 
   // Set branches
   fHeaderTree->Branch("nps", &nps);
   fHeaderTree->Branch("sourceType", &sourceType, "sourceType/C");
+
   //Add your own generator commands here
   //CUSTOM_GENERATOR_HOOK
   //
@@ -116,7 +107,7 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
   ////////////////////////
   fGeometryTree = new TTree("fGeometryTree","Run geometry");
 
-  //Branch vars
+  // Branch vars
   char volumeName[256] = "";
   char volumeShape[256] = "";
   char parentName[256] = "";
@@ -139,20 +130,21 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
   fGeometryTree->Branch("pointCloud_zs", &geomZs);
 
   for (auto* vol : fMessenger.GetVolumes()) {
-    strcpy(volumeName, vol->name.substr(0, std::min<size_t>(255, vol->name.length())).c_str());
-    strcpy(volumeShape, vol->shape.substr(0, std::min<size_t>(255, vol->shape.length())).c_str());
-    strcpy(parentName, vol->parentName.substr(0, std::min<size_t>(255, vol->parentName.length())).c_str());
-    strcpy(materialName, vol->materialName.substr(0, std::min<size_t>(255, vol->materialName.length())).c_str());
+    std::strncpy(volumeName, vol->name.c_str(), 255);
+    std::strncpy(volumeShape, vol->shape.c_str(), 255);
+    std::strncpy(parentName, vol->parentName.c_str(), 255);
+    std::strncpy(materialName, vol->materialName.c_str(), 255);
     geomAbsX = vol->absolutePosition.x();
     geomAbsY = vol->absolutePosition.y();
     geomAbsZ = vol->absolutePosition.z();
     geomNumber = vol->volumeNumber;
+
     int nPoints = 5000;
     geomXs.clear();
     geomYs.clear();
     geomZs.clear();
     if (vol->parentName != "None") {
-      for (int pointNum=0; pointNum<nPoints; pointNum++) {
+      for (int pointNum = 0; pointNum < nPoints; pointNum++) {
         G4ThreeVector randPos = vol->GenerateRandomPointInside();
         geomXs.push_back(randPos.x());
         geomYs.push_back(randPos.y());
@@ -161,7 +153,6 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     }
     fGeometryTree->Fill();
   }
-
 
   /////////////////////////
   // MAKE PRIMARIES TREE //
@@ -185,8 +176,6 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     fPrimariesTree->Branch("muonTheta", &fPrimaryMuonTheta);
     fPrimariesTree->Branch("muonPhi", &fPrimaryMuonPhi);
     fPrimariesTree->Branch("muonSlant", &fPrimaryMuonSlant);
-    //
-    //CRY
     fPrimariesTree->Branch("CRYCoreX", &fCRYCoreX);
     fPrimariesTree->Branch("CRYCoreY", &fCRYCoreY);
     fPrimariesTree->Branch("CRYCoreZ", &fCRYCoreZ);
@@ -200,7 +189,6 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
   ///////////////////////////////////
   if (fMessenger.GetMINTreeStatus()) {
     fMINTree = new TTree("MINTree", "Muon-induced neutrons");
-
     fMINTree->Branch("eventID", &fMINEventID);
     fMINTree->Branch("multiplicity", &fMINEventMultiplicity);
     fMINTree->Branch("angleRelToMuon", &fMINEventAngleRelMuon);
@@ -213,7 +201,6 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
   ////////////////////////////
   if (fMessenger.GetNeutronTallyTreeStatus()) {
     fNeutronTallyTree = new TTree("neutronTallyTree", "Muon-induced neutrons entering cavity");
-
     fNeutronTallyTree->Branch("eventID", &fNeutronTallyEventID);
     fNeutronTallyTree->Branch("numNeutronsEntered", &fNeutronEntryMultiplicity);
     fNeutronTallyTree->Branch("entry_energy", &fNeutron_entryEnergy);
@@ -234,7 +221,6 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
   //////////////////////
   if (fMessenger.GetRecoilTreeStatus()) {
     fRecoilTree = new TTree("recoilTree", "Ion recoils in target");
-
     fRecoilTree->Branch("historyNum", &fRecoilEventID);
     fRecoilTree->Branch("pdgCode", &fRecoilEventPDGCode);
     fRecoilTree->Branch("parent_pdgCode", &fRecoilEventParentPDGCode);
@@ -252,30 +238,30 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
   }
 }
 
-//Fill primaries tree
+// Fill primaries tree
 void PaleoSimOutputManager::FillPrimariesTreeEvent() {
-    if (!fMessenger.GetPrimariesTreeStatus() || !fPrimariesTree) return;
-    if (fPrimaryPdgID.size() == 0) return;
-    fPrimariesTree->Fill();
+  if (!fMessenger.GetPrimariesTreeStatus() || !fPrimariesTree) return;
+  if (fPrimaryPdgID.empty()) return;
+  fPrimariesTree->Fill();
 }
 
 void PaleoSimOutputManager::FillMINTreeEvent() {
-    if (!fMessenger.GetMINTreeStatus() || !fMINTree) return;
-    if (fMINEventMultiplicity == 0) return;
-    fMINTree->Fill();
+  if (!fMessenger.GetMINTreeStatus() || !fMINTree) return;
+  if (fMINEventMultiplicity == 0) return;
+  fMINTree->Fill();
 }
 
-//Fill neutron tally tree
+// Fill neutron tally tree
 void PaleoSimOutputManager::FillNeutronTallyTreeEvent() {
-    if (!fMessenger.GetNeutronTallyTreeStatus() || !fNeutronTallyTree) return;
-    if (fNeutronEntryMultiplicity == 0) return;
-    fNeutronTallyTree->Fill();
+  if (!fMessenger.GetNeutronTallyTreeStatus() || !fNeutronTallyTree) return;
+  if (fNeutronEntryMultiplicity == 0) return;
+  fNeutronTallyTree->Fill();
 }
 
-//Fill recoil tree
+// Fill recoil tree
 void PaleoSimOutputManager::FillRecoilTreeEvent() {
   if (!fMessenger.GetRecoilTreeStatus() || !fRecoilTree) return;
-  if (fNRecoils==0) return;
+  if (fNRecoils == 0) return;
   fRecoilTree->Fill();
 }
 
@@ -317,7 +303,7 @@ void PaleoSimOutputManager::ClearNeutronTallyTreeEvent() {
 }
 
 void PaleoSimOutputManager::ClearRecoilTreeEvent() {
-  fNeutronTallyEventID = -1;
+  fRecoilEventID = -1;
   fNRecoils = 0;
   fRecoilEventPDGCode.clear();
   fRecoilEventParentPDGCode.clear();
@@ -333,22 +319,19 @@ void PaleoSimOutputManager::ClearRecoilTreeEvent() {
   fRecoilVolumeNumbers.clear();
 }
 
-void PaleoSimOutputManager::WriteVRMLGeometry(const G4String& vrmlFilename)
-{
-    // Set environment variable to control VRML output filename
-    setenv("G4VRMLFILE_FILE_NAME", vrmlFilename.c_str(), 1);
+void PaleoSimOutputManager::WriteVRMLGeometry(const G4String& vrmlFilename) {
+  setenv("G4VRMLFILE_FILE_NAME", vrmlFilename.c_str(), 1);
 
-    auto* visManager = new G4VisExecutive();
-    visManager->SetVerboseLevel(0);
-    visManager->Initialize();
+  auto* visManager = new G4VisExecutive();
+  visManager->SetVerboseLevel(0);
+  visManager->Initialize();
 
-    auto* ui = G4UImanager::GetUIpointer();
-    ui->ApplyCommand("/vis/open VRML2FILE");
-    ui->ApplyCommand("/vis/scene/create");
+  auto* ui = G4UImanager::GetUIpointer();
+  ui->ApplyCommand("/vis/open VRML2FILE");
+  ui->ApplyCommand("/vis/scene/create");
+  ui->ApplyCommand("/vis/drawVolume");
+  ui->ApplyCommand("/vis/viewer/flush");
+  ui->ApplyCommand("/vis/sceneHandler/flush");
 
-    ui->ApplyCommand("/vis/drawVolume");
-    ui->ApplyCommand("/vis/viewer/flush");
-    ui->ApplyCommand("/vis/sceneHandler/flush");
-
-    delete visManager;
+  delete visManager;
 }

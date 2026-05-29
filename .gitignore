@@ -6,3 +6,5 @@ CMakeCache.txt
 *.sh
 *.wrl
 *.vrml
+.vscode
+build
