@@ -1,6 +1,7 @@
 #Overburden
 /volume/new Overburden
 /volume/setParent None
+/volume/setPositionType absolute
 /volume/setShape box
 /volume/setVolumeNumber 0
 /volume/setMaterial norite
@@ -9,11 +10,13 @@
 /volume/box/setHalfLengths 10 10 10 m
 /volume/setRGB 0.5 0.5 0.5
 /volume/setAlpha 0.5
+/volume/setVolumeNumber 0
 /volume/finalize
 
 # Define air cavity volume
 /volume/new AirCavity
 /volume/setParent Overburden
+/volume/setPositionType relative
 /volume/setShape box
 /volume/setVolumeNumber 1
 /volume/setMaterial air
@@ -22,4 +25,5 @@
 /volume/box/setHalfLengths 3 3 3 m
 /volume/setRGB 0.9 0.9 0.9
 /volume/setAlpha 0.1
+/volume/setVolumeNumber 1
 /volume/finalize

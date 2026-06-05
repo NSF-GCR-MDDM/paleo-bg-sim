@@ -2,6 +2,14 @@
 #include <set>
 #include <fstream>
 
+G4String PaleoSimMessenger::GetDefaultOutputPathForFormat(const G4String& fmt) const {
+    if (fmt == "h5") {
+        return "outputFiles/output.h5";
+    }
+    return "outputFiles/output.root";
+}
+
+
 PaleoSimMessenger::PaleoSimMessenger() {    
     /////////////////////
     //Geometry commands//
@@ -19,6 +27,11 @@ PaleoSimMessenger::PaleoSimMessenger() {
     ///////////////////
     fOutputDirectory = new G4UIdirectory("/output/");
     fOutputDirectory->SetGuidance("Controls for output writing");
+
+    fSetOutputFormatCmd = new G4UIcmdWithAString("/output/setOutputFormat", this);
+    fSetOutputFormatCmd->SetGuidance("Set output format: 'root' or 'h5'");
+    fSetOutputFormatCmd->SetParameterName("fOutputFormat", true);
+    fSetOutputFormatCmd->SetDefaultValue(fOutputFormat);
 
     fSetPrimariesTreeStatusCmd = new G4UIcmdWithABool("/output/setPrimariesTreeStatus", this);
     fSetPrimariesTreeStatusCmd->SetGuidance("Enable tracking of primary generation properties");
@@ -224,6 +237,7 @@ PaleoSimMessenger::~PaleoSimMessenger() {
     delete fSetDiskSourcePositionCmd;
     delete fSetDiskSourceAxisCmd;
     delete fSetDiskSourceDirectionCmd;
+    delete fSetOutputFormatCmd;
 }
 
 void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
@@ -279,6 +293,14 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
     else if (command == fSetVRMLStatusCmd) {
         fVRMLStatus = fSetVRMLStatusCmd->GetNewBoolValue(newValue);
         G4cout << "VRML file will be written in current directory"<< G4endl;
+    }
+    else if (command == fSetOutputFormatCmd) {
+      if (newValue != "root" && newValue != "h5") {
+          G4Exception("SetNewValue", "BadOutputFormat", FatalException,
+                      "/output/setOutputFormat accepts only 'root' or 'h5'");
+      }
+      SetOutputFormat(newValue);
+      G4cout << "Output format set in macro to: " << newValue << G4endl;
     }
     
     //Generator

@@ -24,8 +24,18 @@ public:
     void SetNewValue(G4UIcommand* command, G4String newValue) override;
 
     //Output
-    void SetOutputPath(G4String path) { fOutputFile=path; };
+    void SetOutputPath(G4String path) {
+        fOutputFile = path;
+        fOutputPathExplicitlySet = true;
+    };
     G4String GetOutputPath() const { return fOutputFile; };
+    void SetOutputFormat(const G4String& fmt) {
+        fOutputFormat = fmt;
+        if (!fOutputPathExplicitlySet) {
+            fOutputFile = GetDefaultOutputPathForFormat(fOutputFormat);
+        }
+    };
+    G4String GetOutputFormat() const { return fOutputFormat; };
     //Trees can be enabled/disabled from macro. These flags track those
     bool GetPrimariesTreeStatus() const { return fPrimariesTreeStatus; };
     bool GetNeutronTallyTreeStatus() const { return fNeutronTallyTreeStatus; };
@@ -130,6 +140,9 @@ private:
     G4String fGeometryMacroPath = "";
 
     // Output configuration
+    G4String GetDefaultOutputPathForFormat(const G4String& fmt) const;
+    G4bool fOutputPathExplicitlySet = false;
+
     G4UIdirectory* fOutputDirectory = nullptr;
     G4UIcmdWithABool* fSetVRMLStatusCmd = nullptr;
     G4UIcmdWithABool* fSetPrimariesTreeStatusCmd = nullptr;
@@ -138,6 +151,8 @@ private:
     G4UIcmdWithAString* fSetRecoilTreeVolumesCmd = nullptr;
 
     G4String fOutputFile = "outputFiles/output.root";
+    G4UIcmdWithAString* fSetOutputFormatCmd = nullptr;
+    G4String fOutputFormat = "root";
     G4bool fPrimariesTreeStatus = true;
 
     G4bool fMINTreeStatus = false;

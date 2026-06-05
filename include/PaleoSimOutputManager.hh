@@ -7,6 +7,10 @@
 #include "PaleoSimMessenger.hh" 
 #include "TFile.h" 
 #include "TTree.h"
+#include "H5Cpp.h"
+
+class PaleoSimRootOutputWriter;
+class PaleoSimH5OutputWriter;
 
 class PaleoSimOutputManager {
 public:
@@ -87,6 +91,9 @@ public:
     void WriteVRMLGeometry(const G4String& vrmlFilename);
 
 private:
+    friend class PaleoSimRootOutputWriter;
+    friend class PaleoSimH5OutputWriter;
+
     PaleoSimMessenger& fMessenger; 
 
     TFile* fFile = nullptr;

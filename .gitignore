@@ -8,3 +8,5 @@ CMakeCache.txt
 *.vrml
 *.txt
 *.geo
+.vscode
+build

@@ -1,6 +1,6 @@
 # PaleoSim
 
-Code for simulating interactions interactions in paleo detectors
+Code for simulating interactions interactions in paleo-detectors.
 
 ---
 
@@ -36,12 +36,12 @@ cmake </path/to/code/folder>
 make clean
 make -j<#>
 ```
-It is recommended to do a `make clean` any time code is changed in a header file, and to re-do a `cmake` if new files are added to the source code. When executing the `make`, the number of cores with which to compile the code can be passed in to speed up the compilation. 
+It is recommended to run `make clean` any time code is changed in a header file, and to redo `cmake` if new files are added to the source code. When executing `make`, one can specify the number of cores `N` to be used for compilation via the `-j<N>` flag. 
 
 To run:
 
 ```bash
-./particleProduction < macro file >
+./particleProduction <macro_file.mac>
 ```
 
 The macro file arguments are documented here: [Macro Command Options](docs/macro_commands.md). The geometry is specified through a separate macro linked to the main. Details on that format can be found here: [Geometry Command Options](docs/geometry_commands.md)
