@@ -56,6 +56,7 @@ void PaleoSimCrySource::InitializeSource() {
   std::cout<<"Number of CRY particles to sample is "<<nCryEntries<<std::endl;
   cryFileLoaded = true;
 
+  /*
   //Preload into memory
   for (Long64_t i = 0; i < nCryEntries; ++i) {
       cryTree->GetEntry(i); // fills cry_* branch buffers for one event
@@ -71,37 +72,36 @@ void PaleoSimCrySource::InitializeSource() {
           std::cout<<"On entry "<<i<<" of "<<nCryEntries<<std::endl;
       }
   }
-
+  */
   //Get header info
   TTree * headerTree = dynamic_cast<TTree*>(cryFile->Get("headerTree"));
   float altitude,latitude,norm;
   headerTree->SetBranchAddress("altitude", &altitude);
   headerTree->SetBranchAddress("latitude",          &latitude);
-  headerTree->SetBranchAddress("primaries_per_cm2_per_s",          &norm);
+  headerTree->SetBranchAddress("showers_per_cm2_per_s",          &norm);
 
   headerTree->GetEvent(0);
   fMessenger.SetCRYAltitude(static_cast<double>(altitude));
   fMessenger.SetCRYLatitude(static_cast<double>(latitude));
   fMessenger.SetCRYNorm(static_cast<double>(norm));
   delete headerTree;
+
+  //Not efficient but its fine for doing ones
+  G4ThreeVector basePosition = SamplePointOnTopOfWorldVolume();
+  overburden_z = basePosition.z();
 }
 
 
 void PaleoSimCrySource::GeneratePrimaries(G4Event* anEvent) {
 
-  Long64_t entry = G4RandFlat::shootInt(nCryEntries);
-    
-  cry_pdgcode = &all_cry_pdgcodes.at(entry);
-  cry_energy  = &all_cry_energy.at(entry);
-  cry_u       = &all_cry_u.at(entry);
-  cry_v       = &all_cry_v.at(entry);
-  cry_w       = &all_cry_w.at(entry);
-  cry_x       = &all_cry_x.at(entry);
-  cry_y       = &all_cry_y.at(entry);
+  Long64_t entry = cryEventIdx;
+  if (cryEventIdx >= nCryEntries) {
+    std::cout<<"All particles in CRY file have been thrown. Re-sampling is occurrring. Warning!"<<std::endl;
+    entry = cryEventIdx % nCryEntries;
+  }
 
-
-  // Sample a position on the top of the world volume
-  G4ThreeVector basePosition = SamplePointOnTopOfWorldVolume();
+  cryTree->GetEntry(entry);
+  cryEventIdx++;
 
   //Load all particles into vertices
   for (size_t i = 0; i < cry_pdgcode->size(); i++) {
@@ -117,7 +117,8 @@ void PaleoSimCrySource::GeneratePrimaries(G4Event* anEvent) {
     double Etot = Ekin + mass;
     double p = std::sqrt(Etot * Etot - mass * mass);
 
-    G4ThreeVector position = basePosition + G4ThreeVector(cry_x->at(i) * mm, cry_y->at(i) * mm, 0);
+    G4ThreeVector position =  G4ThreeVector(cry_x->at(i) * mm, cry_y->at(i) * mm, overburden_z);
+    //This should be unneeded, but we include as a check.
     if (IsWithinTopSurface(position)) {
       G4ThreeVector direction(cry_u->at(i), cry_v->at(i), cry_w->at(i));
       G4ThreeVector momentum = direction * p;
@@ -131,22 +132,9 @@ void PaleoSimCrySource::GeneratePrimaries(G4Event* anEvent) {
       vertex->SetPrimary(primary);
       anEvent->AddPrimaryVertex(vertex);
     }
+    else {
+      G4Exception("GeneratePrimaries", "CRY003", FatalException,
+                  ("CRY file is throwing particles outside of your top surface area. \nNormalization will be off. \nRe-run cry with an area matching your G4 top surface"));
+    }
   }
-
-  //Store primary info in userEventInfo
-  auto* info = new PaleoSimUserEventInformation();
-  // Compute total energy
-  double totalEnergy = 0.0;
-  G4ThreeVector weightedDirection(0,0,0);
-  for (size_t i = 0; i < cry_pdgcode->size(); ++i) {
-      double energy = cry_energy->at(i);  // in MeV
-      totalEnergy += energy;
-      weightedDirection += G4ThreeVector(cry_u->at(i), cry_v->at(i), cry_w->at(i)) * energy;
-  }
-  G4ThreeVector dir = weightedDirection.unit();
-  info->CRYCoreTheta = dir.theta();  // radians
-  info->CRYCorePhi   = dir.phi();    // radians
-  info->CRYTotalEnergy = totalEnergy;  // MeV
-  info->CRYCorePosition = basePosition;
-  anEvent->SetUserInformation(info); //G4 takes ownership, no need to delete
 }

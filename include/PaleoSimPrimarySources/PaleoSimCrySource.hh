@@ -21,6 +21,7 @@ private:
     bool cryFileLoaded = false;
     TTree* cryTree = nullptr;
     int nCryEntries = 0;
+    int cryEventIdx = 0;
 
     std::vector<int>* cry_pdgcode = nullptr;
     std::vector<float>* cry_energy = nullptr;
@@ -37,6 +38,8 @@ private:
     std::vector<std::vector<float>> all_cry_w;
     std::vector<std::vector<float>> all_cry_x;
     std::vector<std::vector<float>> all_cry_y;  
+
+    double overburden_z=0;
 };
 
 #endif

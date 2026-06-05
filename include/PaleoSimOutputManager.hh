@@ -37,14 +37,6 @@ public:
     void SetPrimaryMuonTheta(double val) { fPrimaryMuonTheta = val; };
     void SetPrimaryMuonPhi(double val) { fPrimaryMuonPhi = val; };
     void SetPrimaryMuonSlant(double val) { fPrimaryMuonSlant = val; };
-    //
-    //CRY generator
-    void SetCRYCoreX(double val) { fCRYCoreX = val;};
-    void SetCRYCoreY(double val) { fCRYCoreY = val;};
-    void SetCRYCoreZ(double val) { fCRYCoreZ = val;};
-    void SetCRYCoreTheta(double val) { fCRYCoreTheta = val;};
-    void SetCRYCorePhi(double val) { fCRYCorePhi = val;};
-    void SetCRYTotalEnergy(double val) { fCRYTotalEnergy = val; };
 
     //MUON-INDUCED NEUTRON TREE
     void FillMINTreeEvent();
