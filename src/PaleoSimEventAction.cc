@@ -109,6 +109,12 @@ void PaleoSimEventAction::EndOfEventAction(const G4Event* event) {
     fOutputManager.ClearNeutronTallyTreeEvent();
   }    
 
+  //Data loaded into SecondaryCaptureTree in stepping action
+  if (fMessenger.GetSecondaryCaptureTreeStatus()) {
+    fOutputManager.FillSecondaryCaptureTreeEvent();
+    fOutputManager.ClearSecondaryCaptureTreeEvent();
+  }
+
   //Data loaded into RecoilTree variables in stepping action
   if (fMessenger.GetRecoilTreeStatus()) {
     fOutputManager.FillRecoilTreeEvent();

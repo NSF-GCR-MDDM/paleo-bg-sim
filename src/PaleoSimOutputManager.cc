@@ -99,6 +99,10 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     fHeaderTree->Branch("CRYLatitude", &CRYLatitude);
     fHeaderTree->Branch("showers_per_cm2_per_s", &CRYNorm);
   }
+  if (fMessenger.GetSourceType()=="SCTGenerator") {
+    int SCTCapturedParticles = fMessenger.GetSCTCapturedParticles();
+    fHeaderTree->Branch("SCTCapturedParticles", &SCTCapturedParticles);
+  }
   // Fill once when we make the tree, we aren't ever updating this
   fHeaderTree->Fill();
 
@@ -209,6 +213,23 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     fNeutronTallyTree->Branch("prevVolumeNumbers", &fPrevNeutronTallyVolumeNumbers);
   }
 
+  /////////////////////////////////
+  // MAKE SECONDARY CAPTURE TREE //
+  /////////////////////////////////
+  if (fMessenger.GetSecondaryCaptureTreeStatus()) {
+    fSecondaryCaptureTree = new TTree("secondaryCaptureTree", "Muon-induced secondaries passing through boundary between volumes");
+    fSecondaryCaptureTree->Branch("eventID", &fSecondaryCaptureEventID);
+    fSecondaryCaptureTree->Branch("pdgCode", &fSecondary_entryPDG);
+    fSecondaryCaptureTree->Branch("energy", &fSecondary_entryEnergy);
+    fSecondaryCaptureTree->Branch("entry_x", &fSecondary_entryX);
+    fSecondaryCaptureTree->Branch("entry_y", &fSecondary_entryY);
+    fSecondaryCaptureTree->Branch("entry_z", &fSecondary_entryZ);
+    fSecondaryCaptureTree->Branch("entry_u", &fSecondary_entryU);
+    fSecondaryCaptureTree->Branch("entry_v", &fSecondary_entryV);
+    fSecondaryCaptureTree->Branch("entry_w", &fSecondary_entryW);
+    fSecondaryCaptureTree->Branch("creation_z", &fSecondary_creationZ);
+  }
+
   //////////////////////
   // MAKE RECOIL TREE //
   //////////////////////
@@ -249,6 +270,12 @@ void PaleoSimOutputManager::FillNeutronTallyTreeEvent() {
   if (!fMessenger.GetNeutronTallyTreeStatus() || !fNeutronTallyTree) return;
   if (fNeutronEntryMultiplicity == 0) return;
   fNeutronTallyTree->Fill();
+}
+
+// Fill secondary capture tree
+void PaleoSimOutputManager::FillSecondaryCaptureTreeEvent() {
+  if (!fMessenger.GetSecondaryCaptureTreeStatus() || !fSecondaryCaptureTree) return;
+  fSecondaryCaptureTree->Fill();
 }
 
 // Fill recoil tree
@@ -293,6 +320,19 @@ void PaleoSimOutputManager::ClearNeutronTallyTreeEvent() {
   fNeutron_distance.clear();
   fNeutronTallyVolumeNumbers.clear();
   fPrevNeutronTallyVolumeNumbers.clear();
+}
+
+void PaleoSimOutputManager::ClearSecondaryCaptureTreeEvent() {
+  fSecondaryCaptureEventID = -1;
+  fSecondary_entryPDG.clear();
+  fSecondary_entryEnergy.clear();
+  fSecondary_entryX.clear();
+  fSecondary_entryY.clear();
+  fSecondary_entryZ.clear();
+  fSecondary_entryU.clear();
+  fSecondary_entryV.clear();
+  fSecondary_entryW.clear();
+  fSecondary_creationZ.clear();
 }
 
 void PaleoSimOutputManager::ClearRecoilTreeEvent() {

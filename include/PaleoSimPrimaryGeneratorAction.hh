@@ -21,6 +21,7 @@
 #include "PaleoSimPrimarySources/PaleoSimVolumetricSource.hh"
 #include "PaleoSimPrimarySources/PaleoSimMeiHimeSource.hh"
 #include "PaleoSimPrimarySources/PaleoSimCrySource.hh"
+#include "PaleoSimPrimarySources/PaleoSimSCTSource.hh"
 
 class PaleoSimPrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction {
 public:
@@ -42,11 +43,14 @@ private:
     //
     //CRY generator
     //
+    //Captured Particle(secondaryCaptureTree) Generator
+    //
     //Volumetric source generator
     PaleoSimDiskSource* fDiskSource = nullptr;
     PaleoSimVolumetricSource* fVolumetricSource = nullptr;
     PaleoSimMeiHimeSource* fMeiHimeSource = nullptr;
     PaleoSimCrySource* fCrySource = nullptr;
+    PaleoSimSCTSource* fSCTSource = nullptr;
 };
 
 #endif

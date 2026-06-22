@@ -47,6 +47,10 @@ PaleoSimMessenger::PaleoSimMessenger() {
     fSetNeutronTallyTreeVolumesCmd->SetGuidance("List of names of volumes to track neutrons entering, separated by spaces");
     fSetNeutronTallyTreeVolumesCmd->SetParameterName("fNeutronTallyTreeVolumes", true);
 
+    fSetSecondaryCaptureTreeVolumesCmd = new G4UIcmdWithAString("/output/setSecondaryCaptureTreeVolumes", this);
+    fSetSecondaryCaptureTreeVolumesCmd->SetGuidance("Pair of names of volumes to capture secondaries crossing the boundary between, separated by a space");
+    fSetSecondaryCaptureTreeVolumesCmd->SetParameterName("fSecondaryCaptureTreeVolumes", true);
+
     fSetRecoilTreeVolumesCmd = new G4UIcmdWithAString("/output/setRecoilTreeVolumes", this);
     fSetRecoilTreeVolumesCmd->SetGuidance("List of names of volumes to track nuclear recoils in, separated by spaces");
     fSetRecoilTreeVolumesCmd->SetParameterName("fRecoilTreeVolumes", true);
@@ -103,6 +107,20 @@ PaleoSimMessenger::PaleoSimMessenger() {
     fSetCRYFilenameCmd->SetGuidance("Pass in output of cryGenerator code (root file)");
     fSetCRYFilenameCmd->SetParameterName("fCRYFilename", true);
     fSetCRYFilenameCmd->SetDefaultValue(fCRYFilename);
+
+    //Captured Particle(secondaryCaptureTree) generator
+    fSCTGeneratorDirectory = new G4UIdirectory("/generator/SCTGenerator/");
+    fSCTGeneratorDirectory->SetGuidance("Controls for SCT Generator");
+
+    fSetSCTFilenameCmd = new G4UIcmdWithAString("/generator/SCTGenerator/setSCTFilename", this);
+    fSetSCTFilenameCmd->SetGuidance("Pass in output containing secondaryCaptureTree (root file)");
+    fSetSCTFilenameCmd->SetParameterName("fSCTFilename", true);
+    fSetSCTFilenameCmd->SetDefaultValue(fSCTFilename);
+
+    fSetSCTBootstrapCmd = new G4UIcmdWithAString("/generator/SCTGenerator/setSCTBootstrap", this);
+    fSetSCTFilenameCmd->SetGuidance("Specify bootstrapping method: standard or rrs");
+    fSetSCTFilenameCmd->SetParameterName("fSCTBootstrap", true);
+    fSetSCTFilenameCmd->SetDefaultValue(fSCTBootstrap);
 
     //Volumetric Source Generator
     fVolumetricSourceDirectory = new G4UIdirectory("/generator/VolumetricSource/");
@@ -197,6 +215,7 @@ PaleoSimMessenger::~PaleoSimMessenger() {
     delete fSetPrimariesTreeStatusCmd;
     delete fSetMINTreeStatusCmd;
     delete fSetNeutronTallyTreeVolumesCmd;
+    delete fSetSecondaryCaptureTreeVolumesCmd;
     delete fSetRecoilTreeVolumesCmd;
     delete fSetVRMLStatusCmd;
 
@@ -217,6 +236,9 @@ PaleoSimMessenger::~PaleoSimMessenger() {
     //CRY
     delete fCRYGeneratorDirectory;
     delete fSetCRYFilenameCmd;
+    //SCT
+    delete fSCTGeneratorDirectory;
+    delete fSetSCTFilenameCmd;
     //Volumetric source
     delete fVolumetricSourceDirectory;
     delete fSetVolumetricSourceVolumeNameCmd;
@@ -277,6 +299,15 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
             G4cout << "\t" << name << G4endl;
         }
     }
+    else if (command == fSetSecondaryCaptureTreeVolumesCmd) {
+        std::istringstream iss(newValue);
+        G4String name;
+        G4cout << "Secondary capture tree will capture secondaries passing through the boundary between volumes: " << G4endl;
+        while (iss >> name) {
+            fSecondaryCaptureTreeVolumes.push_back(name);
+            G4cout << "\t" << name << G4endl;
+        }
+    }
     else if (command == fSetRecoilTreeVolumesCmd) {
         std::istringstream iss(newValue);
         G4String name;
@@ -333,6 +364,19 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
             G4Exception("SetNewValue", "EmptyCryFile", FatalException,
                         "/generator/cry/setCRYFilename needs an argument");
         }
+    }
+    //SCT
+    else if (command == fSetSCTFilenameCmd) {
+        fSCTFilename = newValue;
+        G4cout << "SCTGenerator filename set to " << newValue << G4endl;
+        if (fSCTFilename.empty()) {
+            G4Exception("SetNewValue", "EmptySCTFile", FatalException,
+                        "/generator/SCTGenerator/setSCTFilename needs an argument");
+        }
+    }
+    else if (command == fSetSCTBootstrapCmd) {
+        fSCTBootstrap = newValue;
+        G4cout << "SCTBootstrap set to " << newValue << G4endl;
     }
     //Volumetric source
     else if (command == fSetVolumetricSourceVolumeNameCmd) {
@@ -442,8 +486,22 @@ void PaleoSimMessenger::CheckForMacroErrors() {
         fNeutronTallyTreeStatus = true;
     }
 
-    //Check the user-specified volume for neutronTallyTree exists. If so, enable output
+    //Check the user-specified volumes for secondaryCaptureTree exist. If so, enable output
+    for (auto volumeName: fSecondaryCaptureTreeVolumes) {
+        if (!PaleoSimMessenger::VolumeNameExists(volumeName)) {
+            G4Exception("PaleoSimMessenger", "BadSecondaryCaptureTreeVolume", FatalException, 
+            ("Tried to track secondaries passing through "+volumeName+" but volume not found in geometry!").c_str());
+        }
+    }
+    if (fSecondaryCaptureTreeVolumes.size()==2) {
+        fSecondaryCaptureTreeStatus = true;
+    }
+    else if (fSecondaryCaptureTreeVolumes.size()>0) {
+        G4Exception("PaleoSimMessenger", "BadSecondaryCaptureTreeVolume", FatalException,
+        "Can not define boundary between volumes; exactly two volumes expected!");
+    }
 
+    //Check the user-specified volume for recoilTree exists. If so, enable output
     for (auto volumeName: fRecoilTreeVolumes) {
         if (!PaleoSimMessenger::VolumeNameExists(volumeName)) {
             G4Exception("PaleoSimMessenger", "BadRecoilTreeVolume", FatalException,

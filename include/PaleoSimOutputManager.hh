@@ -69,6 +69,20 @@ public:
     void PushNeutronTallyVolumeNumber(int val) {fNeutronTallyVolumeNumbers.push_back(val); };
     void PushPrevNeutronTallyVolumeNumber(int val) {fPrevNeutronTallyVolumeNumbers.push_back(val);};
 
+    //SECONDARY CAPTURE TREE
+    void FillSecondaryCaptureTreeEvent();
+    void ClearSecondaryCaptureTreeEvent();
+    void PushSecondaryCaptureEventID(int val) { fSecondaryCaptureEventID = val; };
+    void PushSecondaryCaptureEventEntryPDG(int val) { fSecondary_entryPDG.push_back(val); };
+    void PushSecondaryCaptureEventEntryEnergy(double val) { fSecondary_entryEnergy.push_back(val); };
+    void PushSecondaryCaptureEventEntryX(double val) { fSecondary_entryX.push_back(val); };
+    void PushSecondaryCaptureEventEntryY(double val) { fSecondary_entryY.push_back(val); };
+    void PushSecondaryCaptureEventEntryZ(double val) { fSecondary_entryZ.push_back(val); };
+    void PushSecondaryCaptureEventEntryU(double val) { fSecondary_entryU.push_back(val); };
+    void PushSecondaryCaptureEventEntryV(double val) { fSecondary_entryV.push_back(val); };
+    void PushSecondaryCaptureEventEntryW(double val) { fSecondary_entryW.push_back(val); };
+    void PushSecondaryCaptureEventCreationZ(double val) {fSecondary_creationZ.push_back(val); };
+
     //RECOIL TREE
     void FillRecoilTreeEvent();
     void ClearRecoilTreeEvent();
@@ -102,6 +116,7 @@ private:
     TTree* fPrimariesTree = nullptr;
     TTree* fMINTree = nullptr;
     TTree* fNeutronTallyTree = nullptr;
+    TTree* fSecondaryCaptureTree = nullptr;
     TTree* fRecoilTree = nullptr;
 
     // Primary Tree variables
@@ -137,6 +152,14 @@ private:
     std::vector<double> fNeutron_angle, fNeutron_distance;
     std::vector<int> fNeutronTallyVolumeNumbers;
     std::vector<int> fPrevNeutronTallyVolumeNumbers;
+
+    // Secondary Capture Tree Variables
+    int fSecondaryCaptureEventID = -1;
+    std::vector<int> fSecondary_entryPDG;
+    std::vector<double> fSecondary_entryEnergy;
+    std::vector<double> fSecondary_entryX, fSecondary_entryY, fSecondary_entryZ;
+    std::vector<double> fSecondary_entryU, fSecondary_entryV, fSecondary_entryW;
+    std::vector<double> fSecondary_creationZ;
 
     // Recoil Tree variables
     int fRecoilEventID = -1;

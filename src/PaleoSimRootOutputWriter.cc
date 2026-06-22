@@ -16,6 +16,7 @@ void PaleoSimRootOutputWriter::Write(PaleoSimOutputManager& manager) {
   if (manager.fMessenger.GetPrimariesTreeStatus() && manager.fPrimariesTree) manager.fPrimariesTree->Write("primariesTree", TFile::kOverwrite);
   if (manager.fMessenger.GetMINTreeStatus() && manager.fMINTree) manager.fMINTree->Write("MINTree", TFile::kOverwrite);
   if (manager.fMessenger.GetNeutronTallyTreeStatus() && manager.fNeutronTallyTree) manager.fNeutronTallyTree->Write("neutronTallyTree", TFile::kOverwrite);
+  if (manager.fMessenger.GetSecondaryCaptureTreeStatus() && manager.fSecondaryCaptureTree) manager.fSecondaryCaptureTree->Write("secondaryCaptureTree", TFile::kOverwrite);
   if (manager.fMessenger.GetRecoilTreeStatus() && manager.fRecoilTree) manager.fRecoilTree->Write("recoilTree", TFile::kOverwrite);
 
   manager.fFile->Close();
@@ -27,5 +28,6 @@ void PaleoSimRootOutputWriter::Write(PaleoSimOutputManager& manager) {
   manager.fPrimariesTree = nullptr;
   manager.fMINTree = nullptr;
   manager.fNeutronTallyTree = nullptr;
+  manager.fSecondaryCaptureTree = nullptr;
   manager.fRecoilTree = nullptr;
 }

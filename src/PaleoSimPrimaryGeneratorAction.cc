@@ -35,7 +35,6 @@ PaleoSimPrimaryGeneratorAction::PaleoSimPrimaryGeneratorAction(PaleoSimMessenger
                   ("Invalid source type: " + sourceType).c_str());
   }
 
-
   if (sourceType == "meiHimeMuonGenerator") {
     fMeiHimeSource = new PaleoSimMeiHimeSource(fMessenger);
     fMeiHimeSource->InitializeSource();
@@ -46,6 +45,11 @@ PaleoSimPrimaryGeneratorAction::PaleoSimPrimaryGeneratorAction(PaleoSimMessenger
   else if (sourceType == "CRYGenerator") {
     fCrySource = new PaleoSimCrySource(fMessenger);
     fCrySource->InitializeSource();
+  }
+  
+  else if (sourceType == "SCTGenerator") {
+    fSCTSource = new PaleoSimSCTSource(fMessenger);
+    fSCTSource->InitializeSource();
   }
   else if (sourceType == "volumetricSource") {
     fVolumetricSource = new PaleoSimVolumetricSource(fMessenger);
@@ -66,6 +70,7 @@ PaleoSimPrimaryGeneratorAction::~PaleoSimPrimaryGeneratorAction() {
     delete fVolumetricSource;
     delete fDiskSource;
     delete fCrySource;
+    delete fSCTSource;
 }
 
 void PaleoSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
@@ -84,6 +89,10 @@ void PaleoSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
   //CRY
   else if (sourceType == "CRYGenerator") {
     fCrySource->GeneratePrimaries(anEvent);
+  }
+  //Captured Particle Generator
+  else if (sourceType == "SCTGenerator") {
+    fSCTSource->GeneratePrimaries(anEvent);
   }
   //Volumetric source
   else if (sourceType == "volumetricSource") {
