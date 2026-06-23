@@ -39,9 +39,10 @@ PaleoSimPrimaryGeneratorAction::PaleoSimPrimaryGeneratorAction(PaleoSimMessenger
     fMeiHimeSource = new PaleoSimMeiHimeSource(fMessenger);
     fMeiHimeSource->InitializeSource();
   }
-  //else if (sourceType == "muteGenerator") {
-  //  InitializeMuteMuons();
-  //}
+  else if (sourceType == "muteGenerator") {
+    fMuteSource = new PaleoSimMuteSource(fMessenger);
+    fMuteSource->InitializeSource();
+  }
   else if (sourceType == "CRYGenerator") {
     fCrySource = new PaleoSimCrySource(fMessenger);
     fCrySource->InitializeSource();
@@ -83,9 +84,9 @@ void PaleoSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
     fMeiHimeSource->GeneratePrimaries(anEvent);
   }
   //MUTE
-  //else if (sourceType == "muteGenerator") {
-  //  GenerateMutePrimaries(anEvent);
-  //}
+  else if (sourceType == "muteGenerator") {
+    fMuteSource->GeneratePrimaries(anEvent);
+  }
   //CRY
   else if (sourceType == "CRYGenerator") {
     fCrySource->GeneratePrimaries(anEvent);

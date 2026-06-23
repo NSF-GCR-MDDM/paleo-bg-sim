@@ -22,6 +22,7 @@
 #include "PaleoSimPrimarySources/PaleoSimMeiHimeSource.hh"
 #include "PaleoSimPrimarySources/PaleoSimCrySource.hh"
 #include "PaleoSimPrimarySources/PaleoSimSCTSource.hh"
+#include "PaleoSimPrimarySources/PaleoSimMuteSource.hh"
 
 class PaleoSimPrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction {
 public:
@@ -37,9 +38,6 @@ private:
     PaleoSimOutputManager& fManager;
 
     //Mute generator
-    //TH2D* fMuteHist = nullptr;
-    //void InitializeMuteMuons();
-    //void GenerateMutePrimaries(G4Event*);
     //
     //CRY generator
     //
@@ -51,6 +49,7 @@ private:
     PaleoSimMeiHimeSource* fMeiHimeSource = nullptr;
     PaleoSimCrySource* fCrySource = nullptr;
     PaleoSimSCTSource* fSCTSource = nullptr;
+    PaleoSimMuteSource* fMuteSource = nullptr;
 };
 
 #endif

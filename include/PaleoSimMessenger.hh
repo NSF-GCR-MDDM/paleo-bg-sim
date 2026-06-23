@@ -62,6 +62,10 @@ public:
     //
     //Mute generator
     G4String GetMuteHistFilename() const { return fMuteHistFilename;};
+    G4String GetMuteOverburdenType() const { return fMuteOverburdenType;};
+    G4String GetMuteMountainProfileFilename() const { return fMuteMountainProfileFilename;};
+    G4double GetMuteFluxDepth() const { return fMuteFluxDepth;};
+ 
     //
     //CRY generator
     G4String GetCRYFilename() const { return fCRYFilename; };
@@ -190,7 +194,7 @@ private:
     // Add new generator names to the list below
     std::vector<G4String> fValidSourceTypes = {
           "meiHimeMuonGenerator", //Mei & Hime muon generator, with TF1s
-          "muteGenerator", //Mute, samples from 2D histogram of muon energy and thetas (root file)
+          "muteGenerator", //Mute, samples from 3D histogram of muon energy, thetas, and slant depths (root file)
           "CRYGenerator", //Samples root file containing list of events
           "SCTGenerator", //Samples root file containing secondaryCaptureTree
           "volumetricSource", //Samples particles from a flat Volumetric with supplied direction and spectrum 
@@ -212,7 +216,14 @@ private:
     // "muteGenerator"
     G4UIdirectory* fMuteGeneratorDirectory = nullptr;
     G4UIcmdWithAString* fSetMuteHistFilenameCmd = nullptr;
+    G4UIcmdWithAString* fSetMuteOverburdenTypeCmd = nullptr;
+    G4UIcmdWithAString* fSetMuteMountainProfileFilenameCmd = nullptr;
+    G4UIcmdWithADoubleAndUnit* fSetMuteFluxDepthCmd = nullptr;
     G4String fMuteHistFilename="";
+    G4String fMuteOverburdenType="flat";
+    G4String fMuteMountainProfileFilename="";
+    G4double fMuteFluxDepth = 6.*km;
+
     //
     // "cry"
     G4UIdirectory* fCRYGeneratorDirectory = nullptr;

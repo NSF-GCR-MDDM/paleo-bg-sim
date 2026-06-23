@@ -95,9 +95,24 @@ PaleoSimMessenger::PaleoSimMessenger() {
     fMuteGeneratorDirectory->SetGuidance("Controls for Mute Generator");
 
     fSetMuteHistFilenameCmd = new G4UIcmdWithAString("/generator/muteGenerator/setMuteHistFilename", this);
-    fSetMuteHistFilenameCmd->SetGuidance("File containing 'muonHist' TH2D with GeV on x and Theta (rad) on y");
+    fSetMuteHistFilenameCmd->SetGuidance("File containing 'muonHist' TH3D with Slant Depths(kmwe) on x, GeV on y, and Theta (rad) on z");
     fSetMuteHistFilenameCmd->SetParameterName("muteHistFilename", true);
     fSetMuteHistFilenameCmd->SetDefaultValue(fMuteHistFilename);
+
+    fSetMuteOverburdenTypeCmd = new G4UIcmdWithAString("/generator/muteGenerator/setMuteOverburdenType", this);
+    fSetMuteOverburdenTypeCmd->SetGuidance("Overburden type: flat or mountain");
+    fSetMuteOverburdenTypeCmd->SetParameterName("muteOverburdenType", true);
+    fSetMuteOverburdenTypeCmd->SetDefaultValue(fMuteOverburdenType);
+
+    fSetMuteMountainProfileFilenameCmd = new G4UIcmdWithAString("/generator/muteGenerator/setMuteMountainProfileFilename", this);
+    fSetMuteMountainProfileFilenameCmd->SetGuidance("Text file containing MUTE mountain profile");
+    fSetMuteMountainProfileFilenameCmd->SetParameterName("muteMountainProfileFilename", true);
+    fSetMuteMountainProfileFilenameCmd->SetDefaultValue(fMuteMountainProfileFilename);
+
+    fSetMuteFluxDepthCmd = new G4UIcmdWithADoubleAndUnit("/generator/muteGenerator/setMuteFluxDepth", this);
+    fSetMuteFluxDepthCmd->SetGuidance("Depth at which MUTE flux was generated, in kmwe");
+    fSetMuteFluxDepthCmd->SetParameterName("muteFluxDepth", true);
+    fSetMuteFluxDepthCmd->SetDefaultValue(fMuteFluxDepth);
 
     //CRY generator
     fCRYGeneratorDirectory = new G4UIdirectory("/generator/cry/");
@@ -233,6 +248,9 @@ PaleoSimMessenger::~PaleoSimMessenger() {
     //Mute generator
     delete fMuteGeneratorDirectory;
     delete fSetMuteHistFilenameCmd;
+    delete fSetMuteMountainProfileFilenameCmd;
+    delete fSetMuteOverburdenTypeCmd;
+    delete fSetMuteFluxDepthCmd;
     //CRY
     delete fCRYGeneratorDirectory;
     delete fSetCRYFilenameCmd;
@@ -356,6 +374,30 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
                         "/generator/muteGenerator/setMuteHistFilename needs an argument");
         }
     }
+    else if (command == fSetMuteMountainProfileFilenameCmd) {
+        fMuteMountainProfileFilename = newValue;
+        G4cout << "MUTE Mountain profile set to " << newValue << G4endl;
+        if (fMuteMountainProfileFilename.empty()) {
+            G4Exception("SetNewValue", "EmptyMuteMountainProfileFile", FatalException,
+                        "/generator/muteGenerator/setMuteMountainProfileFilename needs an argument");
+        }
+    }
+    else if (command == fSetMuteOverburdenTypeCmd) {
+        fMuteOverburdenType = newValue;
+        if (newValue == "flat" || newValue == "mountain") {
+            G4cout << "MUTE overburden type set to " << newValue << G4endl;
+        }
+        else {
+            G4Exception("SetNewValue", "InvalidMuteOverbudenType", FatalException, 
+                        "/generator/muteGenerator/setMuteOverburdenType must be set to flat or mountain");
+        }
+    }
+
+    else if (command == fSetMuteFluxDepthCmd) {
+        fMuteFluxDepth = fSetMuteFluxDepthCmd->GetNewDoubleValue(newValue);
+        G4cout << "MUTE flux depth set in macro to: " << newValue << G4endl;
+    }
+
     //CRY
     else if (command == fSetCRYFilenameCmd) {
         fCRYFilename = newValue;
