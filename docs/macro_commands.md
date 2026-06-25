@@ -2,7 +2,7 @@
 
 Automatically generated from PaleoSimMessenger.hh and PaleoSimMessenger.cc with genMacroDoc.py
 
-Last generated on: 2026-06-16 17:34
+Last generated on: 2026-06-25 17:13
 
 ## /geom/
 
@@ -57,8 +57,24 @@ Last generated on: 2026-06-16 17:34
 ### /generator/muteGenerator/
 
 - **/generator/muteGenerator/setMuteHistFilename** (optional) — `muteHistFilename`
-  - Description: File containing 'muonHist' TH2D with GeV on x and Theta (rad) on y
+  - Description: File containing 'muonHist' TH3D with Slant Depths(kmwe) on x, GeV on y, and Theta (rad) on z
   - Default: `""`
+
+- **/generator/muteGenerator/setMuteOverburdenType** (optional) — `muteOverburdenType`
+  - Description: Overburden type: flat or mountain
+  - Default: `"flat"`
+
+- **/generator/muteGenerator/setMuteMountainProfileFilename** (optional) — `muteMountainProfileFilename`
+  - Description: Text file containing MUTE mountain profile
+  - Default: `""`
+
+- **/generator/muteGenerator/setMuteFluxDepth** (optional) — `muteFluxDepth`
+  - Description: Depth at which MUTE flux was generated, in kmwe
+  - Default: `6.*km`
+
+- **/generator/muteGenerator/setMuteFluxNormalization** (optional) — `muteFluxNormalization`
+  - Description: Total muon flux given by MUTE, in counts per cm^2 per s
+  - Default: `0`
 
 ### /generator/cry/
 

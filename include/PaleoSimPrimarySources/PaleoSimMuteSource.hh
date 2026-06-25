@@ -2,11 +2,37 @@
 #define PaleoSimMuteSource_h 1
 
 #include <vector>
+#include <map>
 #include "TFile.h"
 #include "TTree.h"
 #include "TH3D.h"
 #include "PaleoSimMessenger.hh"
 #include "PaleoSimPrimarySources/PaleoSimPrimarySource.hh"
+
+/*
+* MUTE mountain profiles contain three columns of thetas, phis, and slant depths. 
+* This class intends to store the profile as sets of "rings" of the mountain at 
+* each zenith angle provided in the file.
+*/
+
+struct TerrainPoint {
+    double phi;
+    double slantDepth;
+};
+
+class MountainProfile {
+    public:
+    MountainProfile() {};
+    void AddMountainPoint(double theta, double phi, double X);
+    double FindOrSampleAzimuthal(double targetTheta, double targetX) const;
+
+    private:
+    std::map<double, std::vector<TerrainPoint>> profileMap;
+    std::vector<double> FindPhiOnRing(const std::vector<TerrainPoint>& mountainRing, double targetX) const;
+    std::vector<TerrainPoint> CreateInterpolatedRing(const std::vector<TerrainPoint>& mountainRing1,
+                                                     const std::vector<TerrainPoint>& mountainRing2,
+                                                     double fraction) const;
+};
 
 class PaleoSimMuteSource : public PaleoSimPrimarySource {
     public:
@@ -26,9 +52,7 @@ class PaleoSimMuteSource : public PaleoSimPrimarySource {
         double mountainAzimuthal;
         double mountainZenith;
 
-        std::vector<double> allMountainSlantDepths;
-        std::vector<double> allMountainAzimuthals;
-        std::vector<double> allMountainZeniths;
+        MountainProfile mountainProfile;
 };
 
 #endif

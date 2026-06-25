@@ -80,8 +80,6 @@ void PaleoSimEventAction::BeginOfEventAction(const G4Event* event) {
     if (srcType == "meiHimeMuonGenerator" || srcType == "muteGenerator") {
       fOutputManager.SetPrimaryMuonTheta(info->muonTheta);
       fOutputManager.SetPrimaryMuonPhi(info->muonPhi);
-    }
-    if (srcType == "meiHimeMuonGenerator") {
       fOutputManager.SetPrimaryMuonSlant(info->muonSlantDepth);
     }
   }

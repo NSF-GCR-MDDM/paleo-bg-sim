@@ -17,7 +17,7 @@ class PaleoSimUserEventInformation : public G4VUserEventInformation {
       // CUSTOM_GENERATOR_HOOK
       // If you need information passed from your primary generation to your PrimariesTree, put that here
       //
-      // Mei & Hime muon generator (and same for mute for all except slant)
+      // Mei & Hime muon generator (and same for mute)
       G4double muonTheta;
       G4double muonPhi;
       G4double muonSlantDepth;

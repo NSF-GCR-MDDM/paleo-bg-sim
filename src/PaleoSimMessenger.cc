@@ -114,6 +114,11 @@ PaleoSimMessenger::PaleoSimMessenger() {
     fSetMuteFluxDepthCmd->SetParameterName("muteFluxDepth", true);
     fSetMuteFluxDepthCmd->SetDefaultValue(fMuteFluxDepth);
 
+    fSetMuteFluxNormalizationCmd = new G4UIcmdWithADouble("/generator/muteGenerator/setMuteFluxNormalization", this);
+    fSetMuteFluxNormalizationCmd->SetGuidance("Total muon flux given by MUTE, in counts per cm^2 per s");
+    fSetMuteFluxNormalizationCmd->SetParameterName("muteFluxNormalization", true);
+    fSetMuteFluxNormalizationCmd->SetDefaultValue(fMuteFluxNormalization);
+
     //CRY generator
     fCRYGeneratorDirectory = new G4UIdirectory("/generator/cry/");
     fCRYGeneratorDirectory->SetGuidance("Controls for Cry Generator");
@@ -251,6 +256,7 @@ PaleoSimMessenger::~PaleoSimMessenger() {
     delete fSetMuteMountainProfileFilenameCmd;
     delete fSetMuteOverburdenTypeCmd;
     delete fSetMuteFluxDepthCmd;
+    delete fSetMuteFluxNormalizationCmd;
     //CRY
     delete fCRYGeneratorDirectory;
     delete fSetCRYFilenameCmd;
@@ -396,6 +402,11 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
     else if (command == fSetMuteFluxDepthCmd) {
         fMuteFluxDepth = fSetMuteFluxDepthCmd->GetNewDoubleValue(newValue);
         G4cout << "MUTE flux depth set in macro to: " << newValue << G4endl;
+    }
+
+    else if (command == fSetMuteFluxNormalizationCmd) {
+        fMuteFluxNormalization = fSetMuteFluxNormalizationCmd->GetNewDoubleValue(newValue);
+        G4cout << "MUTE total flux set in macro to: " << newValue << G4endl;
     }
 
     //CRY

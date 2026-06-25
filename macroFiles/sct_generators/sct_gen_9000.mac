@@ -4,7 +4,7 @@
 #Source commands
 /generator/setSourceType meiHimeMuonGenerator
 /generator/meiHimeMuonGenerator/setMuonEffectiveDepth 23.847 km
-/generator/setNPS 1000000000
+/generator/setNPS 500000000
 
 #Output commands
 /output/setPrimariesTreeStatus false

@@ -9,6 +9,7 @@
 #include "G4UIcmdWith3VectorAndUnit.hh"
 #include "G4UIcmdWith3Vector.hh"
 #include "G4UIcmdWithABool.hh"
+#include "G4UIcmdWithADouble.hh"
 #include "globals.hh"
 #include "G4UIcmdWithAnInteger.hh"
 #include <vector>
@@ -65,6 +66,7 @@ public:
     G4String GetMuteOverburdenType() const { return fMuteOverburdenType;};
     G4String GetMuteMountainProfileFilename() const { return fMuteMountainProfileFilename;};
     G4double GetMuteFluxDepth() const { return fMuteFluxDepth;};
+    G4double GetMuteFluxNormalization() const { return fMuteFluxNormalization;};
  
     //
     //CRY generator
@@ -219,10 +221,12 @@ private:
     G4UIcmdWithAString* fSetMuteOverburdenTypeCmd = nullptr;
     G4UIcmdWithAString* fSetMuteMountainProfileFilenameCmd = nullptr;
     G4UIcmdWithADoubleAndUnit* fSetMuteFluxDepthCmd = nullptr;
+    G4UIcmdWithADouble* fSetMuteFluxNormalizationCmd = nullptr;
     G4String fMuteHistFilename="";
     G4String fMuteOverburdenType="flat";
     G4String fMuteMountainProfileFilename="";
     G4double fMuteFluxDepth = 6.*km;
+    G4double fMuteFluxNormalization = 0;
 
     //
     // "cry"

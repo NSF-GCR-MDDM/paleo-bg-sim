@@ -103,6 +103,10 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     int SCTCapturedParticles = fMessenger.GetSCTCapturedParticles();
     fHeaderTree->Branch("SCTCapturedParticles", &SCTCapturedParticles);
   }
+  if (fMessenger.GetSourceType()=="muteGenerator") {
+    double muteTotalFlux = fMessenger.GetMuteFluxNormalization();
+    fHeaderTree->Branch("muteFluxNormalization", &muteTotalFlux);
+  }
   // Fill once when we make the tree, we aren't ever updating this
   fHeaderTree->Fill();
 
@@ -174,7 +178,7 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     //CUSTOM_GENERATOR_HOOK 
     //Add branches stored to primary tree here
     //
-    // Mei & Hime muon generator - first two also used for mute generator
+    // Mei & Hime muon generator - also used for mute generator
     fPrimariesTree->Branch("muonTheta", &fPrimaryMuonTheta);
     fPrimariesTree->Branch("muonPhi", &fPrimaryMuonPhi);
     fPrimariesTree->Branch("muonSlant", &fPrimaryMuonSlant);
