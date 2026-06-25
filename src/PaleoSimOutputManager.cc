@@ -97,7 +97,7 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     double CRYNorm = fMessenger.GetCRYNorm();
     fHeaderTree->Branch("CRYAltitude_m", &CRYAltitude);
     fHeaderTree->Branch("CRYLatitude", &CRYLatitude);
-    fHeaderTree->Branch("primaries_per_cm2_per_s", &CRYNorm);
+    fHeaderTree->Branch("showers_per_cm2_per_s", &CRYNorm);
   }
   // Fill once when we make the tree, we aren't ever updating this
   fHeaderTree->Fill();
@@ -143,13 +143,11 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     geomXs.clear();
     geomYs.clear();
     geomZs.clear();
-    if (vol->parentName != "None") {
-      for (int pointNum = 0; pointNum < nPoints; pointNum++) {
-        G4ThreeVector randPos = vol->GenerateRandomPointInside();
-        geomXs.push_back(randPos.x());
-        geomYs.push_back(randPos.y());
-        geomZs.push_back(randPos.z());
-      }
+    for (int pointNum=0; pointNum<nPoints; pointNum++) {
+      G4ThreeVector randPos = vol->GenerateRandomPointInside();
+      geomXs.push_back(randPos.x());
+      geomYs.push_back(randPos.y());
+      geomZs.push_back(randPos.z());
     }
     fGeometryTree->Fill();
   }
@@ -176,12 +174,7 @@ void PaleoSimOutputManager::CreateOutputFileAndTrees() {
     fPrimariesTree->Branch("muonTheta", &fPrimaryMuonTheta);
     fPrimariesTree->Branch("muonPhi", &fPrimaryMuonPhi);
     fPrimariesTree->Branch("muonSlant", &fPrimaryMuonSlant);
-    fPrimariesTree->Branch("CRYCoreX", &fCRYCoreX);
-    fPrimariesTree->Branch("CRYCoreY", &fCRYCoreY);
-    fPrimariesTree->Branch("CRYCoreZ", &fCRYCoreZ);
-    fPrimariesTree->Branch("CRYCoreTheta", &fCRYCoreTheta);
-    fPrimariesTree->Branch("CRYCorePhi", &fCRYCorePhi);
-    fPrimariesTree->Branch("CRYTotalEnergy", &fCRYTotalEnergy);
+    //
   }
 
   ///////////////////////////////////

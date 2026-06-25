@@ -17,6 +17,10 @@
 #include "PaleoSimMessenger.hh"
 #include "PaleoSimOutputManager.hh"
 #include "PaleoSimVolumeDefinition.hh"
+#include "PaleoSimPrimarySources/PaleoSimDiskSource.hh"
+#include "PaleoSimPrimarySources/PaleoSimVolumetricSource.hh"
+#include "PaleoSimPrimarySources/PaleoSimMeiHimeSource.hh"
+#include "PaleoSimPrimarySources/PaleoSimCrySource.hh"
 
 class PaleoSimPrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction {
 public:
@@ -31,71 +35,18 @@ private:
     PaleoSimMessenger& fMessenger;
     PaleoSimOutputManager& fManager;
 
-    //Helper functions - could be used by any class
-    G4ThreeVector SamplePointOnTopOfWorldVolume();
-    G4bool IsWithinTopSurface(const G4ThreeVector& point);
-
-    //CUSTOM_GENERATOR_HOOK
-    // Add private state and methods for your generator implementation here
-    //
-    // TF1 version of Mei & Hime muon generator internals
-    TF1* fMuonThetaDist = nullptr;
-    TF1* fMuonEnergyDist = nullptr;
-    void InitializeMeiHimeMuons();
-    void GenerateMeiHimeMuonPrimaries(G4Event*);
-    //
     //Mute generator
-    TH2D* fMuteHist = nullptr;
-    void InitializeMuteMuons();
-    void GenerateMutePrimaries(G4Event*);
+    //TH2D* fMuteHist = nullptr;
+    //void InitializeMuteMuons();
+    //void GenerateMutePrimaries(G4Event*);
     //
     //CRY generator
-    TFile* cryFile = nullptr;
-    bool cryFileLoaded = false;
-    TTree* cryTree = nullptr;
-    int nCryEntries = 0;
-
-    std::vector<int>* cry_pdgcode = nullptr;
-    std::vector<float>* cry_energy = nullptr;
-    std::vector<float>* cry_u = nullptr;
-    std::vector<float>* cry_v = nullptr;
-    std::vector<float>* cry_w = nullptr;
-    std::vector<float>* cry_x = nullptr;
-    std::vector<float>* cry_y = nullptr;
-    
-    std::vector<std::vector<int>> all_cry_pdgcodes;
-    std::vector<std::vector<float>> all_cry_energy;
-    std::vector<std::vector<float>> all_cry_u;
-    std::vector<std::vector<float>> all_cry_v;
-    std::vector<std::vector<float>> all_cry_w;
-    std::vector<std::vector<float>> all_cry_x;
-    std::vector<std::vector<float>> all_cry_y;
-
-    void InitializeCRYGenerator();
-    void GenerateCRYPrimaries(G4Event*);
     //
     //Volumetric source generator
-    TFile* fVolumetricSourceSpectrumFile = nullptr;
-    bool fVolumetricSourceSpectrumFileLoaded = false;
-    TH1D* fVolumetricSourceSpectrumHist = nullptr;
-    int fVolumetricSourcePDGCode;
-    bool fBoundingBoxInitialized = false;
-    G4String fVolumetricSourceType;
-    G4ThreeVector fVolumetricBoundsMin;
-    G4ThreeVector fVolumetricBoundsMax;
-    PaleoSimVolumeDefinition* fSourceVolumeDefinition = nullptr;
-    void InitializeVolumetricSourceGenerator();
-    void GenerateVolumetricSourcePrimaries(G4Event*);
-    //Disk source generator
-    TFile* diskSourceSpectrumFile = nullptr;
-    bool diskSourceSpectrumFileLoaded = false;
-    TH1D* diskSourceSpectrumHist = nullptr;
-    int diskSourcePDGCode;
-    G4ThreeVector diskSourcePosition;
-    G4String diskSourceType;
-    void InitializeDiskSourceGenerator();
-    void GenerateDiskSourcePrimaries(G4Event*);
-    G4ThreeVector SamplePointOnDisk(double radius,const G4ThreeVector& position, const G4ThreeVector& axis);
+    PaleoSimDiskSource* fDiskSource = nullptr;
+    PaleoSimVolumetricSource* fVolumetricSource = nullptr;
+    PaleoSimMeiHimeSource* fMeiHimeSource = nullptr;
+    PaleoSimCrySource* fCrySource = nullptr;
 };
 
 #endif

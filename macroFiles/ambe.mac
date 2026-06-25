@@ -6,7 +6,7 @@
 /generator/VolumetricSource/setPDGCode 2112
 /generator/VolumetricSource/setVolumeName AmBeSource
 /generator/VolumetricSource/setVolumetricSourceType hist
-/generator/VolumetricSource/setVolumetricSourceSpectrumFilename /home/sch52/code/paleo-bg-sim/auxillaryCodes/histGenerator/ambe_neutrons.root
+/generator/VolumetricSource/setVolumetricSourceSpectrumFilename /home/sch52/code/paleo-bg-sim/data/ambe_neutrons.root
 /generator/VolumetricSource/setVolumetricSourceSpectrumHistName hist
 
 /generator/setNPS 2000
