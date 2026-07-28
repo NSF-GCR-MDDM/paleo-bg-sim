@@ -2,7 +2,7 @@
 
 Automatically generated from PaleoSimMessenger.hh and PaleoSimMessenger.cc with genMacroDoc.py
 
-Last generated on: 2025-08-07 12:38
+Last generated on: 2026-06-25 17:13
 
 ## /geom/
 
@@ -13,9 +13,9 @@ Last generated on: 2025-08-07 12:38
 ## /output/
 
 - **/output/setOutputFormat** (optional) — `fOutputFormat`
-  - Description: Set output format: `root` or `h5`
-  - Default: `root`
-  
+  - Description: Set output format: 'root' or 'h5'
+  - Default: `fmt`
+
 - **/output/setPrimariesTreeStatus** (optional) — `fPrimariesTreeStatus`
   - Description: Enable tracking of primary generation properties
   - Default: `true`
@@ -26,6 +26,9 @@ Last generated on: 2025-08-07 12:38
 
 - **/output/setNeutronTallyTreeVolumes** (optional) — `fNeutronTallyTreeVolumes`
   - Description: List of names of volumes to track neutrons entering, separated by spaces
+
+- **/output/setSecondaryCaptureTreeVolumes** (optional) — `fSecondaryCaptureTreeVolumes`
+  - Description: Pair of names of volumes to capture secondaries crossing the boundary between, separated by a space
 
 - **/output/setRecoilTreeVolumes** (optional) — `fRecoilTreeVolumes`
   - Description: List of names of volumes to track nuclear recoils in, separated by spaces
@@ -42,7 +45,6 @@ Last generated on: 2025-08-07 12:38
 
 - **/generator/setNPS** (optional) — `fNPS`
   - Description: Set number of events to throw
-  - Default: `100`
 
 ### /generator/meiHimeMuonGenerator/
 
@@ -55,14 +57,40 @@ Last generated on: 2025-08-07 12:38
 ### /generator/muteGenerator/
 
 - **/generator/muteGenerator/setMuteHistFilename** (optional) — `muteHistFilename`
-  - Description: File containing 'muonHist' TH2D with GeV on x and Theta (rad) on y
+  - Description: File containing 'muonHist' TH3D with Slant Depths(kmwe) on x, GeV on y, and Theta (rad) on z
   - Default: `""`
+
+- **/generator/muteGenerator/setMuteOverburdenType** (optional) — `muteOverburdenType`
+  - Description: Overburden type: flat or mountain
+  - Default: `"flat"`
+
+- **/generator/muteGenerator/setMuteMountainProfileFilename** (optional) — `muteMountainProfileFilename`
+  - Description: Text file containing MUTE mountain profile
+  - Default: `""`
+
+- **/generator/muteGenerator/setMuteFluxDepth** (optional) — `muteFluxDepth`
+  - Description: Depth at which MUTE flux was generated, in kmwe
+  - Default: `6.*km`
+
+- **/generator/muteGenerator/setMuteFluxNormalization** (optional) — `muteFluxNormalization`
+  - Description: Total muon flux given by MUTE, in counts per cm^2 per s
+  - Default: `0`
 
 ### /generator/cry/
 
 - **/generator/cry/setCRYFilename** (optional) — `fCRYFilename`
   - Description: Pass in output of cryGenerator code (root file)
   - Default: `""`
+
+### /generator/SCTGenerator/
+
+- **/generator/SCTGenerator/setSCTFilename** (optional) — `fSCTFilename`
+  - Description: Pass in output containing secondaryCaptureTree (root file)
+  - Default: `""`
+
+- **/generator/SCTGenerator/setSCTBootstrap** (optional) — `fSCTBootstrap`
+  - Description: Specify bootstrapping method: standard or rrs
+  - Default: `"standard"`
 
 ### /generator/VolumetricSource/
 

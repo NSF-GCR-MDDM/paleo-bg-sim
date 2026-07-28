@@ -80,8 +80,6 @@ void PaleoSimEventAction::BeginOfEventAction(const G4Event* event) {
     if (srcType == "meiHimeMuonGenerator" || srcType == "muteGenerator") {
       fOutputManager.SetPrimaryMuonTheta(info->muonTheta);
       fOutputManager.SetPrimaryMuonPhi(info->muonPhi);
-    }
-    if (srcType == "meiHimeMuonGenerator") {
       fOutputManager.SetPrimaryMuonSlant(info->muonSlantDepth);
     }
   }
@@ -108,6 +106,12 @@ void PaleoSimEventAction::EndOfEventAction(const G4Event* event) {
     fOutputManager.FillNeutronTallyTreeEvent();
     fOutputManager.ClearNeutronTallyTreeEvent();
   }    
+
+  //Data loaded into SecondaryCaptureTree in stepping action
+  if (fMessenger.GetSecondaryCaptureTreeStatus()) {
+    fOutputManager.FillSecondaryCaptureTreeEvent();
+    fOutputManager.ClearSecondaryCaptureTreeEvent();
+  }
 
   //Data loaded into RecoilTree variables in stepping action
   if (fMessenger.GetRecoilTreeStatus()) {

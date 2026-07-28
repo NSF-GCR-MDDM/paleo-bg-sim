@@ -35,17 +35,22 @@ PaleoSimPrimaryGeneratorAction::PaleoSimPrimaryGeneratorAction(PaleoSimMessenger
                   ("Invalid source type: " + sourceType).c_str());
   }
 
-
   if (sourceType == "meiHimeMuonGenerator") {
     fMeiHimeSource = new PaleoSimMeiHimeSource(fMessenger);
     fMeiHimeSource->InitializeSource();
   }
-  //else if (sourceType == "muteGenerator") {
-  //  InitializeMuteMuons();
-  //}
+  else if (sourceType == "muteGenerator") {
+    fMuteSource = new PaleoSimMuteSource(fMessenger);
+    fMuteSource->InitializeSource();
+  }
   else if (sourceType == "CRYGenerator") {
     fCrySource = new PaleoSimCrySource(fMessenger);
     fCrySource->InitializeSource();
+  }
+  
+  else if (sourceType == "SCTGenerator") {
+    fSCTSource = new PaleoSimSCTSource(fMessenger);
+    fSCTSource->InitializeSource();
   }
   else if (sourceType == "volumetricSource") {
     fVolumetricSource = new PaleoSimVolumetricSource(fMessenger);
@@ -66,6 +71,7 @@ PaleoSimPrimaryGeneratorAction::~PaleoSimPrimaryGeneratorAction() {
     delete fVolumetricSource;
     delete fDiskSource;
     delete fCrySource;
+    delete fSCTSource;
 }
 
 void PaleoSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
@@ -78,12 +84,16 @@ void PaleoSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
     fMeiHimeSource->GeneratePrimaries(anEvent);
   }
   //MUTE
-  //else if (sourceType == "muteGenerator") {
-  //  GenerateMutePrimaries(anEvent);
-  //}
+  else if (sourceType == "muteGenerator") {
+    fMuteSource->GeneratePrimaries(anEvent);
+  }
   //CRY
   else if (sourceType == "CRYGenerator") {
     fCrySource->GeneratePrimaries(anEvent);
+  }
+  //Captured Particle Generator
+  else if (sourceType == "SCTGenerator") {
+    fSCTSource->GeneratePrimaries(anEvent);
   }
   //Volumetric source
   else if (sourceType == "volumetricSource") {

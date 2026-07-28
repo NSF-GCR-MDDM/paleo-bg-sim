@@ -9,6 +9,7 @@
 #include "G4UIcmdWith3VectorAndUnit.hh"
 #include "G4UIcmdWith3Vector.hh"
 #include "G4UIcmdWithABool.hh"
+#include "G4UIcmdWithADouble.hh"
 #include "globals.hh"
 #include "G4UIcmdWithAnInteger.hh"
 #include <vector>
@@ -41,6 +42,8 @@ public:
     bool GetNeutronTallyTreeStatus() const { return fNeutronTallyTreeStatus; };
     bool GetMINTreeStatus() const { return fMINTreeStatus; };
     const std::vector<G4String>& GetNeutronTallyTreeVolumes() const { return fNeutronTallyTreeVolumes; };
+    bool GetSecondaryCaptureTreeStatus() const { return fSecondaryCaptureTreeStatus; };
+    const std::vector<G4String>& GetSecondaryCaptureTreeVolumes() const { return fSecondaryCaptureTreeVolumes; };
     bool GetRecoilTreeStatus() const { return fRecoilTreeStatus; };
     const std::vector<G4String>& GetRecoilTreeVolumes() const { return fRecoilTreeVolumes; };
     bool GetVRMLStatus() const { return fVRMLStatus; };
@@ -60,6 +63,11 @@ public:
     //
     //Mute generator
     G4String GetMuteHistFilename() const { return fMuteHistFilename;};
+    G4String GetMuteOverburdenType() const { return fMuteOverburdenType;};
+    G4String GetMuteMountainProfileFilename() const { return fMuteMountainProfileFilename;};
+    G4double GetMuteFluxDepth() const { return fMuteFluxDepth;};
+    G4double GetMuteFluxNormalization() const { return fMuteFluxNormalization;};
+ 
     //
     //CRY generator
     G4String GetCRYFilename() const { return fCRYFilename; };
@@ -69,6 +77,15 @@ public:
     G4double GetCRYAltitude() const { return fCRYAltitude;};  
     G4double GetCRYLatitude() const { return fCRYLatitude;};
     G4double GetCRYNorm() const { return fCRYNorm;};
+    //
+    //SCT generator
+    G4String GetSCTFilename() const { return fSCTFilename; };
+    G4String GetSCTBootstrap() const { return fSCTBootstrap; };
+    void SetSCTNorm(double val) { fSCTNorm = val; };     
+    G4double GetSCTNorm() const { return fSCTNorm; };
+    void SetSCTCapturedParticles(int val) { fSCTCapturedParticles = val; };
+    G4int GetSCTCapturedParticles() const { return fSCTCapturedParticles; };
+    //
     //Volumetric source generator
     G4String GetVolumetricSourceVolumeName() const { return fVolumetricSourceVolumeName; };
     G4int GetVolumetricSourcePDGCode() const { return fVolumetricSourcePDGCode; };
@@ -148,6 +165,7 @@ private:
     G4UIcmdWithABool* fSetPrimariesTreeStatusCmd = nullptr;
     G4UIcmdWithABool* fSetMINTreeStatusCmd = nullptr;
     G4UIcmdWithAString* fSetNeutronTallyTreeVolumesCmd = nullptr;
+    G4UIcmdWithAString* fSetSecondaryCaptureTreeVolumesCmd = nullptr;
     G4UIcmdWithAString* fSetRecoilTreeVolumesCmd = nullptr;
 
     G4String fOutputFile = "outputFiles/output.root";
@@ -159,6 +177,9 @@ private:
 
     std::vector<G4String> fNeutronTallyTreeVolumes;
     G4bool fNeutronTallyTreeStatus = false;
+
+    std::vector<G4String> fSecondaryCaptureTreeVolumes;
+    G4bool fSecondaryCaptureTreeStatus = false;
     
     std::vector<G4String> fRecoilTreeVolumes;
     G4bool fRecoilTreeStatus = false;
@@ -175,8 +196,9 @@ private:
     // Add new generator names to the list below
     std::vector<G4String> fValidSourceTypes = {
           "meiHimeMuonGenerator", //Mei & Hime muon generator, with TF1s
-          "muteGenerator", //Mute, samples from 2D histogram of muon energy and thetas (root file)
+          "muteGenerator", //Mute, samples from 3D histogram of muon energy, thetas, and slant depths (root file)
           "CRYGenerator", //Samples root file containing list of events
+          "SCTGenerator", //Samples root file containing secondaryCaptureTree
           "volumetricSource", //Samples particles from a flat Volumetric with supplied direction and spectrum 
           "diskSource"
       };
@@ -196,7 +218,16 @@ private:
     // "muteGenerator"
     G4UIdirectory* fMuteGeneratorDirectory = nullptr;
     G4UIcmdWithAString* fSetMuteHistFilenameCmd = nullptr;
+    G4UIcmdWithAString* fSetMuteOverburdenTypeCmd = nullptr;
+    G4UIcmdWithAString* fSetMuteMountainProfileFilenameCmd = nullptr;
+    G4UIcmdWithADoubleAndUnit* fSetMuteFluxDepthCmd = nullptr;
+    G4UIcmdWithADouble* fSetMuteFluxNormalizationCmd = nullptr;
     G4String fMuteHistFilename="";
+    G4String fMuteOverburdenType="flat";
+    G4String fMuteMountainProfileFilename="";
+    G4double fMuteFluxDepth = 6.*km;
+    G4double fMuteFluxNormalization = 0;
+
     //
     // "cry"
     G4UIdirectory* fCRYGeneratorDirectory = nullptr;
@@ -204,6 +235,15 @@ private:
     G4String fCRYFilename="";
     G4double fCRYAltitude, fCRYLatitude;
     G4double fCRYNorm;
+    //
+    // "SCTGenerator"
+    G4UIdirectory* fSCTGeneratorDirectory = nullptr;
+    G4UIcmdWithAString* fSetSCTFilenameCmd = nullptr;
+    G4UIcmdWithAString* fSetSCTBootstrapCmd = nullptr;
+    G4String fSCTFilename="";
+    G4String fSCTBootstrap="standard";
+    G4double fSCTNorm;
+    G4int fSCTCapturedParticles;
     //
     // "VolumetricSourceGenerator"
     G4UIdirectory* fVolumetricSourceDirectory = nullptr;
