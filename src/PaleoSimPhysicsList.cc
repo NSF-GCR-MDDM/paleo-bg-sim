@@ -71,7 +71,6 @@ void PaleoSimPhysicsList::ConstructProcess() {
   G4MuonMinus::MuonMinus()->GetProcessManager()->AddDiscreteProcess(proc);
 
   // Specialized cuts for tracking volumes
-  /*
   for (auto name: fMessenger.GetRecoilTreeVolumes()) {
     G4LogicalVolume* trackingVolume = G4LogicalVolumeStore::GetInstance()->GetVolume(name, false);
     if (trackingVolume) {
@@ -92,5 +91,4 @@ void PaleoSimPhysicsList::ConstructProcess() {
               << name << G4endl;
     }
   }
-    */
 }
