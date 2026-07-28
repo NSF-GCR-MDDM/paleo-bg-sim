@@ -57,21 +57,6 @@ PaleoSimPhysicsList::PaleoSimPhysicsList(PaleoSimMessenger& messenger): fMesseng
     rDecay->SetARM(true);
   }
 
-  // Specialized cuts for "Target" volume
-  for (auto volume: fMessenger.GetVolumes()) {
-    G4String name = volume->name;
-    G4LogicalVolume* trackingVolume = G4LogicalVolumeStore::GetInstance()->GetVolume(name, false);
-    if (trackingVolume) {
-        auto* trackingRegion = new G4Region(name+"Region");
-        trackingRegion->AddRootLogicalVolume(trackingVolume);
-
-        auto* cuts = new G4ProductionCuts();
-        cuts->SetProductionCut(10*nanometer, "proton"); //Sets for all charged hadrons
-        cuts->SetProductionCut(10*nanometer, "alpha");
-
-        trackingRegion->SetProductionCuts(cuts);
-    }
-  }
 }
 
 void PaleoSimPhysicsList::ConstructProcess() {
@@ -84,4 +69,28 @@ void PaleoSimPhysicsList::ConstructProcess() {
 
   G4MuonPlus::MuonPlus()->GetProcessManager()->AddDiscreteProcess(proc);
   G4MuonMinus::MuonMinus()->GetProcessManager()->AddDiscreteProcess(proc);
+
+  // Specialized cuts for tracking volumes
+  /*
+  for (auto name: fMessenger.GetRecoilTreeVolumes()) {
+    G4LogicalVolume* trackingVolume = G4LogicalVolumeStore::GetInstance()->GetVolume(name, false);
+    if (trackingVolume) {
+        G4cout << "Applying production cuts to volume: "
+              << name << G4endl;
+
+        auto* trackingRegion = new G4Region(name+"Region");
+        trackingRegion->AddRootLogicalVolume(trackingVolume);
+
+        auto* cuts = new G4ProductionCuts();
+        cuts->SetProductionCut(10*nanometer, "proton");
+        cuts->SetProductionCut(10*nanometer, "alpha");
+
+        trackingRegion->SetProductionCuts(cuts);
+    }
+    else {
+        G4cout << "WARNING: Could not find logical volume: "
+              << name << G4endl;
+    }
+  }
+    */
 }
