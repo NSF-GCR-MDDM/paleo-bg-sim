@@ -3,11 +3,14 @@
 
 #Source commands
 /generator/setSourceType muteGenerator
-/generator/muteGenerator/setMuteHistFilename /home/sch52/code/paleo-bg-sim/data/muteMuons.root
-/generator/setNPS 200000
+/generator/muteGenerator/setMuteHistFilename /home/pspranav/paleo-bg-mute/muteGenerator/GranSasso.root
+/generator/muteGenerator/setMuteOverburdenType mountain
+/generator/muteGenerator/setMuteMountainProfileFilename /home/pspranav/paleo-bg-mute/muteGenerator/data/mountains/lngs_mountain.txt
+/generator/muteGenerator/setMuteFluxNormalization 2.4714067093616173e-08
+/generator/setNPS 10000000
 
 #Output commands
-/output/setNeutronTallyTreeVolume AirCavity
+/output/setNeutronTallyTreeVolumes AirCavity
 /output/setVRMLOutputStatus 0
 
 #Verbosity settings

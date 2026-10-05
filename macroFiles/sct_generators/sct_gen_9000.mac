@@ -1,0 +1,21 @@
+#Geometry commands
+/geom/setGeometry /macroFiles/geometry/sct_generator.geo
+
+#Source commands
+/generator/setSourceType meiHimeMuonGenerator
+/generator/meiHimeMuonGenerator/setMuonEffectiveDepth 23.847 km
+/generator/setNPS 500000000
+
+#Output commands
+/output/setPrimariesTreeStatus false
+/output/setSecondaryCaptureTreeVolumes Overburden Floor
+/output/setVRMLOutputStatus false
+/output/setOutputFormat root
+
+#Verbosity settings
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+
+

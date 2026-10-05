@@ -102,7 +102,6 @@ void PaleoSimMaterialManager::DefineMaterials() {
     materialMap["lead"] = nist->FindOrBuildMaterial("G4_Pb");  
     materialMap["lif"] = LiF;
     materialMap["standard_rock"] = StandardRock;
-    materialMap["quartz"] = Quartz;
     materialMap["water"] = nist->FindOrBuildMaterial("G4_WATER");
     materialMap["concrete"] = nist->FindOrBuildMaterial("G4_CONCRETE");
     materialMap["steel"] = nist->FindOrBuildMaterial("G4_STAINLESS-STEEL");

@@ -23,6 +23,8 @@ protected:
   G4ThreeVector SamplePointOnDisk(double radius,const G4ThreeVector& position, const G4ThreeVector& axis);
   G4ThreeVector SamplePointOnTopOfWorldVolume();
   G4bool IsWithinTopSurface(const G4ThreeVector& point);
+  void RandomReflectionRotation(G4double& X, G4double& Y, int randNum);
+  void LocalSquareSmear(G4double& X, G4double& Y, const int nps);
 };
 
 #endif

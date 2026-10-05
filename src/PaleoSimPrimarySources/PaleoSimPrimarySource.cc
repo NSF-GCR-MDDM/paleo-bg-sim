@@ -1,4 +1,5 @@
 #include "Randomize.hh"
+#include <cmath>
 #include "G4PhysicalConstants.hh"
 
 #include "PaleoSimVolumeDefinition.hh"
@@ -101,4 +102,51 @@ G4bool PaleoSimPrimarySource::IsWithinTopSurface(const G4ThreeVector& point) {
   }
 
   return false;
+}
+
+void PaleoSimPrimarySource::RandomReflectionRotation(G4double& X, G4double& Y, int randNum) {
+    G4double origX = X;
+    G4double origY = Y;
+
+    switch(randNum) {
+        case 0: break; // Original 
+        case 1: X = -origX; break; // Reflect X
+        case 2: Y = -origY; break; // Reflect Y
+        case 3: X = -origX; Y = -origY; break; // Reflect both 
+        case 4: X =  origY; Y =  origX; break; // Swap X and Y 
+        case 5: X = -origY; Y =  origX; break; // Swap & Reflect X (Rotate +90)
+        case 6: X =  origY; Y = -origX; break; // Swap & Reflect Y (Rotate -90)
+        case 7: X = -origY; Y = -origX; break; // Swap & Flip both 
+    }
+}
+
+void PaleoSimPrimarySource::LocalSquareSmear(G4double& X, G4double& Y, const int nps) {
+    G4double origX = X;
+    G4double origY = Y;
+
+    const auto& volumes = fMessenger.GetVolumes();
+    const PaleoSimVolumeDefinition* worldDef = nullptr;
+    for (const auto* vol : volumes) {
+        if (vol->parentName == "None") {
+            worldDef = vol;
+            break;    
+        }
+    }
+
+    if (worldDef->shape == "box") {
+        G4double length = 2*worldDef->halfLengths.x();
+        G4double breadth = 2*worldDef->halfLengths.y();
+        G4double generatorArea = length * breadth;
+        G4double particleSpacing = std::sqrt(generatorArea / nps);
+
+        X = origX + G4RandFlat::shoot(-particleSpacing/2, particleSpacing/2);
+        Y = origY + G4RandFlat::shoot(-particleSpacing/2, particleSpacing/2);
+    }
+
+    else {
+        G4Exception("LocalSquareSmear", "UnsupportedShape", FatalException,
+                    ("Square smear not supported for shape: " + worldDef->shape).c_str());
+    }
+
+    return;
 }

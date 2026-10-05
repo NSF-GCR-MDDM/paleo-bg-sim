@@ -151,6 +151,54 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
         }
     }
 
+    //////////////////////////
+    // SECONDARY CAPTURE TREE //
+    //////////////////////////
+    if (fMessenger.GetSecondaryCaptureTreeStatus()) {
+        const G4int& particlePDG = particleDef->GetPDGEncoding();
+
+        if (!postStepVolume) return;  // Safety check for particles leaving the world volume
+        
+        // Check if particle is heavier than an electron
+        if (particleDef->GetPDGMass() > 0.511*MeV) {
+
+            if (preStepPoint->GetStepStatus() == fGeomBoundary) {
+                // Get the capture volumes
+                const auto& captureVolumes = fMessenger.GetSecondaryCaptureTreeVolumes();
+
+                // Get volume names and check if we need to capture this particle
+                const G4String& prevVolName = preStepVolume->GetName();
+                const G4String& curVolName = postStepVolume->GetName();
+
+                // TODO: Currently using two volumes to define boundary, need to modify to accommodate capturing at the top surface of any volume
+                if ((std::find(captureVolumes.begin(), captureVolumes.end(), prevVolName) != captureVolumes.end()) &&
+                    (std::find(captureVolumes.begin(), captureVolumes.end(), curVolName) != captureVolumes.end())) {
+                        // Push eventID
+                        fOutputManager.PushSecondaryCaptureEventID(eventID);
+                        fOutputManager.PushSecondaryCaptureEventEntryPDG(particlePDG);
+
+                        G4double energy = preStepPoint->GetKineticEnergy();
+                        fOutputManager.PushSecondaryCaptureEventEntryEnergy(energy);
+
+                        G4ThreeVector position = preStepPoint->GetPosition();
+                        fOutputManager.PushSecondaryCaptureEventEntryX(position.x());
+                        fOutputManager.PushSecondaryCaptureEventEntryY(position.y());
+                        fOutputManager.PushSecondaryCaptureEventEntryZ(position.z());
+
+                        G4ThreeVector momentumDirection = preStepPoint->GetMomentumDirection();
+                        fOutputManager.PushSecondaryCaptureEventEntryU(momentumDirection.x());
+                        fOutputManager.PushSecondaryCaptureEventEntryV(momentumDirection.y());
+                        fOutputManager.PushSecondaryCaptureEventEntryW(momentumDirection.z());
+
+                        // To read starting depth
+                        G4ThreeVector startingPos = track->GetVertexPosition();
+                        fOutputManager.PushSecondaryCaptureEventCreationZ(startingPos.z());
+                    }
+            }
+
+        }
+    }
+
     /////////////////
     // RECOIL TREE //
     /////////////////
