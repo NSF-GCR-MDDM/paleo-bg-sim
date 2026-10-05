@@ -88,10 +88,6 @@ void PaleoSimMaterialManager::DefineMaterials() {
     //https://pdg.lbl.gov/2024/AtomicNuclearProperties/HTML/standard_rock.html
     G4Material* StandardRock = new G4Material("StandardRock", 11, 22, 2.65*g/cm3);
 
-    G4Material* Quartz = new G4Material("Quartz", 2.62*g/cm3, 2);
-    Quartz->AddElement(Si, 0.4674); // 46.74% Silicon
-    Quartz->AddElement(O, 0.5326);  // 53.26% Oxygen 
-
     //Add to map - MUST BE LOWER CASE
     materialMap["air"] = nist->FindOrBuildMaterial("G4_AIR");
     materialMap["norite"] = Norite;
