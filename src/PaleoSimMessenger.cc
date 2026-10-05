@@ -299,6 +299,12 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
           G4Exception("SetNewValue", "BadOutputFormat", FatalException,
                       "/output/setOutputFormat accepts only 'root' or 'h5'");
       }
+      //Stop running if user requests HDF5 but did not build this code with HDF5
+      #ifndef USE_HDF5
+      if (newValue == "h5") {
+          G4Exception("SetNewValue", "HDF5Unavailable", FatalException,"HDF5 output requested, but PaleoSim was built without HDF5 support.");
+      }
+      #endif
       SetOutputFormat(newValue);
       G4cout << "Output format set in macro to: " << newValue << G4endl;
     }
