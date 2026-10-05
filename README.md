@@ -25,7 +25,7 @@ As a design philosophy, we have tried to minimize external dependencies. As a re
 
 Testing has been done with ROOT v6.32.04 and Geant4 v.11.3.0. 
 
-Full installation instructions will located here once written:[Installation Instructions](docs/install.md)
+Installation instructions (currently only for Ubuntu) located here: [Installation Instructions](docs/install.md)
 
 ## Compiling & Running
 
