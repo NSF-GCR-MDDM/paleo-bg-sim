@@ -64,9 +64,6 @@ else()
   message(WARNING "ROOT_CXX_STANDARD not defined by ROOT; defaulting to C++17.")
 endif()
 
-set(HDF5_PREFER_PARALLEL FALSE)
-find_package(HDF5 REQUIRED COMPONENTS C CXX)
-
 #----------------------------------------------------------------------------
 # Setup Geant4 include directories and compile definitions
 # Setup include directory for this project
@@ -91,7 +88,20 @@ add_executable(particleProduction particleProduction.cc ${sources} ${headers})
 target_link_libraries(particleProduction
   ${Geant4_LIBRARIES}
   ${ROOT_LIBRARIES}
-  ${HDF5_LIBRARIES}
 )
+
+#----------------------------------------------------------------------------
+# Optional HDF5 support
+#
+find_package(HDF5 QUIET COMPONENTS CXX)
+
+if(HDF5_FOUND)
+  message(STATUS "HDF5 found: enabling HDF5 support")
+  target_include_directories(particleProduction PRIVATE ${HDF5_INCLUDE_DIRS})
+  target_link_libraries(particleProduction PRIVATE ${HDF5_LIBRARIES})
+  target_compile_definitions(particleProduction PRIVATE USE_HDF5)
+else()
+  message(STATUS "HDF5 not found: building without HDF5 support")
+endif()
 
 install(TARGETS particleProduction DESTINATION bin)

@@ -7,7 +7,6 @@
 #include "PaleoSimMessenger.hh" 
 #include "TFile.h" 
 #include "TTree.h"
-#include "H5Cpp.h"
 
 class PaleoSimRootOutputWriter;
 class PaleoSimH5OutputWriter;

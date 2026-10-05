@@ -2,11 +2,13 @@
 
 #include "PaleoSimOutputManager.hh"
 #include "G4Exception.hh"
-#include "H5Cpp.h"
 #include "TTree.h"
-#include <cstring>
 #include <string>
+#include <cstring>
 #include <vector>
+
+#ifdef USE_HDF5
+#include "H5Cpp.h"
 
 namespace {
 
@@ -405,30 +407,34 @@ void WriteNumericTrees(H5::H5File& h5, TTree* tree, const std::string& base) {
 
 } // namespace
 
+#endif
+
 void PaleoSimH5OutputWriter::Write(PaleoSimOutputManager& manager) {
-  const std::string outputPath = manager.fMessenger.GetOutputPath();
-  H5::H5File h5(outputPath, H5F_ACC_TRUNC);
+  #ifdef USE_HDF5
+    const std::string outputPath = manager.fMessenger.GetOutputPath();
+    H5::H5File h5(outputPath, H5F_ACC_TRUNC);
 
-  WriteHeaderTree(h5, manager.fHeaderTree);
-  WriteGeometryTree(h5, manager.fGeometryTree);
+    WriteHeaderTree(h5, manager.fHeaderTree);
+    WriteGeometryTree(h5, manager.fGeometryTree);
 
-  if (manager.fMessenger.GetPrimariesTreeStatus()) WriteNumericTrees(h5, manager.fPrimariesTree, "/primariesTree");
-  if (manager.fMessenger.GetMINTreeStatus()) WriteNumericTrees(h5, manager.fMINTree, "/MINTree");
-  if (manager.fMessenger.GetNeutronTallyTreeStatus()) WriteNumericTrees(h5, manager.fNeutronTallyTree, "/neutronTallyTree");
-  if (manager.fMessenger.GetRecoilTreeStatus()) WriteNumericTrees(h5, manager.fRecoilTree, "/recoilTree");
+    if (manager.fMessenger.GetPrimariesTreeStatus()) WriteNumericTrees(h5, manager.fPrimariesTree, "/primariesTree");
+    if (manager.fMessenger.GetMINTreeStatus()) WriteNumericTrees(h5, manager.fMINTree, "/MINTree");
+    if (manager.fMessenger.GetNeutronTallyTreeStatus()) WriteNumericTrees(h5, manager.fNeutronTallyTree, "/neutronTallyTree");
+    if (manager.fMessenger.GetRecoilTreeStatus()) WriteNumericTrees(h5, manager.fRecoilTree, "/recoilTree");
 
-  h5.close();
+    h5.close();
 
-  if (manager.fFile) {
-    manager.fFile->Close();
-    delete manager.fFile;
-    manager.fFile = nullptr;
-  }
+    if (manager.fFile) {
+      manager.fFile->Close();
+      delete manager.fFile;
+      manager.fFile = nullptr;
+    }
 
-  delete manager.fHeaderTree; manager.fHeaderTree = nullptr;
-  delete manager.fGeometryTree; manager.fGeometryTree = nullptr;
-  delete manager.fPrimariesTree; manager.fPrimariesTree = nullptr;
-  delete manager.fMINTree; manager.fMINTree = nullptr;
-  delete manager.fNeutronTallyTree; manager.fNeutronTallyTree = nullptr;
-  delete manager.fRecoilTree; manager.fRecoilTree = nullptr;
+    delete manager.fHeaderTree; manager.fHeaderTree = nullptr;
+    delete manager.fGeometryTree; manager.fGeometryTree = nullptr;
+    delete manager.fPrimariesTree; manager.fPrimariesTree = nullptr;
+    delete manager.fMINTree; manager.fMINTree = nullptr;
+    delete manager.fNeutronTallyTree; manager.fNeutronTallyTree = nullptr;
+    delete manager.fRecoilTree; manager.fRecoilTree = nullptr;
+  #endif
 }
