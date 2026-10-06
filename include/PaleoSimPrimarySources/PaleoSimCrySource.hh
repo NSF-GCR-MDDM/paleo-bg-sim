@@ -21,7 +21,6 @@ private:
     bool cryFileLoaded = false;
     TTree* cryTree = nullptr;
     int nCryEntries = 0;
-    int cryEventIdx = 0;
 
     std::vector<int>* cry_pdgcode = nullptr;
     std::vector<float>* cry_energy = nullptr;

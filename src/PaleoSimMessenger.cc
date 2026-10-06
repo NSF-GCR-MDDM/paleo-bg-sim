@@ -3,9 +3,6 @@
 #include <fstream>
 
 G4String PaleoSimMessenger::GetDefaultOutputPathForFormat(const G4String& fmt) const {
-    if (fmt == "h5") {
-        return "outputFiles/output.h5";
-    }
     return "outputFiles/output.root";
 }
 
@@ -29,7 +26,7 @@ PaleoSimMessenger::PaleoSimMessenger() {
     fOutputDirectory->SetGuidance("Controls for output writing");
 
     fSetOutputFormatCmd = new G4UIcmdWithAString("/output/setOutputFormat", this);
-    fSetOutputFormatCmd->SetGuidance("Set output format: 'root' or 'h5'");
+    fSetOutputFormatCmd->SetGuidance("Set output format: 'root'");
     fSetOutputFormatCmd->SetParameterName("fOutputFormat", true);
     fSetOutputFormatCmd->SetDefaultValue(fOutputFormat);
 
@@ -350,16 +347,9 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
         G4cout << "VRML file will be written in current directory"<< G4endl;
     }
     else if (command == fSetOutputFormatCmd) {
-      if (newValue != "root" && newValue != "h5") {
-          G4Exception("SetNewValue", "BadOutputFormat", FatalException,
-                      "/output/setOutputFormat accepts only 'root' or 'h5'");
+      if (newValue != "root") {
+          G4Exception("SetNewValue", "BadOutputFormat", FatalException,"/output/setOutputFormat accepts only 'root'");
       }
-      //Stop running if user requests HDF5 but did not build this code with HDF5
-      #ifndef USE_HDF5
-      if (newValue == "h5") {
-          G4Exception("SetNewValue", "HDF5Unavailable", FatalException,"HDF5 output requested, but PaleoSim was built without HDF5 support.");
-      }
-      #endif
       SetOutputFormat(newValue);
       G4cout << "Output format set in macro to: " << newValue << G4endl;
     }

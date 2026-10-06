@@ -4,36 +4,37 @@
 #include "PaleoSimEventAction.hh"
 #include "PaleoSimSteppingAction.hh"
 
-// Constructor now accepts a pointer to the already-created generator and detector
+
 PaleoSimActionInitialization::PaleoSimActionInitialization(
-    PaleoSimMessenger& messenger,
-    PaleoSimOutputManager& manager)
+    PaleoSimMessenger& messenger)
  : G4VUserActionInitialization(),
-   fMessenger(messenger),
-   fOutputManager(manager)
+   fMessenger(messenger)
 {}
+
 
 void PaleoSimActionInitialization::BuildForMaster() const
 {
-  auto* runAction = new PaleoSimRunAction(fOutputManager);
+  auto* runAction = new PaleoSimRunAction(fMessenger);
   SetUserAction(runAction);
 }
+
 
 void PaleoSimActionInitialization::Build() const
 {
   G4cout << "Registering Primary Generator Action..." << G4endl;
 
-  auto* generator = new PaleoSimPrimaryGeneratorAction(fMessenger, fOutputManager);
-  SetUserAction(generator);  // Use the generator passed in from main()
-  
-  auto* runAction = new PaleoSimRunAction(fOutputManager);
+  //Each worker RunAction owns its own OutputManager
+  auto* runAction = new PaleoSimRunAction(fMessenger);
   SetUserAction(runAction);
 
-  // Pass SteppingAction to EventAction
-  auto* steppingAction = new PaleoSimSteppingAction(fMessenger, fOutputManager);  // Pass detector and generator
+  auto& outputManager = runAction->GetOutputManager();
+
+  auto* generator = new PaleoSimPrimaryGeneratorAction(fMessenger, outputManager);
+  SetUserAction(generator);
+
+  auto* steppingAction = new PaleoSimSteppingAction(fMessenger, outputManager);
   SetUserAction(steppingAction);
 
-  // Now pass the SteppingAction into EventAction
-  auto* eventAction = new PaleoSimEventAction(fMessenger, fOutputManager);
+  auto* eventAction = new PaleoSimEventAction(fMessenger, outputManager);
   SetUserAction(eventAction);
 }

@@ -93,15 +93,15 @@ void PaleoSimCrySource::InitializeSource() {
 
 
 void PaleoSimCrySource::GeneratePrimaries(G4Event* anEvent) {
+    
+  Long64_t entry = anEvent->GetEventID();
 
-  Long64_t entry = cryEventIdx;
-  if (cryEventIdx >= nCryEntries) {
+  if (entry >= nCryEntries) {
     std::cout<<"All particles in CRY file have been thrown. Re-sampling is occurrring. Warning!"<<std::endl;
-    entry = cryEventIdx % nCryEntries;
+    entry = entry % nCryEntries;
   }
 
   cryTree->GetEntry(entry);
-  cryEventIdx++;
 
   //Load all particles into vertices
   for (size_t i = 0; i < cry_pdgcode->size(); i++) {

@@ -1,293 +1,400 @@
 #include "PaleoSimOutputManager.hh"
-#include "PaleoSimRootOutputWriter.hh"
-#include "PaleoSimH5OutputWriter.hh"
 
-#include "TFile.h"
-#include "TTree.h"
-#include "G4SystemOfUnits.hh"
+#include "G4RootAnalysisManager.hh"
 #include "G4Exception.hh"
-#include <stdexcept>
-#include <sys/stat.h>
-#include <cstring>
-#include <algorithm>
-#include <vector>
+#include "G4Threading.hh"
+#include "G4ThreeVector.hh"
+
+#include <filesystem>
 #include <string>
 
 #include "G4VisExecutive.hh"
 #include "G4VisManager.hh"
 #include "G4UImanager.hh"
 
+
 // Constructor
 PaleoSimOutputManager::PaleoSimOutputManager(PaleoSimMessenger& messenger)
     : fMessenger(messenger) {}
 
-// Write and close
-void PaleoSimOutputManager::WriteAndClose() {
-  const auto fmt = fMessenger.GetOutputFormat();
-  if (fmt == "root") {
-    PaleoSimRootOutputWriter::Write(*this);
-  } else if (fmt == "h5") {
-    PaleoSimH5OutputWriter::Write(*this);
-  } else {
-    G4Exception("PaleoSimOutputManager", "UnknownOutputFormat", FatalException,
-                ("Unknown output format: " + std::string(fmt)).c_str());
+
+// Book ntuples
+void PaleoSimOutputManager::Book() {
+  auto* analysisManager = G4RootAnalysisManager::Instance();
+
+  // Merge worker ntuples into one ROOT file when running multithreaded
+  fMergeNtuples = G4Threading::IsMultithreadedApplication();
+  if (fMergeNtuples) analysisManager->SetNtupleMerging(true);
+
+  //Create Trees
+  BookHeader();
+  BookGeometry();
+  if (fMessenger.GetPrimariesTreeStatus()) {
+    BookPrimaries();
+  }
+
+  if (fMessenger.GetMINTreeStatus()) {
+    BookMIN();
+  }
+  if (fMessenger.GetNeutronTallyTreeStatus()) {
+    BookNeutronTally();
+  }
+  if (fMessenger.GetSecondaryCaptureTreeStatus()) {
+    BookSecondaryCapture();
+  }
+  if (fMessenger.GetRecoilTreeStatus()) {
+    BookRecoil();
   }
 }
 
-// Create files and trees
-void PaleoSimOutputManager::CreateOutputFileAndTrees() {
-  // Create files and trees
-  G4String outputPath = fMessenger.GetOutputPath();
 
-  // Check if the specified output directory exists; if it does not, return error
-  std::string outputDir;
-  size_t slashPos = outputPath.find_last_of("/\\");
-  if (slashPos != std::string::npos) outputDir = outputPath.substr(0, slashPos);
-  else outputDir = ".";
-
-  if (!outputDir.empty() && outputDir != ".") {
-    struct stat info;
-    bool pathExists = stat(outputDir.c_str(), &info) == 0 && S_ISDIR(info.st_mode);
-    if (!pathExists) {
-      G4Exception("PaleoSimOutputManager", "outputFolderMissing", FatalException,
-                  ("Specified output folder does not exist: " + outputDir).c_str());
+// Open output file and write run-level information
+void PaleoSimOutputManager::BeginOfRun() {
+  //Get output file, check the path to it exists
+  std::filesystem::path outputPath(fMessenger.GetOutputPath());
+  std::filesystem::path outputDir = outputPath.parent_path();
+  if (!G4Threading::IsWorkerThread()) {
+    if (!outputDir.empty() && !std::filesystem::is_directory(outputDir)) {
+      G4Exception("PaleoSimOutputManager","outputFolderMissing",FatalException,("Specified output folder does not exist: "+outputDir.string()).c_str());
     }
   }
 
-  // Make output file
-  const auto fmt = fMessenger.GetOutputFormat();
-  if (fmt == "root") {
-    fFile = new TFile(outputPath.c_str(), "RECREATE");
-    if (!fFile || fFile->IsZombie()) {
-      throw std::runtime_error("Failed to create ROOT output file.");
-    }
-  } else if (fmt == "h5") {
-    fFile = nullptr;
-  } else {
-    G4Exception("PaleoSimOutputManager", "UnknownOutputFormat", FatalException,
-                ("Unknown output format: " + std::string(fmt)).c_str());
+  //Open output file
+  auto* analysisManager = G4RootAnalysisManager::Instance();
+
+  if (!analysisManager->OpenFile(outputPath.string())) {
+    G4Exception("PaleoSimOutputManager","outputFileOpenFailed",FatalException,("Failed to create output file: "+outputPath.string()).c_str());
   }
 
-  ////////////////////
-  //Make header tree//
-  ////////////////////
-  fHeaderTree = new TTree("headerTree","Run meta information");
+  //Sequential runs write run-level ntuples here.
+  //For MT, worker 0 writes the single copy that will be merged into the output file.
+  if (!fMergeNtuples || (G4Threading::IsWorkerThread() && G4Threading::G4GetThreadId() == 0)) {
+    FillRunLevelNtuples();
+  }
+}
 
-  long long nps = fMessenger.GetNPS();
-  char sourceType[256] = "";
-  std::strncpy(sourceType, fMessenger.GetSourceType().c_str(), 255);
 
-  // Set branches
-  fHeaderTree->Branch("nps", &nps);
-  fHeaderTree->Branch("sourceType", &sourceType, "sourceType/C");
+// Write and close
+void PaleoSimOutputManager::EndOfRun() {
+  auto* analysisManager = G4RootAnalysisManager::Instance();
+  analysisManager->Write();
+  analysisManager->CloseFile();
+}
+
+
+// Book header ntuple
+void PaleoSimOutputManager::BookHeader() {
+  auto* analysisManager = G4RootAnalysisManager::Instance();
+
+  fHeaderID = analysisManager->CreateNtuple("headerTree","Run meta information");
+
+  fHeaderNpsCol = analysisManager->CreateNtupleDColumn(fHeaderID, "nps");
+  fHeaderSourceTypeCol = analysisManager->CreateNtupleSColumn(fHeaderID, "sourceType");
 
   //Add your own generator commands here
   //CUSTOM_GENERATOR_HOOK
   //
   //Mei & Hime muon generator
   if (fMessenger.GetSourceType()=="meiHimeMuonGenerator") {
-    double meiHimeMuonEffectiveDepth = fMessenger.GetMeiHimeMuonEffectiveDepth();
-    fHeaderTree->Branch("meiHimeMuonEffectiveDepth_mm", &meiHimeMuonEffectiveDepth);
-    double meiHimeFluxNormalization = fMessenger.GetMeiHimeFluxNormalization();
-    fHeaderTree->Branch("meiHimeFluxNormalization_per_cm2_per_s", &meiHimeFluxNormalization);
+    fHeaderMeiHimeEffectiveDepthCol = analysisManager->CreateNtupleDColumn(fHeaderID, "meiHimeMuonEffectiveDepth_mm");
+    fHeaderMeiHimeFluxNormalizationCol = analysisManager->CreateNtupleDColumn(fHeaderID, "meiHimeFluxNormalization_per_cm2_per_s");
   }
+
+  //CRY generator
   if (fMessenger.GetSourceType()=="CRYGenerator") {
-    double CRYAltitude = fMessenger.GetCRYAltitude();
-    double CRYLatitude = fMessenger.GetCRYLatitude();
-    double CRYNorm = fMessenger.GetCRYNorm();
-    fHeaderTree->Branch("CRYAltitude_m", &CRYAltitude);
-    fHeaderTree->Branch("CRYLatitude", &CRYLatitude);
-    fHeaderTree->Branch("showers_per_cm2_per_s", &CRYNorm);
+    fHeaderCRYAltitudeCol = analysisManager->CreateNtupleDColumn(fHeaderID, "CRYAltitude_m");
+    fHeaderCRYLatitudeCol = analysisManager->CreateNtupleDColumn(fHeaderID, "CRYLatitude");
+    fHeaderCRYNormCol = analysisManager->CreateNtupleDColumn(fHeaderID, "showers_per_cm2_per_s");
   }
+
+  //Secondary capture generator
   if (fMessenger.GetSourceType()=="SCTGenerator") {
-    int SCTCapturedParticles = fMessenger.GetSCTCapturedParticles();
-    fHeaderTree->Branch("SCTCapturedParticles", &SCTCapturedParticles);
+    fHeaderSCTCapturedParticlesCol = analysisManager->CreateNtupleIColumn(fHeaderID, "SCTCapturedParticles");
   }
+
+  //MUTE generator
   if (fMessenger.GetSourceType()=="muteGenerator") {
-    double muteTotalFlux = fMessenger.GetMuteFluxNormalization();
-    fHeaderTree->Branch("muteFluxNormalization", &muteTotalFlux);
+    fHeaderMuteFluxNormalizationCol = analysisManager->CreateNtupleDColumn(fHeaderID, "muteFluxNormalization");
   }
-  // Fill once when we make the tree, we aren't ever updating this
-  fHeaderTree->Fill();
+
+  analysisManager->FinishNtuple(fHeaderID);
+}
+
+
+// Book geometry ntuple
+void PaleoSimOutputManager::BookGeometry() {
+  auto* analysisManager = G4RootAnalysisManager::Instance();
+
+  fGeometryID = analysisManager->CreateNtuple("fGeometryTree","Run geometry");
+
+  fGeometryNameCol = analysisManager->CreateNtupleSColumn(fGeometryID, "name");
+  fGeometryShapeCol = analysisManager->CreateNtupleSColumn(fGeometryID, "shape");
+  fGeometryParentCol = analysisManager->CreateNtupleSColumn(fGeometryID, "parent");
+  fGeometryMaterialCol = analysisManager->CreateNtupleSColumn(fGeometryID, "material");
+  fGeometryNumberCol = analysisManager->CreateNtupleIColumn(fGeometryID, "number");
+  fGeometryAbsXCol = analysisManager->CreateNtupleDColumn(fGeometryID, "abs_x");
+  fGeometryAbsYCol = analysisManager->CreateNtupleDColumn(fGeometryID, "abs_y");
+  fGeometryAbsZCol = analysisManager->CreateNtupleDColumn(fGeometryID, "abs_z");
+
+  analysisManager->CreateNtupleDColumn(fGeometryID, "pointCloud_xs", fGeomXs);
+  analysisManager->CreateNtupleDColumn(fGeometryID, "pointCloud_ys", fGeomYs);
+  analysisManager->CreateNtupleDColumn(fGeometryID, "pointCloud_zs", fGeomZs);
+
+  analysisManager->FinishNtuple(fGeometryID);
+}
+
+
+// Book primaries ntuple
+void PaleoSimOutputManager::BookPrimaries() {
+  auto* analysisManager = G4RootAnalysisManager::Instance();
+
+  fPrimariesID = analysisManager->CreateNtuple("primariesTree", "Generated primary particles");
+
+  fPrimaryEventIDCol = analysisManager->CreateNtupleIColumn(fPrimariesID, "eventID");
+  analysisManager->CreateNtupleIColumn(fPrimariesID, "pdgID", fPrimaryPdgID);
+  analysisManager->CreateNtupleDColumn(fPrimariesID, "energy", fPrimaryEnergy);
+  analysisManager->CreateNtupleDColumn(fPrimariesID, "x", fPrimaryX);
+  analysisManager->CreateNtupleDColumn(fPrimariesID, "y", fPrimaryY);
+  analysisManager->CreateNtupleDColumn(fPrimariesID, "z", fPrimaryZ);
+  analysisManager->CreateNtupleDColumn(fPrimariesID, "px", fPrimaryPx);
+  analysisManager->CreateNtupleDColumn(fPrimariesID, "py", fPrimaryPy);
+  analysisManager->CreateNtupleDColumn(fPrimariesID, "pz", fPrimaryPz);
+
+  //CUSTOM_GENERATOR_HOOK
+  //Add branches stored to primary tree here
+  //
+  // Mei & Hime muon generator - first two also used for mute generator
+  fPrimaryMuonThetaCol = analysisManager->CreateNtupleDColumn(fPrimariesID, "muonTheta");
+  fPrimaryMuonPhiCol = analysisManager->CreateNtupleDColumn(fPrimariesID, "muonPhi");
+  fPrimaryMuonSlantCol = analysisManager->CreateNtupleDColumn(fPrimariesID, "muonSlant");
+  //
+
+  analysisManager->FinishNtuple(fPrimariesID);
+}
+
+
+// Book muon-induced neutron ntuple
+void PaleoSimOutputManager::BookMIN() {
+  auto* analysisManager = G4RootAnalysisManager::Instance();
+
+  fMINID = analysisManager->CreateNtuple("MINTree", "Muon-induced neutrons");
+
+  fMINEventIDCol = analysisManager->CreateNtupleIColumn(fMINID, "eventID");
+  fMINMultiplicityCol = analysisManager->CreateNtupleIColumn(fMINID, "multiplicity");
+  analysisManager->CreateNtupleDColumn(fMINID, "angleRelToMuon", fMINEventAngleRelMuon);
+  analysisManager->CreateNtupleDColumn(fMINID, "energy", fMINEventEnergy);
+  analysisManager->CreateNtupleDColumn(fMINID, "distanceToMuonTrack", fMINEventDistanceToMuonTrack);
+
+  analysisManager->FinishNtuple(fMINID);
+}
+
+
+// Book neutron tally ntuple
+void PaleoSimOutputManager::BookNeutronTally() {
+  auto* analysisManager = G4RootAnalysisManager::Instance();
+
+  fNeutronTallyID = analysisManager->CreateNtuple("neutronTallyTree", "Muon-induced neutrons entering cavity");
+
+  fNeutronTallyEventIDCol = analysisManager->CreateNtupleIColumn(fNeutronTallyID, "eventID");
+  fNeutronTallyMultiplicityCol = analysisManager->CreateNtupleIColumn(fNeutronTallyID, "numNeutronsEntered");
+  analysisManager->CreateNtupleDColumn(fNeutronTallyID, "entry_energy", fNeutron_entryEnergy);
+  analysisManager->CreateNtupleDColumn(fNeutronTallyID, "entry_x", fNeutron_entryX);
+  analysisManager->CreateNtupleDColumn(fNeutronTallyID, "entry_y", fNeutron_entryY);
+  analysisManager->CreateNtupleDColumn(fNeutronTallyID, "entry_z", fNeutron_entryZ);
+  analysisManager->CreateNtupleDColumn(fNeutronTallyID, "entry_u", fNeutron_entryU);
+  analysisManager->CreateNtupleDColumn(fNeutronTallyID, "entry_v", fNeutron_entryV);
+  analysisManager->CreateNtupleDColumn(fNeutronTallyID, "entry_w", fNeutron_entryW);
+  analysisManager->CreateNtupleDColumn(fNeutronTallyID, "angleRelMuon", fNeutron_angle);
+  analysisManager->CreateNtupleDColumn(fNeutronTallyID, "distanceToMuonTrack", fNeutron_distance);
+  analysisManager->CreateNtupleIColumn(fNeutronTallyID, "volumeNumbers", fNeutronTallyVolumeNumbers);
+  analysisManager->CreateNtupleIColumn(fNeutronTallyID, "prevVolumeNumbers", fPrevNeutronTallyVolumeNumbers);
+
+  analysisManager->FinishNtuple(fNeutronTallyID);
+}
+
+
+// Book secondary capture ntuple
+void PaleoSimOutputManager::BookSecondaryCapture() {
+  auto* analysisManager = G4RootAnalysisManager::Instance();
+
+  fSecondaryCaptureID = analysisManager->CreateNtuple("secondaryCaptureTree", "Muon-induced secondaries passing through boundary between volumes");
+
+  fSecondaryCaptureEventIDCol = analysisManager->CreateNtupleIColumn(fSecondaryCaptureID, "eventID");
+  analysisManager->CreateNtupleIColumn(fSecondaryCaptureID, "pdgCode", fSecondary_entryPDG);
+  analysisManager->CreateNtupleDColumn(fSecondaryCaptureID, "energy", fSecondary_entryEnergy);
+  analysisManager->CreateNtupleDColumn(fSecondaryCaptureID, "entry_x", fSecondary_entryX);
+  analysisManager->CreateNtupleDColumn(fSecondaryCaptureID, "entry_y", fSecondary_entryY);
+  analysisManager->CreateNtupleDColumn(fSecondaryCaptureID, "entry_z", fSecondary_entryZ);
+  analysisManager->CreateNtupleDColumn(fSecondaryCaptureID, "entry_u", fSecondary_entryU);
+  analysisManager->CreateNtupleDColumn(fSecondaryCaptureID, "entry_v", fSecondary_entryV);
+  analysisManager->CreateNtupleDColumn(fSecondaryCaptureID, "entry_w", fSecondary_entryW);
+  analysisManager->CreateNtupleDColumn(fSecondaryCaptureID, "creation_z", fSecondary_creationZ);
+
+  analysisManager->FinishNtuple(fSecondaryCaptureID);
+}
+
+
+// Book recoil ntuple
+void PaleoSimOutputManager::BookRecoil() {
+  auto* analysisManager = G4RootAnalysisManager::Instance();
+
+  fRecoilID = analysisManager->CreateNtuple("recoilTree", "Ion recoils in target");
+
+  fRecoilEventIDCol = analysisManager->CreateNtupleIColumn(fRecoilID, "historyNum");
+  analysisManager->CreateNtupleIColumn(fRecoilID, "pdgCode", fRecoilEventPDGCode);
+  analysisManager->CreateNtupleIColumn(fRecoilID, "parent_pdgCode", fRecoilEventParentPDGCode);
+  analysisManager->CreateNtupleDColumn(fRecoilID, "energy", fRecoilEventEnergy);
+  analysisManager->CreateNtupleDColumn(fRecoilID, "x", fRecoilEventX);
+  analysisManager->CreateNtupleDColumn(fRecoilID, "y", fRecoilEventY);
+  analysisManager->CreateNtupleDColumn(fRecoilID, "z", fRecoilEventZ);
+  analysisManager->CreateNtupleDColumn(fRecoilID, "u", fRecoilEventU);
+  analysisManager->CreateNtupleDColumn(fRecoilID, "v", fRecoilEventV);
+  analysisManager->CreateNtupleDColumn(fRecoilID, "w", fRecoilEventW);
+  analysisManager->CreateNtupleDColumn(fRecoilID, "time", fRecoilEventTime);
+  analysisManager->CreateNtupleDColumn(fRecoilID, "code", fRecoilEventCode);
+  fRecoilNRecoilsCol = analysisManager->CreateNtupleIColumn(fRecoilID, "nRecoils");
+  analysisManager->CreateNtupleIColumn(fRecoilID, "volumeNumbers", fRecoilVolumeNumbers);
+
+  analysisManager->FinishNtuple(fRecoilID);
+}
+
+
+// Fill run-level ntuples
+void PaleoSimOutputManager::FillRunLevelNtuples() {
+  auto* analysisManager = G4RootAnalysisManager::Instance();
+
+  ////////////////////
+  //Fill header tree//
+  ////////////////////
+  analysisManager->FillNtupleDColumn(fHeaderID, fHeaderNpsCol, static_cast<G4double>(fMessenger.GetNPS()));
+  analysisManager->FillNtupleSColumn(fHeaderID, fHeaderSourceTypeCol, fMessenger.GetSourceType());
+
+  //Add your own generator commands here
+  //CUSTOM_GENERATOR_HOOK
+  //
+  //Mei & Hime muon generator
+  if (fMessenger.GetSourceType()=="meiHimeMuonGenerator") {
+    analysisManager->FillNtupleDColumn(fHeaderID, fHeaderMeiHimeEffectiveDepthCol, fMessenger.GetMeiHimeMuonEffectiveDepth());
+    analysisManager->FillNtupleDColumn(fHeaderID, fHeaderMeiHimeFluxNormalizationCol, fMessenger.GetMeiHimeFluxNormalization());
+  }
+
+  //CRY generator
+  if (fMessenger.GetSourceType()=="CRYGenerator") {
+    analysisManager->FillNtupleDColumn(fHeaderID, fHeaderCRYAltitudeCol, fMessenger.GetCRYAltitude());
+    analysisManager->FillNtupleDColumn(fHeaderID, fHeaderCRYLatitudeCol, fMessenger.GetCRYLatitude());
+    analysisManager->FillNtupleDColumn(fHeaderID, fHeaderCRYNormCol, fMessenger.GetCRYNorm());
+  }
+
+  //Secondary capture generator
+  if (fMessenger.GetSourceType()=="SCTGenerator") {
+    analysisManager->FillNtupleIColumn(fHeaderID, fHeaderSCTCapturedParticlesCol, static_cast<G4int>(fMessenger.GetSCTCapturedParticles()));
+  }
+
+  //MUTE generator
+  if (fMessenger.GetSourceType()=="muteGenerator") {
+    analysisManager->FillNtupleDColumn(fHeaderID, fHeaderMuteFluxNormalizationCol, fMessenger.GetMuteFluxNormalization());
+  }
+
+  analysisManager->AddNtupleRow(fHeaderID);
 
   ////////////////////////
-  // MAKE GEOMETRY TREE //
+  // FILL GEOMETRY TREE //
   ////////////////////////
-  fGeometryTree = new TTree("fGeometryTree","Run geometry");
-
-  // Branch vars
-  char volumeName[256] = "";
-  char volumeShape[256] = "";
-  char parentName[256] = "";
-  char materialName[256] = "";
-  int geomNumber;
-  double geomAbsX, geomAbsY, geomAbsZ;
-  std::vector<double> geomXs, geomYs, geomZs;
-
-  // Set branches
-  fGeometryTree->Branch("name", &volumeName, "name/C");
-  fGeometryTree->Branch("shape", &volumeShape, "shape/C");
-  fGeometryTree->Branch("parent", &parentName, "parent/C");
-  fGeometryTree->Branch("material", &materialName, "material/C");
-  fGeometryTree->Branch("number", &geomNumber, "number/I");
-  fGeometryTree->Branch("abs_x", &geomAbsX, "abs_x/D");
-  fGeometryTree->Branch("abs_y", &geomAbsY, "abs_y/D");
-  fGeometryTree->Branch("abs_z", &geomAbsZ, "abs_z/D");
-  fGeometryTree->Branch("pointCloud_xs", &geomXs);
-  fGeometryTree->Branch("pointCloud_ys", &geomYs);
-  fGeometryTree->Branch("pointCloud_zs", &geomZs);
-
   for (auto* vol : fMessenger.GetVolumes()) {
-    std::strncpy(volumeName, vol->name.c_str(), 255);
-    std::strncpy(volumeShape, vol->shape.c_str(), 255);
-    std::strncpy(parentName, vol->parentName.c_str(), 255);
-    std::strncpy(materialName, vol->materialName.c_str(), 255);
-    geomAbsX = vol->absolutePosition.x();
-    geomAbsY = vol->absolutePosition.y();
-    geomAbsZ = vol->absolutePosition.z();
-    geomNumber = vol->volumeNumber;
+    analysisManager->FillNtupleSColumn(fGeometryID, fGeometryNameCol, vol->name);
+    analysisManager->FillNtupleSColumn(fGeometryID, fGeometryShapeCol, vol->shape);
+    analysisManager->FillNtupleSColumn(fGeometryID, fGeometryParentCol, vol->parentName);
+    analysisManager->FillNtupleSColumn(fGeometryID, fGeometryMaterialCol, vol->materialName);
+    analysisManager->FillNtupleIColumn(fGeometryID, fGeometryNumberCol, vol->volumeNumber);
+    analysisManager->FillNtupleDColumn(fGeometryID, fGeometryAbsXCol, vol->absolutePosition.x());
+    analysisManager->FillNtupleDColumn(fGeometryID, fGeometryAbsYCol, vol->absolutePosition.y());
+    analysisManager->FillNtupleDColumn(fGeometryID, fGeometryAbsZCol, vol->absolutePosition.z());
 
     int nPoints = 5000;
-    geomXs.clear();
-    geomYs.clear();
-    geomZs.clear();
+    fGeomXs.clear();
+    fGeomYs.clear();
+    fGeomZs.clear();
+
     for (int pointNum=0; pointNum<nPoints; pointNum++) {
       G4ThreeVector randPos = vol->GenerateRandomPointInside();
-      geomXs.push_back(randPos.x());
-      geomYs.push_back(randPos.y());
-      geomZs.push_back(randPos.z());
+      fGeomXs.push_back(randPos.x());
+      fGeomYs.push_back(randPos.y());
+      fGeomZs.push_back(randPos.z());
     }
-    fGeometryTree->Fill();
-  }
 
-  /////////////////////////
-  // MAKE PRIMARIES TREE //
-  /////////////////////////
-  if (fMessenger.GetPrimariesTreeStatus()) {
-    fPrimariesTree = new TTree("primariesTree", "Generated primary particles");
-
-    fPrimariesTree->Branch("eventID", &fPrimaryEventID);
-    fPrimariesTree->Branch("pdgID", &fPrimaryPdgID);
-    fPrimariesTree->Branch("energy", &fPrimaryEnergy);
-    fPrimariesTree->Branch("x", &fPrimaryX);
-    fPrimariesTree->Branch("y", &fPrimaryY);
-    fPrimariesTree->Branch("z", &fPrimaryZ);
-    fPrimariesTree->Branch("px", &fPrimaryPx);
-    fPrimariesTree->Branch("py", &fPrimaryPy);
-    fPrimariesTree->Branch("pz", &fPrimaryPz);
-    //CUSTOM_GENERATOR_HOOK 
-    //Add branches stored to primary tree here
-    //
-    // Mei & Hime muon generator - also used for mute generator
-    fPrimariesTree->Branch("muonTheta", &fPrimaryMuonTheta);
-    fPrimariesTree->Branch("muonPhi", &fPrimaryMuonPhi);
-    fPrimariesTree->Branch("muonSlant", &fPrimaryMuonSlant);
-    //
-  }
-
-  ///////////////////////////////////
-  // MAKE MUON-INDUCED NEUTRON TREE//
-  ///////////////////////////////////
-  if (fMessenger.GetMINTreeStatus()) {
-    fMINTree = new TTree("MINTree", "Muon-induced neutrons");
-    fMINTree->Branch("eventID", &fMINEventID);
-    fMINTree->Branch("multiplicity", &fMINEventMultiplicity);
-    fMINTree->Branch("angleRelToMuon", &fMINEventAngleRelMuon);
-    fMINTree->Branch("energy", &fMINEventEnergy);
-    fMINTree->Branch("distanceToMuonTrack", &fMINEventDistanceToMuonTrack);
-  }
-
-  /////////////////////////////
-  // MAKE NEUTRON TALLY TREE //
-  ////////////////////////////
-  if (fMessenger.GetNeutronTallyTreeStatus()) {
-    fNeutronTallyTree = new TTree("neutronTallyTree", "Muon-induced neutrons entering cavity");
-    fNeutronTallyTree->Branch("eventID", &fNeutronTallyEventID);
-    fNeutronTallyTree->Branch("numNeutronsEntered", &fNeutronEntryMultiplicity);
-    fNeutronTallyTree->Branch("entry_energy", &fNeutron_entryEnergy);
-    fNeutronTallyTree->Branch("entry_x", &fNeutron_entryX);
-    fNeutronTallyTree->Branch("entry_y", &fNeutron_entryY);
-    fNeutronTallyTree->Branch("entry_z", &fNeutron_entryZ);
-    fNeutronTallyTree->Branch("entry_u", &fNeutron_entryU);
-    fNeutronTallyTree->Branch("entry_v", &fNeutron_entryV);
-    fNeutronTallyTree->Branch("entry_w", &fNeutron_entryW);
-    fNeutronTallyTree->Branch("angleRelMuon", &fNeutron_angle);
-    fNeutronTallyTree->Branch("distanceToMuonTrack", &fNeutron_distance);
-    fNeutronTallyTree->Branch("volumeNumbers", &fNeutronTallyVolumeNumbers);
-    fNeutronTallyTree->Branch("prevVolumeNumbers", &fPrevNeutronTallyVolumeNumbers);
-  }
-
-  /////////////////////////////////
-  // MAKE SECONDARY CAPTURE TREE //
-  /////////////////////////////////
-  if (fMessenger.GetSecondaryCaptureTreeStatus()) {
-    fSecondaryCaptureTree = new TTree("secondaryCaptureTree", "Muon-induced secondaries passing through boundary between volumes");
-    fSecondaryCaptureTree->Branch("eventID", &fSecondaryCaptureEventID);
-    fSecondaryCaptureTree->Branch("pdgCode", &fSecondary_entryPDG);
-    fSecondaryCaptureTree->Branch("energy", &fSecondary_entryEnergy);
-    fSecondaryCaptureTree->Branch("entry_x", &fSecondary_entryX);
-    fSecondaryCaptureTree->Branch("entry_y", &fSecondary_entryY);
-    fSecondaryCaptureTree->Branch("entry_z", &fSecondary_entryZ);
-    fSecondaryCaptureTree->Branch("entry_u", &fSecondary_entryU);
-    fSecondaryCaptureTree->Branch("entry_v", &fSecondary_entryV);
-    fSecondaryCaptureTree->Branch("entry_w", &fSecondary_entryW);
-    fSecondaryCaptureTree->Branch("creation_z", &fSecondary_creationZ);
-  }
-
-  //////////////////////
-  // MAKE RECOIL TREE //
-  //////////////////////
-  if (fMessenger.GetRecoilTreeStatus()) {
-    fRecoilTree = new TTree("recoilTree", "Ion recoils in target");
-    fRecoilTree->Branch("historyNum", &fRecoilEventID);
-    fRecoilTree->Branch("pdgCode", &fRecoilEventPDGCode);
-    fRecoilTree->Branch("parent_pdgCode", &fRecoilEventParentPDGCode);
-    fRecoilTree->Branch("energy", &fRecoilEventEnergy);
-    fRecoilTree->Branch("x", &fRecoilEventX);
-    fRecoilTree->Branch("y", &fRecoilEventY);
-    fRecoilTree->Branch("z", &fRecoilEventZ);
-    fRecoilTree->Branch("u", &fRecoilEventU);
-    fRecoilTree->Branch("v", &fRecoilEventV);
-    fRecoilTree->Branch("w", &fRecoilEventW);
-    fRecoilTree->Branch("time", &fRecoilEventTime);
-    fRecoilTree->Branch("code", &fRecoilEventCode);
-    fRecoilTree->Branch("nRecoils", &fNRecoils);
-    fRecoilTree->Branch("volumeNumbers", &fRecoilVolumeNumbers);
+    analysisManager->AddNtupleRow(fGeometryID);
   }
 }
+
 
 // Fill primaries tree
 void PaleoSimOutputManager::FillPrimariesTreeEvent() {
-  if (!fMessenger.GetPrimariesTreeStatus() || !fPrimariesTree) return;
+  if (fPrimariesID < 0) return;
   if (fPrimaryPdgID.empty()) return;
-  fPrimariesTree->Fill();
+
+  auto* analysisManager = G4RootAnalysisManager::Instance();
+
+  analysisManager->FillNtupleIColumn(fPrimariesID, fPrimaryEventIDCol, fPrimaryEventID);
+  analysisManager->FillNtupleDColumn(fPrimariesID, fPrimaryMuonThetaCol, fPrimaryMuonTheta);
+  analysisManager->FillNtupleDColumn(fPrimariesID, fPrimaryMuonPhiCol, fPrimaryMuonPhi);
+  analysisManager->FillNtupleDColumn(fPrimariesID, fPrimaryMuonSlantCol, fPrimaryMuonSlant);
+
+  analysisManager->AddNtupleRow(fPrimariesID);
 }
 
+
 void PaleoSimOutputManager::FillMINTreeEvent() {
-  if (!fMessenger.GetMINTreeStatus() || !fMINTree) return;
+  if (fMINID < 0) return;
   if (fMINEventMultiplicity == 0) return;
-  fMINTree->Fill();
+
+  auto* analysisManager = G4RootAnalysisManager::Instance();
+
+  analysisManager->FillNtupleIColumn(fMINID, fMINEventIDCol, fMINEventID);
+  analysisManager->FillNtupleIColumn(fMINID, fMINMultiplicityCol, fMINEventMultiplicity);
+
+  analysisManager->AddNtupleRow(fMINID);
 }
+
 
 // Fill neutron tally tree
 void PaleoSimOutputManager::FillNeutronTallyTreeEvent() {
-  if (!fMessenger.GetNeutronTallyTreeStatus() || !fNeutronTallyTree) return;
+  if (fNeutronTallyID < 0) return;
   if (fNeutronEntryMultiplicity == 0) return;
-  fNeutronTallyTree->Fill();
+
+  auto* analysisManager = G4RootAnalysisManager::Instance();
+
+  analysisManager->FillNtupleIColumn(fNeutronTallyID, fNeutronTallyEventIDCol, fNeutronTallyEventID);
+  analysisManager->FillNtupleIColumn(fNeutronTallyID, fNeutronTallyMultiplicityCol, fNeutronEntryMultiplicity);
+
+  analysisManager->AddNtupleRow(fNeutronTallyID);
 }
+
 
 // Fill secondary capture tree
 void PaleoSimOutputManager::FillSecondaryCaptureTreeEvent() {
-  if (!fMessenger.GetSecondaryCaptureTreeStatus() || !fSecondaryCaptureTree) return;
-  fSecondaryCaptureTree->Fill();
+  if (fSecondaryCaptureID < 0) return;
+
+  auto* analysisManager = G4RootAnalysisManager::Instance();
+
+  analysisManager->FillNtupleIColumn(fSecondaryCaptureID, fSecondaryCaptureEventIDCol, fSecondaryCaptureEventID);
+
+  analysisManager->AddNtupleRow(fSecondaryCaptureID);
 }
+
 
 // Fill recoil tree
 void PaleoSimOutputManager::FillRecoilTreeEvent() {
-  if (!fMessenger.GetRecoilTreeStatus() || !fRecoilTree) return;
+  if (fRecoilID < 0) return;
   if (fNRecoils == 0) return;
-  fRecoilTree->Fill();
+
+  auto* analysisManager = G4RootAnalysisManager::Instance();
+
+  analysisManager->FillNtupleIColumn(fRecoilID, fRecoilEventIDCol, fRecoilEventID);
+  analysisManager->FillNtupleIColumn(fRecoilID, fRecoilNRecoilsCol, fNRecoils);
+
+  analysisManager->AddNtupleRow(fRecoilID);
 }
+
 
 void PaleoSimOutputManager::ClearPrimariesTreeEvent() {
   fPrimaryEventID = -1;
@@ -303,12 +410,14 @@ void PaleoSimOutputManager::ClearPrimariesTreeEvent() {
   //Clear/reset vars here
 }
 
+
 void PaleoSimOutputManager::ClearMINTreeEvent() {
   fMINEventMultiplicity = 0;
   fMINEventAngleRelMuon.clear();
   fMINEventEnergy.clear();
   fMINEventDistanceToMuonTrack.clear();
 }
+
 
 void PaleoSimOutputManager::ClearNeutronTallyTreeEvent() {
   fNeutronTallyEventID = -1;
@@ -326,6 +435,7 @@ void PaleoSimOutputManager::ClearNeutronTallyTreeEvent() {
   fPrevNeutronTallyVolumeNumbers.clear();
 }
 
+
 void PaleoSimOutputManager::ClearSecondaryCaptureTreeEvent() {
   fSecondaryCaptureEventID = -1;
   fSecondary_entryPDG.clear();
@@ -338,6 +448,7 @@ void PaleoSimOutputManager::ClearSecondaryCaptureTreeEvent() {
   fSecondary_entryW.clear();
   fSecondary_creationZ.clear();
 }
+
 
 void PaleoSimOutputManager::ClearRecoilTreeEvent() {
   fRecoilEventID = -1;
@@ -355,6 +466,7 @@ void PaleoSimOutputManager::ClearRecoilTreeEvent() {
   fRecoilEventCode.clear();
   fRecoilVolumeNumbers.clear();
 }
+
 
 void PaleoSimOutputManager::WriteVRMLGeometry(const G4String& vrmlFilename) {
   setenv("G4VRMLFILE_FILE_NAME", vrmlFilename.c_str(), 1);
