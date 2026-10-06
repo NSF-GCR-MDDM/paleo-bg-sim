@@ -23,11 +23,7 @@
 #include "G4ProductionCuts.hh"
 #include "G4LogicalVolumeStore.hh"
 
-// Muon nuclear interaction
-#include "G4MuonNuclearProcess.hh"
-#include "G4MuonVDNuclearModel.hh"
-#include "G4MuonMinus.hh"
-#include "G4MuonPlus.hh"
+#include "G4RegionStore.hh"
 
 PaleoSimPhysicsList::PaleoSimPhysicsList(PaleoSimMessenger& messenger): fMessenger(messenger)  {
 
@@ -59,36 +55,26 @@ PaleoSimPhysicsList::PaleoSimPhysicsList(PaleoSimMessenger& messenger): fMesseng
 
 }
 
-void PaleoSimPhysicsList::ConstructProcess() {
-  G4VModularPhysicsList::ConstructProcess(); 
-
-  // Custom muon nuclear process
-  auto* model = new G4MuonVDNuclearModel(); // or G4MuonNuclearInteractionModel
-  auto* proc  = new G4MuonNuclearProcess();
-  proc->RegisterMe(model);
-
-  G4MuonPlus::MuonPlus()->GetProcessManager()->AddDiscreteProcess(proc);
-  G4MuonMinus::MuonMinus()->GetProcessManager()->AddDiscreteProcess(proc);
+void PaleoSimPhysicsList::SetCuts() {
+  SetCutsWithDefault();
 
   // Specialized cuts for tracking volumes
   for (auto name: fMessenger.GetRecoilTreeVolumes()) {
-    G4LogicalVolume* trackingVolume = G4LogicalVolumeStore::GetInstance()->GetVolume(name, false);
-    if (trackingVolume) {
-        G4cout << "Applying production cuts to volume: "
-              << name << G4endl;
+    G4Region* trackingRegion =
+        G4RegionStore::GetInstance()->GetRegion(name+"Region", false);
 
-        auto* trackingRegion = new G4Region(name+"Region");
-        trackingRegion->AddRootLogicalVolume(trackingVolume);
+    if (trackingRegion) {
+      G4cout << "Applying production cuts to volume: "
+             << name << G4endl;
 
-        auto* cuts = new G4ProductionCuts();
-        cuts->SetProductionCut(10*nanometer, "proton");
-        cuts->SetProductionCut(10*nanometer, "alpha");
+      auto* cuts = new G4ProductionCuts();
+      cuts->SetProductionCut(10*nanometer, "proton");
 
-        trackingRegion->SetProductionCuts(cuts);
+      trackingRegion->SetProductionCuts(cuts);
     }
     else {
-        G4cout << "WARNING: Could not find logical volume: "
-              << name << G4endl;
+      G4cout << "WARNING: Could not find region: "
+             << name+"Region" << G4endl;
     }
   }
 }

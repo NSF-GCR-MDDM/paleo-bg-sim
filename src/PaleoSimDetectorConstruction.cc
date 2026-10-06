@@ -9,6 +9,7 @@
 #include "G4PVPlacement.hh"
 #include "G4VisAttributes.hh"
 #include "G4SystemOfUnits.hh"
+#include "G4LogicalVolumeStore.hh"
 
 PaleoSimDetectorConstruction::PaleoSimDetectorConstruction(PaleoSimMessenger& messenger)
 : G4VUserDetectorConstruction(),
@@ -92,5 +93,17 @@ G4VPhysicalVolume* PaleoSimDetectorConstruction::Construct() {
         }
     }
 
+    //Check for tracking volumes
+    for (auto name: fMessenger.GetRecoilTreeVolumes()) {
+        G4LogicalVolume* trackingVolume = G4LogicalVolumeStore::GetInstance()->GetVolume(name, false);
+        if (trackingVolume) {
+            auto* trackingRegion = new G4Region(name+"Region");
+            trackingRegion->AddRootLogicalVolume(trackingVolume);
+        }
+        else {
+                G4cout << "WARNING: Could not find logical volume: "<< name << G4endl;
+        }
+    }
+    
     return physWorld;
 }

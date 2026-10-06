@@ -1,24 +1,20 @@
-#ifndef PaleoSimActionInitialization_h
-#define PaleoSimActionInitialization_h 1
+#ifndef PALEOSIMACTIONINITIALIZATION_HH
+#define PALEOSIMACTIONINITIALIZATION_HH
 
 #include "G4VUserActionInitialization.hh"
 #include "PaleoSimMessenger.hh"
-#include "PaleoSimOutputManager.hh"
-#include "PaleoSimPrimaryGeneratorAction.hh"
 
 class PaleoSimActionInitialization : public G4VUserActionInitialization
 {
-  public:
-    PaleoSimActionInitialization(PaleoSimMessenger& messenger,PaleoSimOutputManager& manager);
-    virtual ~PaleoSimActionInitialization() = default;
+public:
+    PaleoSimActionInitialization(PaleoSimMessenger& messenger);
+    ~PaleoSimActionInitialization() override = default;
 
-    virtual void BuildForMaster() const;
-    virtual void Build() const;
-  private:
+    void BuildForMaster() const override;
+    void Build() const override;
+
+private:
     PaleoSimMessenger& fMessenger;
-    PaleoSimOutputManager& fOutputManager;
 };
 
 #endif
-
-    
