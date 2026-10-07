@@ -22,6 +22,7 @@
 #include "G4Region.hh"
 #include "G4ProductionCuts.hh"
 #include "G4LogicalVolumeStore.hh"
+#include "G4EmParameters.hh"
 
 #include "G4RegionStore.hh"
 
