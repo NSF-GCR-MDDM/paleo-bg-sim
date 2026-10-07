@@ -137,4 +137,5 @@ void PaleoSimCrySource::GeneratePrimaries(G4Event* anEvent) {
                   ("CRY file is throwing particles outside of your top surface area. \nNormalization will be off. \nRe-run cry with an area matching your G4 top surface"));
     }
   }
+  anEvent->SetUserInformation(new PaleoSimUserEventInformation());
 }
