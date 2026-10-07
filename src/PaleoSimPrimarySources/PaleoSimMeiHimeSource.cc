@@ -26,14 +26,14 @@ void PaleoSimMeiHimeSource::InitializeSource() {
   fMessenger.SetMeiHimeFluxNormalization(I0);
 
   fMuonThetaDist = new TF1("fMuonThetaDist",
-                        "( [0]*exp(-[2]/([3]*cos(x))) + [1]*exp(-[2]/([4]*cos(x))) ) / cos(x)",
+                        "( [0]*exp(-[2]/([3]*cos(x))) + [1]*exp(-[2]/([4]*cos(x))) ) * sin(x)",
                         0, CLHEP::pi / 2. - 0.001);
                           
   fMuonThetaDist->SetParameter(0, 0.0000086); //I1
   fMuonThetaDist->SetParameter(1, 0.00000044); //I2
   fMuonThetaDist->SetParameter(2, h0_km);
-  fMuonThetaDist->SetParameter(3, 0.45); //1/lambda1
-  fMuonThetaDist->SetParameter(4, 0.87); //1/lambda2
+  fMuonThetaDist->SetParameter(3, 0.45); //lambda1
+  fMuonThetaDist->SetParameter(4, 0.87); //lambda2
   fMuonThetaDist->SetNpx(1000);
 
   fMuonEnergyDist = new TF1("fMuonEnergyDist",
