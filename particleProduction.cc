@@ -20,28 +20,71 @@
 
 /*
 To-do:
-  - Consistency with variable names needs some cleaning up
-  - Very minimal testing has been done. 
-  - Maybe we should append units to output branches
-  - Long-term goal: refactor messenger class to make less messy
-  - Do we care about mu- vs. mu+ in meiHime & mute
-  - Error checking on parameters for RGBA in geometry file
+/*
+To-do (prioritized):
+
+P0 - Wrong results or crashes in current configs (fix before any production run):
+  - MeiHime: fMuonEnergyDist->SetParameter(1, h_km) missing (removed in 727d468), so energies are sampled at zero depth.
+    Add after h_km is computed, before GetRandom()
+  - CRY: GeneratePrimaries never sets PaleoSimUserEventInformation (lost in 0fa1ef9). SteppingAction dereferences
+    info for CRY when MIN or neutron tally trees are on (lines 59, 71, 138, 143) -> segfault (conus_cry.mac)
+  - SteppingAction recoil tree uses postStepVolume (lines 207-212, 224, 271); energy deposits belong to preStepVolume,
+    so ERs at boundaries are misattributed
+  - SteppingAction line 248 early return skips prevVolume update (line 291) -> wrong prevVolumeNumbers in neutron
+    tally when recoil tree is on
+  - MeiHime angular sampling/normalization is inconsistent with generation from a horizontal top surface:
+    p(theta) should be I_th(theta)*sin(theta)*cos(theta), which simplifies to
+    (I1 e.. + I2 e..)*sin(theta). Horizontal-plane flux normalization should likewise use
+    integral I_th(theta)*cos(theta)dOmega, not the angle-integrated Mei-Hime flux directly
+
+P1 - Needed before running with >1 thread:
+  - --nThreads is overridden by /run/numberOfThreads in macros (meiHime.mac line 20); remove from macros or apply
+    cmd-line value after macro
+  - Make ROOT random sampling consistent with MT-codes
+    ROOT GetRandom() calls use global gRandom (MeiHime TF1, Disk/Volumetric TH1, MUTE TH3): data race with >1 thread
+    and not reproducible from G4 seed. Avoid gRandom; make ROOT sampling use an event-local RNG derived from the
+    Geant4 event RNG (e.g. per-event TRandom3 seeded from G4UniformRand(), passed to GetRandom(&rng))
+  - Sources write to shared messenger from every worker: SetMeiHimeFluxNormalization, SetCRYAltitude/Latitude/Norm
+    (SCT covered below). Restrict writes to one thread (e.g. IsMetadataThread helper)
+  - Make sure secondaries tree/generator consistent with MT refactor
+  - Verify merged MT output: run --nThreads 2, check tree->Print() shows vector<int>/vector<double> branches,
+    and that SCT source and analysis scripts read the merged trees
   - Check G4 MT codes
-  - Check different physics lists
-  - headerTree needs updating - include seed, more macro args
-  - Could have a 'cellNum' argument for volumes, and then potentially track multiple cells with recoils, tallies, etc.,
-    or store cellNum -> volumeName map in header tree
-  - Compare with Geant4 Mei & hime simulation paper from--different settings?
+  - Very minimal testing has been done
+
+P2 - Latent bugs and provenance:
+  - GeometryMessenger ComputeMissingCoordinates (lines 409, 412): absolute <-> relative position ignores parent
+    rotation; wrong for off-center children of rotated volumes (affects point sampling, IsPointInside, geometry tree)
+  - SCT capture boundary semantics: preStepVolume is the volume just entered, not the one left. Verify intended behavior;
+    if capture is supposed to represent crossings between the two listed volumes, use prevVolume for the volume being left
   - Check MUTE code
+  - headerTree needs updating - include seed, more macro args
+  - Minor: ~PaleoSimPrimaryGeneratorAction doesn't delete fMuteSource; GenerateRandomPointInside gives false fatal
+    error if 1000th try succeeds; CmdLineParser silently drops values starting with '-' (e.g. negative seeds)
+
+P3 - Physics validation:
+  - Compare with Geant4 Mei & hime simulation paper from--different settings?
+  - Check different physics lists - Are we tracking correctly?
+  - Do we care about mu- vs. mu+ in meiHime & mute
+
+P4 - Features:
+  - Energy deposition tree instead of lumping EM into recoil tree
+  - Add option for loading CRY file into memory (cmd line?)
   - Volumetric sampling
   - AmBe source defined
-  - Energy deposition tree instead of lumping EM into recoil tree
-  - Make sure secondaries tree/generator consistent with MT refactor
-  - Add option for loading CRY file into memory (cmd line?)
-  - Update documentation
+  - Could have a 'cellNum' argument for volumes, and then potentially track multiple cells with recoils, tallies, etc.,
+    or store cellNum -> volumeName map in header tree
+  - Maybe we should append units to output branches
+  - Error checking on parameters for RGBA in geometry file
   - Use existing GDML viewing? Was buggy before
+
+P5 - Cleanup and long-term:
   - Remove H5 stuff from CMake or figure out how to reimplement with parallel. I'd argue for an external converter.
     The main reason I wanted it was to READ h5 CRY files
+  - Update documentation
+  - Consistency with variable names needs some cleaning up
+  - Long-term goal: refactor messenger class to make less messy
+*/
 */
 
 int main(int argc, char** argv) {
