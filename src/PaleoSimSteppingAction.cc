@@ -41,7 +41,7 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
     // MIN TREE //
     //////////////
     if (fMessenger.GetMINTreeStatus()) {
-        if ((fMessenger.GetSourceType()=="meiHimeMuonGenerator") || (fMessenger.GetSourceType()=="muteGenerator") || (fMessenger.GetSourceType()=="CRYGenerator")) { 
+        if ((fMessenger.GetSourceType()=="meiHimeMuonGenerator") || (fMessenger.GetSourceType()=="muteGenerator")) { 
             G4int trackID = track->GetTrackID();
             G4int parentID = track->GetParentID();
             G4int particlePDG = particleDef->GetPDGEncoding();
@@ -134,7 +134,7 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
                     }
 
                     // Zenith angle:
-                    if ((fMessenger.GetSourceType()=="meiHimeMuonGenerator") || (fMessenger.GetSourceType()=="muteGenerator") || (fMessenger.GetSourceType()=="CRYGenerator")) { 
+                    if ((fMessenger.GetSourceType()=="meiHimeMuonGenerator") || (fMessenger.GetSourceType()=="muteGenerator")) { 
                         const G4ThreeVector& muDir = info->primaryDirection;
                         const G4ThreeVector& neutronDir = preStepPoint->GetMomentumDirection();
                         fOutputManager.PushNeutronTallyEventAngleRelMuon(neutronDir.angle(muDir));
