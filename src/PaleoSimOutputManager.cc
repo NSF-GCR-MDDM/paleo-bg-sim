@@ -18,13 +18,15 @@ PaleoSimOutputManager::PaleoSimOutputManager(PaleoSimMessenger& messenger)
     : fMessenger(messenger) {}
 
 
-// Book ntuples
+// Book ntuples - i.e. create trees
 void PaleoSimOutputManager::Book() {
   auto* analysisManager = G4RootAnalysisManager::Instance();
 
   // Merge worker ntuples into one ROOT file when running multithreaded
   fMergeNtuples = G4Threading::IsMultithreadedApplication();
-  if (fMergeNtuples) analysisManager->SetNtupleMerging(true);
+  if (fMergeNtuples) {
+    analysisManager->SetNtupleMerging(true);
+  }
 
   //Create Trees
   BookHeader();
@@ -32,7 +34,6 @@ void PaleoSimOutputManager::Book() {
   if (fMessenger.GetPrimariesTreeStatus()) {
     BookPrimaries();
   }
-
   if (fMessenger.GetMINTreeStatus()) {
     BookMIN();
   }
@@ -68,7 +69,7 @@ void PaleoSimOutputManager::BeginOfRun() {
 
   //Sequential runs write run-level ntuples here.
   //For MT, worker 0 writes the single copy that will be merged into the output file.
-  if (!fMergeNtuples || (G4Threading::IsWorkerThread() && G4Threading::G4GetThreadId() == 0)) {
+  if (!fMergeNtuples || ((G4Threading::IsWorkerThread() && G4Threading::G4GetThreadId() == 0))) {
     FillRunLevelNtuples();
   }
 }
@@ -161,7 +162,8 @@ void PaleoSimOutputManager::BookPrimaries() {
   analysisManager->CreateNtupleDColumn(fPrimariesID, "pz", fPrimaryPz);
 
   //CUSTOM_GENERATOR_HOOK
-  //Add branches stored to primary tree here
+  //Add branches stored to primary tree here - these take default values if not set but we
+  //keep them in code to avoid potential errors later.
   //
   // Mei & Hime muon generator - first two also used for mute generator
   fPrimaryMuonThetaCol = analysisManager->CreateNtupleDColumn(fPrimariesID, "muonTheta");
