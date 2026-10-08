@@ -49,7 +49,7 @@ The macro file arguments are documented here: [Macro Command Options](docs/macro
 command-line options:
 - `--seed <#>` : Uses the passed in number as the random seed. Otherwise uses system time to generate one.
 - `--outputFile <path/and/filename.root>` : Sets the output file name, otherwise defaults to outputFiles/output.root in current folder.
-
+- `--nThreads <nThreads>` : Number of threads to use, default is one.
 ## Analysis
 
 Details on analyzing the produced output will be found here.
