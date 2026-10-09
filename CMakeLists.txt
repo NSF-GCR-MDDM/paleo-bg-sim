@@ -85,7 +85,7 @@ file(GLOB_RECURSE headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 #
 add_executable(particleProduction particleProduction.cc ${sources} ${headers})
 
-target_link_libraries(particleProduction
+target_link_libraries(particleProduction PRIVATE
   ${Geant4_LIBRARIES}
   ${ROOT_LIBRARIES}
 )

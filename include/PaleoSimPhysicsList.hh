@@ -9,7 +9,7 @@ class PaleoSimPhysicsList : public G4VModularPhysicsList {
         PaleoSimPhysicsList(PaleoSimMessenger& messenger);
         ~PaleoSimPhysicsList() override = default;
         
-        void ConstructProcess() override;
+        void SetCuts() override;
     private:
         PaleoSimMessenger& fMessenger;
 };

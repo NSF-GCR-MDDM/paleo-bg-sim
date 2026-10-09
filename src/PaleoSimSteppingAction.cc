@@ -8,6 +8,7 @@
 #include "G4VProcess.hh"
 #include "PaleoSimUserEventInformation.hh"
 #include "PaleoSimEventAction.hh"
+#include "PaleoSimTrackInformation.hh"
 
 PaleoSimSteppingAction::PaleoSimSteppingAction(PaleoSimMessenger& messenger, 
                                                PaleoSimOutputManager& manager)
@@ -41,7 +42,7 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
     // MIN TREE //
     //////////////
     if (fMessenger.GetMINTreeStatus()) {
-        if ((fMessenger.GetSourceType()=="meiHimeMuonGenerator") || (fMessenger.GetSourceType()=="muteGenerator") || (fMessenger.GetSourceType()=="CRYGenerator")) { 
+        if ((fMessenger.GetSourceType()=="meiHimeMuonGenerator") || (fMessenger.GetSourceType()=="muteGenerator")) { 
             G4int trackID = track->GetTrackID();
             G4int parentID = track->GetParentID();
             G4int particlePDG = particleDef->GetPDGEncoding();
@@ -134,7 +135,7 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
                     }
 
                     // Zenith angle:
-                    if ((fMessenger.GetSourceType()=="meiHimeMuonGenerator") || (fMessenger.GetSourceType()=="muteGenerator") || (fMessenger.GetSourceType()=="CRYGenerator")) { 
+                    if ((fMessenger.GetSourceType()=="meiHimeMuonGenerator") || (fMessenger.GetSourceType()=="muteGenerator")) { 
                         const G4ThreeVector& muDir = info->primaryDirection;
                         const G4ThreeVector& neutronDir = preStepPoint->GetMomentumDirection();
                         fOutputManager.PushNeutronTallyEventAngleRelMuon(neutronDir.angle(muDir));
@@ -162,6 +163,7 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
         // Check if particle is heavier than an electron
         if (particleDef->GetPDGMass() > 0.511*MeV) {
 
+            //Check if it enters the volume (pre-step point is on the boundary)
             if (preStepPoint->GetStepStatus() == fGeomBoundary) {
                 // Get the capture volumes
                 const auto& captureVolumes = fMessenger.GetSecondaryCaptureTreeVolumes();
@@ -193,9 +195,8 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
                         // To read starting depth
                         G4ThreeVector startingPos = track->GetVertexPosition();
                         fOutputManager.PushSecondaryCaptureEventCreationZ(startingPos.z());
-                    }
+                }
             }
-
         }
     }
 
@@ -206,11 +207,12 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
 
         if (!postStepVolume) return;
 
-        G4String postStepVolumeName = postStepVolume->GetName();
+        G4String preStepVolumeName = preStepVolume->GetName();
         const auto& recoilVolumes = fMessenger.GetRecoilTreeVolumes();
 
-        if (std::find(recoilVolumes.begin(), recoilVolumes.end(), postStepVolumeName) != recoilVolumes.end()) {
+        if (std::find(recoilVolumes.begin(), recoilVolumes.end(), preStepVolumeName) != recoilVolumes.end()) {
             
+            /*
             /////////////////
             //Deal with ERs//
             /////////////////
@@ -218,10 +220,10 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
             G4int pdgCode = track->GetParticleDefinition()->GetPDGEncoding();
             if ((emEnergy > 0) && (std::abs(pdgCode) <= 2112)) {
                 const G4ThreeVector& position  = 0.5*(preStepPoint->GetPosition() + postStepPoint->GetPosition());
-                G4double ERTime = preStepPoint->GetGlobalTime();
+                G4double ERTime = 0.5*(preStepPoint->GetGlobalTime()+ postStepPoint->GetGlobalTime());
                 const G4ThreeVector& momentumDirection = track->GetMomentumDirection();
         
-                PaleoSimVolumeDefinition* vol = fMessenger.GetVolumeByName(postStepVolumeName);
+                PaleoSimVolumeDefinition* vol = fMessenger.GetVolumeByName(preStepVolumeName);
                 fOutputManager.PushRecoilVolumeNumber(vol->volumeNumber);
 
                 fOutputManager.PushRecoilEventID(eventID);
@@ -237,7 +239,7 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
                 fOutputManager.PushRecoilEventV(momentumDirection.y());
                 fOutputManager.PushRecoilEventW(momentumDirection.z());
                 fOutputManager.IncrementNRecoils();
-            }
+            */
 
             /////////////////
             //Deal with NRs//
@@ -245,49 +247,62 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
             //NOTE: WARNING: NR recoil is KE of NR, NOT DEPOSITED. These are different if the ion ranges out, but we 
             //are using TRIM for actual tracks and handling ranging out there.
             auto secondaries = step->GetSecondaryInCurrentStep();
-            if (!(secondaries && !secondaries->empty())) return;
-
-            // Now record all secondaries
-            for (const auto& sec : *secondaries) {
-
+            if (secondaries) {
+                
                 G4int parentPdg = track->GetParticleDefinition()->GetPDGEncoding();
-                G4int pdgCode = sec->GetParticleDefinition()->GetPDGEncoding(); //NR target nucleus
+                PaleoSimVolumeDefinition* vol = fMessenger.GetVolumeByName(preStepVolumeName); 
+                auto* parentInfo = dynamic_cast<PaleoSimTrackInformation*>(track->GetUserInformation());
+                G4bool parentExternallyTransported = parentInfo && parentInfo->externallyTransported;
 
-                if (std::abs(pdgCode) <= 2112) continue; //We only record secondaries whose PDG is greater than a neutron, i.e. Nuclear Recoils
-                
-                const G4ThreeVector& position = sec->GetPosition();
-                const G4ThreeVector& momentumDirection = sec->GetMomentumDirection();
-                G4double energy = sec->GetKineticEnergy();
-                G4double NRTime = sec->GetGlobalTime();
-        
-                const G4VProcess* proc = sec->GetCreatorProcess();
-                G4int mtCode = -1;
-                if (proc) {
-                    G4int type = proc->GetProcessType();
-                    G4int subtype = proc->GetProcessSubType();
-                    mtCode = MapProcessToMT(type, subtype);
+                // Now record all secondaries
+                for (const auto& sec : *secondaries) {
+
+                    G4int pdgCode = sec->GetParticleDefinition()->GetPDGEncoding(); //NR target nucleus
+
+                    if (std::abs(pdgCode) <= 2112) continue; //We only record secondaries whose PDG is greater than a neutron, i.e. Nuclear Recoils
+                    
+                    // Skip EM knock-ons of a recoil already handed to external transport code:
+                    // Assume external transport code simulates that cascade.
+                    // Hadronic and decay products are kept, since most codes do not simulate them.
+                    const G4VProcess* proc = sec->GetCreatorProcess();
+                    if (parentExternallyTransported && proc && proc->GetProcessType() == fElectromagnetic) continue;
+
+                    const G4ThreeVector& position = sec->GetPosition();
+                    const G4ThreeVector& momentumDirection = sec->GetMomentumDirection();
+                    G4double energy = sec->GetKineticEnergy();
+                    G4double NRTime = sec->GetGlobalTime();
+            
+                    G4int mtCode = -1;
+                    if (proc) {
+                        G4int type = proc->GetProcessType();
+                        G4int subtype = proc->GetProcessSubType();
+                        mtCode = MapProcessToMT(type, subtype);
+                    }
+                    
+                    fOutputManager.PushRecoilVolumeNumber(vol->volumeNumber);
+
+                    fOutputManager.PushRecoilEventID(eventID);
+                    fOutputManager.PushRecoilEventPDG(pdgCode);
+                    fOutputManager.PushRecoilEventParentPDG(parentPdg);
+                    fOutputManager.PushRecoilEventEnergy(energy);
+                    fOutputManager.PushRecoilEventTime(NRTime);
+                    fOutputManager.PushRecoilEventCode(mtCode);
+                    fOutputManager.PushRecoilEventX(position.x());
+                    fOutputManager.PushRecoilEventY(position.y());
+                    fOutputManager.PushRecoilEventZ(position.z());
+                    fOutputManager.PushRecoilEventU(momentumDirection.x());
+                    fOutputManager.PushRecoilEventV(momentumDirection.y());
+                    fOutputManager.PushRecoilEventW(momentumDirection.z());
+                    fOutputManager.IncrementNRecoils();
+
+                    // Mark this recoil as handed to external transporter
+                    auto* info = new PaleoSimTrackInformation();
+                    info->externallyTransported = true;
+                    const_cast<G4Track*>(sec)->SetUserInformation(info);
                 }
-                
-                PaleoSimVolumeDefinition* vol = fMessenger.GetVolumeByName(postStepVolumeName);
-                fOutputManager.PushRecoilVolumeNumber(vol->volumeNumber);
-
-                fOutputManager.PushRecoilEventID(eventID);
-                fOutputManager.PushRecoilEventPDG(pdgCode);
-                fOutputManager.PushRecoilEventParentPDG(parentPdg);
-                fOutputManager.PushRecoilEventEnergy(energy);
-                fOutputManager.PushRecoilEventTime(NRTime);
-                fOutputManager.PushRecoilEventCode(mtCode);
-                fOutputManager.PushRecoilEventX(position.x());
-                fOutputManager.PushRecoilEventY(position.y());
-                fOutputManager.PushRecoilEventZ(position.z());
-                fOutputManager.PushRecoilEventU(momentumDirection.x());
-                fOutputManager.PushRecoilEventV(momentumDirection.y());
-                fOutputManager.PushRecoilEventW(momentumDirection.z());
-                fOutputManager.IncrementNRecoils();
             }
         }
     }
-
     prevVolume = preStepPoint->GetPhysicalVolume();
 }
 

@@ -11,7 +11,9 @@
 #include "G4HadronPhysicsQGSP_BERT_HP.hh"
 #include "G4HadronPhysicsQGSP_BIC_HP.hh"
 #include "G4HadronElasticPhysicsHP.hh"
-#include "G4NeutronTrackingCut.hh"
+#include "G4StoppingPhysics.hh"
+#include "G4IonElasticPhysics.hh"
+#include "G4IonPhysics.hh"
 
 //Decay physics
 #include "G4RadioactiveDecayPhysics.hh"
@@ -22,12 +24,9 @@
 #include "G4Region.hh"
 #include "G4ProductionCuts.hh"
 #include "G4LogicalVolumeStore.hh"
+#include "G4EmParameters.hh"
 
-// Muon nuclear interaction
-#include "G4MuonNuclearProcess.hh"
-#include "G4MuonVDNuclearModel.hh"
-#include "G4MuonMinus.hh"
-#include "G4MuonPlus.hh"
+#include "G4RegionStore.hh"
 
 PaleoSimPhysicsList::PaleoSimPhysicsList(PaleoSimMessenger& messenger): fMessenger(messenger)  {
 
@@ -44,7 +43,10 @@ PaleoSimPhysicsList::PaleoSimPhysicsList(PaleoSimMessenger& messenger): fMesseng
   //RegisterPhysics(new G4HadronPhysicsQGSP_BERT_HP());
   RegisterPhysics(new G4HadronPhysicsQGSP_BIC_HP()); //Pranav's study showed this may be more accurate, but slower
   RegisterPhysics(new G4HadronElasticPhysicsHP());
-  //RegisterPhysics(new G4NeutronTrackingCut()); //Disable?
+  
+  RegisterPhysics(new G4StoppingPhysics());
+  RegisterPhysics(new G4IonElasticPhysics());
+  RegisterPhysics(new G4IonPhysics());
 
   // Radioactive decay physics
   auto* radioactiveDecayPhysics = new G4RadioactiveDecayPhysics();
@@ -57,38 +59,35 @@ PaleoSimPhysicsList::PaleoSimPhysicsList(PaleoSimMessenger& messenger): fMesseng
     rDecay->SetARM(true);
   }
 
+  //Single Coulomb scattering in recoil regions: every elastic scatter of every
+  //charged particle (e+-, muons, hadrons) is simulated individually, so nuclear
+  //recoils are produced down to the region's "proton" production cut.
+  auto* emParams = G4EmParameters::Instance();
+  for (const auto& name : fMessenger.GetRecoilTreeVolumes()) {
+    emParams->AddPhysics(name+"Region", "G4EmStandardSS");
+  }
 }
 
-void PaleoSimPhysicsList::ConstructProcess() {
-  G4VModularPhysicsList::ConstructProcess(); 
-
-  // Custom muon nuclear process
-  auto* model = new G4MuonVDNuclearModel(); // or G4MuonNuclearInteractionModel
-  auto* proc  = new G4MuonNuclearProcess();
-  proc->RegisterMe(model);
-
-  G4MuonPlus::MuonPlus()->GetProcessManager()->AddDiscreteProcess(proc);
-  G4MuonMinus::MuonMinus()->GetProcessManager()->AddDiscreteProcess(proc);
+void PaleoSimPhysicsList::SetCuts() {
+  SetCutsWithDefault();
 
   // Specialized cuts for tracking volumes
   for (auto name: fMessenger.GetRecoilTreeVolumes()) {
-    G4LogicalVolume* trackingVolume = G4LogicalVolumeStore::GetInstance()->GetVolume(name, false);
-    if (trackingVolume) {
-        G4cout << "Applying production cuts to volume: "
-              << name << G4endl;
+    G4Region* trackingRegion =
+        G4RegionStore::GetInstance()->GetRegion(name+"Region", false);
 
-        auto* trackingRegion = new G4Region(name+"Region");
-        trackingRegion->AddRootLogicalVolume(trackingVolume);
+    if (trackingRegion) {
+      G4cout << "Applying production cuts to volume: "
+             << name << G4endl;
 
-        auto* cuts = new G4ProductionCuts();
-        cuts->SetProductionCut(10*nanometer, "proton");
-        cuts->SetProductionCut(10*nanometer, "alpha");
+      auto* cuts = new G4ProductionCuts();
+      cuts->SetProductionCut(50*nanometer, "proton"); //5 eV
 
-        trackingRegion->SetProductionCuts(cuts);
+      trackingRegion->SetProductionCuts(cuts);
     }
     else {
-        G4cout << "WARNING: Could not find logical volume: "
-              << name << G4endl;
+      G4cout << "WARNING: Could not find region: "
+             << name+"Region" << G4endl;
     }
   }
 }

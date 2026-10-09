@@ -1,5 +1,5 @@
 //Main Program
-#include "G4RunManager.hh"
+#include "G4RunManagerFactory.hh"
 #include "G4UImanager.hh"
 #include "G4TransportationManager.hh"
 #include "Randomize.hh"
@@ -13,34 +13,41 @@
 #include "PaleoSimOutputManager.hh"
 #include "PaleoSimCmdLineParser.hh"
 #include "TRandom.h"
+#include "TROOT.h"
 
 #include "time.h"
 #include <unistd.h>
 
 /*
 To-do:
-  - Consistency with variable names needs some cleaning up
-  - Very minimal testing has been done. 
-  - Maybe we should append units to output branches? Or be consistent with units
-  - Long-term goal: Generators should be in their own pieces of code, in a generators folder or something
-  - Long-term goal: refactor messenger class to make less messy
-  - Do we care about mu- vs. mu+ in meiHime & mute
-  - Error checking on parameters for RGBA in geometry file
-  - Check G4 MT codes
-  - Try different physics lists
-  - headerTree needs updating
-  - We could store the geometry file in the tree--is that with GDML only? nEXO does this
-  - Pranav having some issues with physics lists not being set, but works fine from within particle production...?
+  - Make ROOT random sampling consistent with MT-codes
+    ROOT GetRandom() calls use global gRandom (MeiHime TF1, Disk/Volumetric TH1, MUTE TH3): data race with >1 thread
+    and not reproducible from G4 seed. Avoid gRandom; make ROOT sampling use an event-local RNG derived from the
+    Geant4 event RNG (e.g. per-event TRandom3 seeded from G4UniformRand(), passed to GetRandom(&rng))
+  - Sources write to shared messenger from every worker: SetMeiHimeFluxNormalization, SetCRYAltitude/Latitude/Norm
+    (SCT covered below). Restrict writes to one thread (e.g. IsMetadataThread helper)
+  - GeometryMessenger ComputeMissingCoordinates (lines 409, 412): absolute <-> relative position ignores parent
+    rotation; wrong for off-center children of rotated volumes (affects point sampling, IsPointInside, geometry tree)
+  - Check MUTE code
+  - headerTree needs updating - include seed, more macro args
+  - Minor: ~PaleoSimPrimaryGeneratorAction doesn't delete fMuteSource; GenerateRandomPointInside gives false fatal
+    error if 1000th try succeeds
+  - Do we care about mu- vs. mu+ in meiHime & mute?
+  - Check G4 MT codes (here MT is NOT Multithreading)
+  - Energy deposition tree instead of lumping EM into recoil tree
+  - Add option for loading CRY file into memory (cmd line?)
   - Could have a 'cellNum' argument for volumes, and then potentially track multiple cells with recoils, tallies, etc.,
     or store cellNum -> volumeName map in header tree
-  - Compare with Geant4 Mei & hime simulation paper from--different settings?
-  - Mute generator should have an argument for whether passed in file is energy theta or energy theta phi, and needs sampling adjusted as well
-  - Volumetric sampling
-  - AmBe source defined
-  - Energy deposition tree
+  - Maybe we should append units to output branches
+  - Error checking on parameters for RGBA in geometry file
+  - Remove H5 stuff from CMake or figure out how to reimplement with parallel. I think an external converter is better
+    The main reason I wanted h5 support was to READ h5 CRY files if we want random sampling, but we scrapped that.
+  - Update documentation
+  - Long-term goal: refactor messenger class to make less messy
 */
 
 int main(int argc, char** argv) {
+  ROOT::EnableThreadSafety();
 	std::vector<std::string> vars = {
 			"G4ENSDFSTATEDATA",
 			"G4LEVELGAMMADATA",
@@ -86,6 +93,12 @@ int main(int argc, char** argv) {
     gRandom->SetSeed(seed);
   }
   
+  //Threading
+  G4int nThreads = 1;
+  if (parsedArgs.find("--nThreads") != parsedArgs.end()) {
+    nThreads = std::stoi(parsedArgs["--nThreads"]);
+  }
+
   //
   std::string outputFilename = "";
   if (parsedArgs.find("--outputFile") != parsedArgs.end()) {
@@ -93,12 +106,13 @@ int main(int argc, char** argv) {
   }
 
   // 2. Construct run manager
-  auto* runManager = new G4RunManager();
+  auto* runManager = G4RunManagerFactory::CreateRunManager(G4RunManagerType::MTOnly);
+  runManager->SetNumberOfThreads(nThreads);
 
   // 3. Messenger FIRST — must exist before reading macro
   auto* messenger = new PaleoSimMessenger();
 
-  // 4a. Load main macro BEFORE creating detector, output manager
+  // 4a. Load main macro BEFORE creating detector
   G4UImanager* ui = G4UImanager::GetUIpointer();
   ui->ApplyCommand("/control/execute " + G4String(macroFilename));
   if (outputFilename != "") {
@@ -121,27 +135,24 @@ int main(int argc, char** argv) {
   //5b. Check for errors in macro files
   messenger->CheckForMacroErrors();
 
-  // 6. Create detector, register, create output manager
-  auto* detector       = new PaleoSimDetectorConstruction(*messenger);
+  // 6. Create detector, register
+  auto* detector = new PaleoSimDetectorConstruction(*messenger);
   runManager->SetUserInitialization(detector);  
 
-  // 7. Create output manager
-  auto* outputManager  = new PaleoSimOutputManager(*messenger);
-
-  // 8. Physics list
+  // 7. Physics list
   runManager->SetUserInitialization(new PaleoSimPhysicsList(*messenger));
 
-  // 9. Register actions (via ActionInitialization). Generator is built in here.
-  runManager->SetUserInitialization(new PaleoSimActionInitialization(*messenger, *outputManager));
+  // 8. Register actions (via ActionInitialization). Generator is built in here.
+  runManager->SetUserInitialization(new PaleoSimActionInitialization(*messenger));
 
-  // 10. Initialize run manager AFTER all setup is complete
+  // 9. Initialize run manager AFTER all setup is complete
   runManager->Initialize();  // or RunInitialization if directly used
 
-  // 11. BeamOn loop (manual, from messenger)
+  // 10. BeamOn loop (manual, from messenger)
   G4int nps = messenger->GetNPS();
   runManager->BeamOn(nps);
 
-  // 12. Write geometry VRML if requested
+  // 11. Write geometry VRML if requested
   if (messenger->GetVRMLStatus()) { 
     G4String geoMacroPath = messenger->GetGeometryMacroPath();
 
@@ -150,10 +161,11 @@ int main(int argc, char** argv) {
         ? geoMacroPath.substr(0, dotPos) + ".wrl"
         : geoMacroPath + ".wrl";
 
-    outputManager->WriteVRMLGeometry(vrmlFilename);
+    PaleoSimOutputManager outputManager(*messenger);
+    outputManager.WriteVRMLGeometry(vrmlFilename);
   }
 
-  // 13. Clean up
+  // 12. Clean up
   delete runManager;
   delete messenger;
   return 0;

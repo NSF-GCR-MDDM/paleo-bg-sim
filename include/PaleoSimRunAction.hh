@@ -1,21 +1,26 @@
-#ifndef PaleoSimRunAction_h
-#define PaleoSimRunAction_h 1
+#ifndef PALEOSIMRUNACTION_HH
+#define PALEOSIMRUNACTION_HH
+
+#include <memory>
 
 #include "G4UserRunAction.hh"
-#include "globals.hh"
+#include "PaleoSimMessenger.hh"
 #include "PaleoSimOutputManager.hh"
 
-class PaleoSimRunAction : public G4UserRunAction
-{
-  public:
-    PaleoSimRunAction(PaleoSimOutputManager& manager);
-    virtual ~PaleoSimRunAction() = default;
+class G4Run;
 
-    virtual void BeginOfRunAction(const G4Run*);
-    virtual void   EndOfRunAction(const G4Run*);
-  private:
-    PaleoSimOutputManager& fOutputManager;
+class PaleoSimRunAction : public G4UserRunAction {
+public:
+    PaleoSimRunAction(PaleoSimMessenger& messenger);
+    ~PaleoSimRunAction() override = default;
+
+    void BeginOfRunAction(const G4Run*) override;
+    void EndOfRunAction(const G4Run*) override;
+
+    PaleoSimOutputManager& GetOutputManager() { return *fOutputManager; }
+
+private:
+    std::unique_ptr<PaleoSimOutputManager> fOutputManager;
 };
 
 #endif
-
