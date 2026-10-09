@@ -11,7 +11,9 @@
 #include "G4HadronPhysicsQGSP_BERT_HP.hh"
 #include "G4HadronPhysicsQGSP_BIC_HP.hh"
 #include "G4HadronElasticPhysicsHP.hh"
-#include "G4NeutronTrackingCut.hh"
+#include "G4StoppingPhysics.hh"
+#include "G4IonElasticPhysics.hh"
+#include "G4IonPhysics.hh"
 
 //Decay physics
 #include "G4RadioactiveDecayPhysics.hh"
@@ -41,7 +43,10 @@ PaleoSimPhysicsList::PaleoSimPhysicsList(PaleoSimMessenger& messenger): fMesseng
   //RegisterPhysics(new G4HadronPhysicsQGSP_BERT_HP());
   RegisterPhysics(new G4HadronPhysicsQGSP_BIC_HP()); //Pranav's study showed this may be more accurate, but slower
   RegisterPhysics(new G4HadronElasticPhysicsHP());
-  //RegisterPhysics(new G4NeutronTrackingCut()); //Disable?
+  
+  RegisterPhysics(new G4StoppingPhysics());
+  RegisterPhysics(new G4IonElasticPhysics());
+  RegisterPhysics(new G4IonPhysics());
 
   // Radioactive decay physics
   auto* radioactiveDecayPhysics = new G4RadioactiveDecayPhysics();
@@ -54,6 +59,13 @@ PaleoSimPhysicsList::PaleoSimPhysicsList(PaleoSimMessenger& messenger): fMesseng
     rDecay->SetARM(true);
   }
 
+  //Single Coulomb scattering in recoil regions: every elastic scatter of every
+  //charged particle (e+-, muons, hadrons) is simulated individually, so nuclear
+  //recoils are produced down to the region's "proton" production cut.
+  auto* emParams = G4EmParameters::Instance();
+  for (const auto& name : fMessenger.GetRecoilTreeVolumes()) {
+    emParams->AddPhysics(name+"Region", "G4EmStandardSS");
+  }
 }
 
 void PaleoSimPhysicsList::SetCuts() {
@@ -69,7 +81,7 @@ void PaleoSimPhysicsList::SetCuts() {
              << name << G4endl;
 
       auto* cuts = new G4ProductionCuts();
-      cuts->SetProductionCut(10*nanometer, "proton");
+      cuts->SetProductionCut(50*nanometer, "proton"); //5 eV
 
       trackingRegion->SetProductionCuts(cuts);
     }
