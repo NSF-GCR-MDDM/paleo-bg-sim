@@ -32,8 +32,7 @@ To-do:
   - headerTree needs updating - include seed, more macro args
   - Minor: ~PaleoSimPrimaryGeneratorAction doesn't delete fMuteSource; GenerateRandomPointInside gives false fatal
     error if 1000th try succeeds
-  - Check different physics lists
-  - Do we care about mu- vs. mu+ in meiHime & mute  
+  - Do we care about mu- vs. mu+ in meiHime & mute?
   - Check G4 MT codes (here MT is NOT Multithreading)
   - Energy deposition tree instead of lumping EM into recoil tree
   - Add option for loading CRY file into memory (cmd line?)

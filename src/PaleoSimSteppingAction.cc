@@ -8,6 +8,7 @@
 #include "G4VProcess.hh"
 #include "PaleoSimUserEventInformation.hh"
 #include "PaleoSimEventAction.hh"
+#include "PaleoSimTrackInformation.hh"
 
 PaleoSimSteppingAction::PaleoSimSteppingAction(PaleoSimMessenger& messenger, 
                                                PaleoSimOutputManager& manager)
@@ -211,6 +212,7 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
 
         if (std::find(recoilVolumes.begin(), recoilVolumes.end(), preStepVolumeName) != recoilVolumes.end()) {
             
+            /*
             /////////////////
             //Deal with ERs//
             /////////////////
@@ -237,7 +239,7 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
                 fOutputManager.PushRecoilEventV(momentumDirection.y());
                 fOutputManager.PushRecoilEventW(momentumDirection.z());
                 fOutputManager.IncrementNRecoils();
-            }
+            */
 
             /////////////////
             //Deal with NRs//
@@ -246,21 +248,30 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
             //are using TRIM for actual tracks and handling ranging out there.
             auto secondaries = step->GetSecondaryInCurrentStep();
             if (secondaries) {
+                
+                G4int parentPdg = track->GetParticleDefinition()->GetPDGEncoding();
+                PaleoSimVolumeDefinition* vol = fMessenger.GetVolumeByName(preStepVolumeName); 
+                auto* parentInfo = dynamic_cast<PaleoSimTrackInformation*>(track->GetUserInformation());
+                G4bool parentExternallyTransported = parentInfo && parentInfo->externallyTransported;
 
                 // Now record all secondaries
                 for (const auto& sec : *secondaries) {
 
-                    G4int parentPdg = track->GetParticleDefinition()->GetPDGEncoding();
                     G4int pdgCode = sec->GetParticleDefinition()->GetPDGEncoding(); //NR target nucleus
 
                     if (std::abs(pdgCode) <= 2112) continue; //We only record secondaries whose PDG is greater than a neutron, i.e. Nuclear Recoils
                     
+                    // Skip EM knock-ons of a recoil already handed to external transport code:
+                    // Assume external transport code simulates that cascade.
+                    // Hadronic and decay products are kept, since most codes do not simulate them.
+                    const G4VProcess* proc = sec->GetCreatorProcess();
+                    if (parentExternallyTransported && proc && proc->GetProcessType() == fElectromagnetic) continue;
+
                     const G4ThreeVector& position = sec->GetPosition();
                     const G4ThreeVector& momentumDirection = sec->GetMomentumDirection();
                     G4double energy = sec->GetKineticEnergy();
                     G4double NRTime = sec->GetGlobalTime();
             
-                    const G4VProcess* proc = sec->GetCreatorProcess();
                     G4int mtCode = -1;
                     if (proc) {
                         G4int type = proc->GetProcessType();
@@ -268,7 +279,6 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
                         mtCode = MapProcessToMT(type, subtype);
                     }
                     
-                    PaleoSimVolumeDefinition* vol = fMessenger.GetVolumeByName(preStepVolumeName);
                     fOutputManager.PushRecoilVolumeNumber(vol->volumeNumber);
 
                     fOutputManager.PushRecoilEventID(eventID);
@@ -284,6 +294,11 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
                     fOutputManager.PushRecoilEventV(momentumDirection.y());
                     fOutputManager.PushRecoilEventW(momentumDirection.z());
                     fOutputManager.IncrementNRecoils();
+
+                    // Mark this recoil as handed to external transporter
+                    auto* info = new PaleoSimTrackInformation();
+                    info->externallyTransported = true;
+                    const_cast<G4Track*>(sec)->SetUserInformation(info);
                 }
             }
         }
