@@ -67,7 +67,6 @@ public:
     G4String GetMuteMountainProfileFilename() const { return fMuteMountainProfileFilename;};
     G4double GetMuteFluxDepth() const { return fMuteFluxDepth;};
     G4double GetMuteFluxNormalization() const { return fMuteFluxNormalization;};
- 
     //
     //CRY generator
     G4String GetCRYFilename() const { return fCRYFilename; };
@@ -118,6 +117,12 @@ public:
     void SetDiskSourcePosition(G4ThreeVector val) { fDiskSourcePosition = val;};
     void SetDiskSourceAxis(G4ThreeVector val) { fDiskSourceAxis = val;};
     void SetDiskSourceDirection(G4ThreeVector val) { fDiskSourceDirection = val;};
+    // Radiogenic Source Generator
+    G4String GetRadiogenicSourceFilename() const { return fRadiogenicSourceFilename; };
+    G4String GetRadiogenicSourceVolumeName() const { return fRadiogenicSourceVolumeName; };
+    void SetRadiogenicSourceVolumeName(G4String val) { fRadiogenicSourceVolumeName = val; }; 
+    G4double GetRadiogenicSourceAgeYrs() const { return fRadiogenicSourceAgeYrs; };
+    void SetRadiogenicSourceAgeYrs(double val) { fRadiogenicSourceAgeYrs = val; };
     
     //Geometric calculations
     void ComputeCoordinates();
@@ -200,7 +205,8 @@ private:
           "CRYGenerator", //Samples root file containing list of events
           "SCTGenerator", //Samples root file containing secondaryCaptureTree
           "volumetricSource", //Samples particles from a flat Volumetric with supplied direction and spectrum 
-          "diskSource"
+          "diskSource",
+          "radiogenicSource" //Reads in particles from file containing decay product information
       };
     
     G4String fSourceType = "meiHimeMuonGenerator";
@@ -280,6 +286,15 @@ private:
     G4ThreeVector fDiskSourcePosition = G4ThreeVector(0,0,0);
     G4ThreeVector fDiskSourceAxis = G4ThreeVector(0,0,1);
     G4ThreeVector fDiskSourceDirection = G4ThreeVector(0,0,1);
+    //
+    // Radiogenic Source
+    G4UIdirectory* fRadiogenicSourceDirectory = nullptr;
+    G4UIcmdWithAString* fSetRadiogenicSourceFilenameCmd = nullptr;
+    G4UIcmdWithAString* fSetRadiogenicSourceVolumeNameCmd = nullptr;
+    G4UIcmdWithADouble* fSetRadiogenicSourceAgeYrsCmd = nullptr;
+    G4String fRadiogenicSourceFilename = "";
+    G4String fRadiogenicSourceVolumeName = "";
+    G4double fRadiogenicSourceAgeYrs = 1.*year;
 
 };
 
