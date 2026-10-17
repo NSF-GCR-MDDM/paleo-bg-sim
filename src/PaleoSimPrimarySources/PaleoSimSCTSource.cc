@@ -54,7 +54,6 @@ void PaleoSimSCTSource::InitializeSource() {
                 "Tree 'secondaryCaptureTree' not found in ROOT file.");
   }
   SCTTree->SetBranchAddress("pdgCode",    &sct_pdgcode);
-  SCTTree->SetBranchAddress("pdgCode",    &sct_pdgcode);
   SCTTree->SetBranchAddress("energy",     &sct_energy);
   SCTTree->SetBranchAddress("entry_u",    &sct_u);
   SCTTree->SetBranchAddress("entry_v",    &sct_v);
@@ -70,54 +69,38 @@ void PaleoSimSCTSource::InitializeSource() {
   G4double overburdenZ = randomPosition.z();
 
   //Preload into memory
-  if (SCTBootstrap=="standard") {
-    for (Long64_t i = 0; i < nSCTEntries; ++i) {
-      SCTTree->GetEntry(i); 
-  
-      if (i%1000000 ==0 ) {
-        std::cout<<"On entry "<<i<<" of "<<nSCTEntries<<std::endl;
-      }
-  
-      if (sct_pdgcode->empty()) {
-        continue;
-      }
-      all_sct_pdgcodes.push_back(*sct_pdgcode); // copy vector
-      all_sct_energy.push_back(*sct_energy);
-      all_sct_u.push_back(*sct_u);
-      all_sct_v.push_back(*sct_v);
-      all_sct_w.push_back(*sct_w);
-      all_sct_x.push_back(*sct_x);
-      all_sct_y.push_back(*sct_y);
-    }
-  }
-  else if (SCTBootstrap=="rrs") {
-    for (Long64_t i = 0; i < nSCTEntries; ++i) {
-      SCTTree->GetEntry(i); 
-  
-      if (i%1000000 ==0 ) {
-        std::cout<<"On entry "<<i<<" of "<<nSCTEntries<<std::endl;
-      }
-  
-      if (sct_pdgcode->empty()) {
-        continue;
-      }
+  for (Long64_t i = 0; i < nSCTEntries; ++i) {
+    SCTTree->GetEntry(i); 
 
-      G4ThreeVector entryPosition = G4ThreeVector(sct_x->at(0), sct_y->at(0), overburdenZ);
-      if (!IsWithinTopSurface(entryPosition)) {
-        continue;
-      }
-      all_sct_pdgcodes.push_back(*sct_pdgcode); // copy vector
-      all_sct_energy.push_back(*sct_energy);
-      all_sct_u.push_back(*sct_u);
-      all_sct_v.push_back(*sct_v);
-      all_sct_w.push_back(*sct_w);
-      all_sct_x.push_back(*sct_x);
-      all_sct_y.push_back(*sct_y);
+    if (i%1000000 ==0 ) {
+      std::cout<<"On entry "<<i<<" of "<<nSCTEntries<<std::endl;
     }
+
+    if (sct_pdgcode->empty()) {
+      continue;
+    }
+
+    G4ThreeVector entryPosition = G4ThreeVector(sct_x->at(0), sct_y->at(0), overburdenZ);
+    if (!IsWithinTopSurface(entryPosition)) {
+      continue;
+    }
+
+    if (sct_w->at(0) > 0) { // filter out particles going away from the crystal; temporary fix, 
+      continue;       // later code it directly into the capturing process
+    }
+    
+    all_sct_pdgcodes.push_back(*sct_pdgcode); // copy vector
+    all_sct_energy.push_back(*sct_energy);
+    all_sct_u.push_back(*sct_u);
+    all_sct_v.push_back(*sct_v);
+    all_sct_w.push_back(*sct_w);
+    all_sct_x.push_back(*sct_x);
+    all_sct_y.push_back(*sct_y);
+    
   }
 
   nSCTEntries = all_sct_pdgcodes.size();
-  std::cout << "Actual pool size for sampling after filtering out empty entries: " << nSCTEntries << std::endl;
+  std::cout << "Actual pool size for sampling after filtering out empty/out of geometry entries: " << nSCTEntries << std::endl;
 
   //Get header info
   TTree * headerTree = dynamic_cast<TTree*>(SCTFile->Get("headerTree"));
@@ -130,9 +113,14 @@ void PaleoSimSCTSource::InitializeSource() {
 }
 
 void PaleoSimSCTSource::GeneratePrimaries(G4Event* anEvent) {
+  if (!nSCTEntries) {
+    G4Exception("GenerateSCTPrimaries", "SCTGenerator004", FatalException, 
+                "Failed to read non-empty entries from secondaryCaptureTree.");
+  }
+  
   //Get random event
   Long64_t entry = G4RandFlat::shootInt(nSCTEntries);
-      
+
   sct_pdgcode = &all_sct_pdgcodes.at(entry);
   sct_energy  = &all_sct_energy.at(entry);
   sct_u       = &all_sct_u.at(entry);
@@ -147,6 +135,7 @@ void PaleoSimSCTSource::GeneratePrimaries(G4Event* anEvent) {
     G4double globalX = randomPosition.x() * mm;
     G4double globalY = randomPosition.y() * mm;
     G4double globalZ = randomPosition.z() * mm;
+    
     // To handle local spacing for multiparticle events
     G4double anchorParticleX = sct_x->at(0) * mm;
     G4double anchorParticleY = sct_y->at(0) * mm;
@@ -182,8 +171,10 @@ void PaleoSimSCTSource::GeneratePrimaries(G4Event* anEvent) {
         vertex->SetPrimary(primary);
         anEvent->AddPrimaryVertex(vertex);
       }
-      auto* info = new PaleoSimUserEventInformation();
-      anEvent->SetUserInformation(info);
+
+      // Change/uncomment if you need to pass primary info
+      // auto* info = new PaleoSimUserEventInformation();
+      // anEvent->SetUserInformation(info);
     }
   }
 
@@ -239,8 +230,8 @@ void PaleoSimSCTSource::GeneratePrimaries(G4Event* anEvent) {
         vertex->SetPrimary(primary);
         anEvent->AddPrimaryVertex(vertex);
       }
-      auto* info = new PaleoSimUserEventInformation();
-      anEvent->SetUserInformation(info);
+      // auto* info = new PaleoSimUserEventInformation();
+      // anEvent->SetUserInformation(info);
     }
   }
 }

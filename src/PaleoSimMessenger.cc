@@ -217,6 +217,21 @@ PaleoSimMessenger::PaleoSimMessenger() {
     fSetDiskSourceDirectionCmd = new G4UIcmdWith3Vector("/generator/diskSource/setDiskSourceDirection", this);
     fSetDiskSourceDirectionCmd->SetGuidance("Set direction of particles emergying from the disk");
     fSetDiskSourceDirectionCmd->SetDefaultValue(fDiskSourceDirection);
+
+    //Radiogenic Source Generator
+    fSetRadiogenicSourceFilenameCmd = new G4UIcmdWithAString("/generator/radiogenicSource/setRadiogenicSourceFilename", this);
+    fSetRadiogenicSourceFilenameCmd->SetGuidance("Input name of root file containing decayTree");
+    fSetRadiogenicSourceFilenameCmd->SetParameterName("fRadiogenicSourceFilename", true);
+    fSetRadiogenicSourceFilenameCmd->SetDefaultValue(fRadiogenicSourceFilename);
+    fSetRadiogenicSourceVolumeNameCmd = new G4UIcmdWithAString("/generator/radiogenicSource/setRadiogenicSourceVolumeName", this);
+    fSetRadiogenicSourceVolumeNameCmd->SetGuidance("Set volume to generate particles in, must be defined in geometry file");
+    fSetRadiogenicSourceVolumeNameCmd->SetParameterName("fRadiogenicSourceVolumeName", true);
+    fSetRadiogenicSourceVolumeNameCmd->SetDefaultValue(fRadiogenicSourceVolumeName);
+    fSetRadiogenicSourceAgeYrsCmd = new G4UIcmdWithADouble("/generator/radiogenicSource/setRadiogenicSourceAgeYrs", this);
+    fSetRadiogenicSourceAgeYrsCmd->SetGuidance("Set age of source volume in years");
+    fSetRadiogenicSourceAgeYrsCmd->SetParameterName("fRadiogenicSourceAgeYrs", true);
+    fSetRadiogenicSourceAgeYrsCmd->SetDefaultValue(fRadiogenicSourceAgeYrs);
+
 }
 
 PaleoSimMessenger::~PaleoSimMessenger() {
@@ -281,6 +296,12 @@ PaleoSimMessenger::~PaleoSimMessenger() {
     delete fSetDiskSourceAxisCmd;
     delete fSetDiskSourceDirectionCmd;
     delete fSetOutputFormatCmd;
+    //
+    //Radiogenic Source
+    delete fRadiogenicSourceDirectory;
+    delete fSetRadiogenicSourceAgeYrsCmd;
+    delete fSetRadiogenicSourceFilenameCmd;
+    delete fSetRadiogenicSourceVolumeNameCmd;
 }
 
 void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
@@ -417,11 +438,11 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
     //SCT
     else if (command == fSetSCTFilenameCmd) {
         fSCTFilename = newValue;
-        G4cout << "SCTGenerator filename set to " << newValue << G4endl;
         if (fSCTFilename.empty()) {
             G4Exception("SetNewValue", "EmptySCTFile", FatalException,
                         "/generator/SCTGenerator/setSCTFilename needs an argument");
         }
+        G4cout << "SCTGenerator filename set to " << newValue << G4endl;
     }
     else if (command == fSetSCTBootstrapCmd) {
         fSCTBootstrap = newValue;
@@ -517,6 +538,23 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
     }
     else if (command == fSetDiskSourceDirectionCmd) {
         fDiskSourceDirection = fSetDiskSourceDirectionCmd->GetNew3VectorValue(newValue);
+    }
+    //Radiogenic Source
+    else if (command == fSetRadiogenicSourceFilenameCmd) {
+        fRadiogenicSourceFilename = newValue;
+        if (fRadiogenicSourceFilename.empty()) {
+            G4Exception("SetNewValue", "EmptyRadiogenicSourceFilename", FatalException, 
+                        "/generator/radiogenicSource/setRadiogenicSourceFilename needs an argument");
+        }
+        G4cout << "Radiogenic source filename set in macro to: " << newValue << G4endl;
+    }
+    else if (command == fSetRadiogenicSourceVolumeNameCmd) {
+        fRadiogenicSourceVolumeName = newValue;
+        G4cout << "Radiogenic source volume set in macro to: " << newValue << G4endl;
+    }
+    else if (command == fSetRadiogenicSourceAgeYrsCmd) {
+        fRadiogenicSourceAgeYrs = fSetRadiogenicSourceAgeYrsCmd->GetNewDoubleValue(newValue);
+        G4cout << "Radiogenic source age set in macro to: " << newValue << " years" << G4endl;
     }
 }
 

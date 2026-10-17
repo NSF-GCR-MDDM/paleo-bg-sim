@@ -1,0 +1,23 @@
+#Geometry commands
+/geom/setGeometry /macroFiles/geometry/sct_thrower.geo
+
+#Source commands
+/generator/setSourceType SCTGenerator
+/generator/SCTGenerator/setSCTFilename /data/pspranav/tosvtad/SCT/500m_StandardRock_26x26.root
+/generator/SCTGenerator/setSCTBootstrap standard
+/generator/setNPS 2000000000
+
+#Output commands
+/output/setPrimariesTreeStatus false
+/output/setRecoilTreeVolumes Crystal
+/output/setElectronRecoilTracking false
+/output/setVRMLOutputStatus false
+
+#Verbosity settings
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+
+
+
