@@ -93,7 +93,8 @@ public:
     void PushRecoilEventV(double val) { fRecoilEventV.push_back(val); };
     void PushRecoilEventW(double val) { fRecoilEventW.push_back(val); };
     void PushRecoilEventTime(double val) { fRecoilEventTime.push_back(val); };
-    void PushRecoilEventCode(double val) { fRecoilEventCode.push_back(val); };
+    void PushRecoilEventProcessType(double val) { fRecoilEventProcessType.push_back(val); };
+    void PushRecoilEventProcessSubType(double val) { fRecoilEventProcessSubType.push_back(val); };
     void IncrementNRecoils() { fNRecoils++; };
     void PushRecoilVolumeNumber(int val) { fRecoilVolumeNumbers.push_back(val); };
 
@@ -227,7 +228,8 @@ private:
     std::vector<double> fRecoilEventTime;
     std::vector<double> fRecoilEventX, fRecoilEventY, fRecoilEventZ;
     std::vector<double> fRecoilEventU, fRecoilEventV, fRecoilEventW;
-    std::vector<double> fRecoilEventCode;
+    std::vector<double> fRecoilEventProcessType;
+    std::vector<double> fRecoilEventProcessSubType;
     std::vector<int> fRecoilVolumeNumbers;
 };
 

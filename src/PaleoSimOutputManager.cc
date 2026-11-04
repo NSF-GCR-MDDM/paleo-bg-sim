@@ -253,7 +253,8 @@ void PaleoSimOutputManager::BookRecoil() {
   analysisManager->CreateNtupleDColumn(fRecoilID, "v", fRecoilEventV);
   analysisManager->CreateNtupleDColumn(fRecoilID, "w", fRecoilEventW);
   analysisManager->CreateNtupleDColumn(fRecoilID, "time", fRecoilEventTime);
-  analysisManager->CreateNtupleDColumn(fRecoilID, "code", fRecoilEventCode);
+  analysisManager->CreateNtupleDColumn(fRecoilID, "processType", fRecoilEventProcessType);
+  analysisManager->CreateNtupleDColumn(fRecoilID, "processSubType", fRecoilEventProcessSubType);
   fRecoilNRecoilsCol = analysisManager->CreateNtupleIColumn(fRecoilID, "nRecoils");
   analysisManager->CreateNtupleIColumn(fRecoilID, "volumeNumbers", fRecoilVolumeNumbers);
 
@@ -465,7 +466,8 @@ void PaleoSimOutputManager::ClearRecoilTreeEvent() {
   fRecoilEventV.clear();
   fRecoilEventW.clear();
   fRecoilEventTime.clear();
-  fRecoilEventCode.clear();
+  fRecoilEventProcessType.clear();
+  fRecoilEventProcessSubType.clear();
   fRecoilVolumeNumbers.clear();
 }
 

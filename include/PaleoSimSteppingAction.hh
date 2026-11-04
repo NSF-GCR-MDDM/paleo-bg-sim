@@ -22,7 +22,6 @@ private:
     PaleoSimMessenger& fMessenger;
     PaleoSimOutputManager& fOutputManager;
     
-    G4int MapProcessToMT(G4int processType, G4int processSubType);
     G4VPhysicalVolume* prevVolume = nullptr;
 };
 

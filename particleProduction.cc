@@ -19,31 +19,33 @@
 #include <unistd.h>
 
 /*
-To-do:
-  - Make ROOT random sampling consistent with MT-codes
+To-do before v1.0 release
+  - Make ROOT random sampling consistent with Multithreadung codes:
     ROOT GetRandom() calls use global gRandom (MeiHime TF1, Disk/Volumetric TH1, MUTE TH3): data race with >1 thread
     and not reproducible from G4 seed. Avoid gRandom; make ROOT sampling use an event-local RNG derived from the
     Geant4 event RNG (e.g. per-event TRandom3 seeded from G4UniformRand(), passed to GetRandom(&rng))
-  - Sources write to shared messenger from every worker: SetMeiHimeFluxNormalization, SetCRYAltitude/Latitude/Norm
+  - Some source write to shared messenger from every worker: SetMeiHimeFluxNormalization, SetCRYAltitude/Latitude/Norm
     (SCT covered below). Restrict writes to one thread (e.g. IsMetadataThread helper)
   - GeometryMessenger ComputeMissingCoordinates (lines 409, 412): absolute <-> relative position ignores parent
     rotation; wrong for off-center children of rotated volumes (affects point sampling, IsPointInside, geometry tree)
-  - Check MUTE code
   - headerTree needs updating - include seed, more macro args
-  - Minor: ~PaleoSimPrimaryGeneratorAction doesn't delete fMuteSource; GenerateRandomPointInside gives false fatal
+  - Add run time display at least to end of run, if not estimate of sim time updated every 100(?) events
+  - ~PaleoSimPrimaryGeneratorAction doesn't delete fMuteSource; GenerateRandomPointInside gives false fatal
     error if 1000th try succeeds
-  - Do we care about mu- vs. mu+ in meiHime & mute?
-  - Check G4 MT codes (here MT is NOT Multithreading)
-  - Energy deposition tree instead of lumping EM into recoil tree
-  - Add option for loading CRY file into memory (cmd line?)
-  - Could have a 'cellNum' argument for volumes, and then potentially track multiple cells with recoils, tallies, etc.,
-    or store cellNum -> volumeName map in header tree
-  - Maybe we should append units to output branches
-  - Error checking on parameters for RGBA in geometry file
+  - Check G4 codes, anything more informative to write?
+  - Add option for loading CRY file into memory
   - Remove H5 stuff from CMake or figure out how to reimplement with parallel. I think an external converter is better
     The main reason I wanted h5 support was to READ h5 CRY files if we want random sampling, but we scrapped that.
-  - Update documentation
-  - Long-term goal: refactor messenger class to make less messy
+  - Update documentation  
+  - Append units to output branches
+  - Could have a 'cellNum' argument for volumes, and then potentially track multiple cells with recoils, tallies, etc.,
+    or store cellNum -> volumeName map in header tree
+  - Check MUTE code
+Low-priority projects
+  - Energy deposition tree
+  - Do we care about mu- vs. mu+ in meiHime & mute?
+  - Error checking on parameters for RGBA in geometry file
+  - Refactor messenger class to make less messy
 */
 
 int main(int argc, char** argv) {
