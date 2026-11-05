@@ -203,16 +203,19 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
     /////////////////
     // RECOIL TREE //
     /////////////////
+    //Check whether we are recording nuclear recoils
     if (fMessenger.GetRecoilTreeStatus()) {
 
+        //If the post-step volume is undefined, the particle left the word during the step.
         if (!postStepVolume) return;
 
+        //Check whether the pre-step volume is in one of the recoil volumes we're tracking
         G4String preStepVolumeName = preStepVolume->GetName();
         const auto& recoilVolumes = fMessenger.GetRecoilTreeVolumes();
-
         if (std::find(recoilVolumes.begin(), recoilVolumes.end(), preStepVolumeName) != recoilVolumes.end()) {
             
             /*
+            //Commented for now. Ultimately we want a separate tree to track the recorded energy
             /////////////////
             //Deal with ERs//
             /////////////////
@@ -245,38 +248,53 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
             //Deal with NRs//
             /////////////////
             //NOTE: WARNING: NR recoil is KE of NR, NOT DEPOSITED. These are different if the ion ranges out, but we 
-            //are using TRIM for actual tracks and handling ranging out there.
+            //are using TRIM or some other track-based code for simulating actual tracks and handling ranging out.
+            //Get the secondaries
             auto secondaries = step->GetSecondaryInCurrentStep();
             if (secondaries) {
                 
+                //Get the parent particle, and the volume we were in pre-step
                 G4int parentPdg = track->GetParticleDefinition()->GetPDGEncoding();
                 PaleoSimVolumeDefinition* vol = fMessenger.GetVolumeByName(preStepVolumeName); 
+                //Each track now has a flag that is set to indicate whether we have added it to the recoil tree
+                //If we have, we should not treat the secondaries it generates as new tracks
                 auto* parentInfo = dynamic_cast<PaleoSimTrackInformation*>(track->GetUserInformation());
+                //Set it the PaleoSimTrackInformation exists and the parent was externally transported
                 G4bool parentExternallyTransported = parentInfo && parentInfo->externallyTransported;
 
-                // Now record all secondaries
+                //Loop through secondaries
                 for (const auto& sec : *secondaries) {
 
+                    //Get the PDG code of the secondary. If it's lighter than a neutron, skip it. 
                     G4int pdgCode = sec->GetParticleDefinition()->GetPDGEncoding(); //NR target nucleus
+                    if (std::abs(pdgCode) <= 2112) continue; 
 
-                    if (std::abs(pdgCode) <= 2112) continue; //We only record secondaries whose PDG is greater than a neutron, i.e. Nuclear Recoils
-                    
-                    // Skip EM knock-ons of a recoil already handed to external transport code:
-                    // Assume external transport code simulates that cascade.
-                    // Hadronic and decay products are kept, since most codes do not simulate them.
+                    //If we handed the parent of this particle to an external recoil code, we won't store the secondaries.
+                    //The exception to this is heavy secondaries produced from radioactive decays. We'd like both the 
+                    //recoil of the radioactive nuclei, and the heavy produced secondaries. 
                     const G4VProcess* proc = sec->GetCreatorProcess();
-                    if (parentExternallyTransported && proc && proc->GetProcessType() == fElectromagnetic) continue;
+                    if (parentExternallyTransported) {
+                        if ((proc) && (proc)->GetProcessType() != fDecay) {
+                            auto* info = new PaleoSimTrackInformation();
+                            //We aren't recording this. We set it as externally-tracked to avoid skipping it
+                            //and then tracking tertiaries
+                            info->externallyTransported = true;
+                            const_cast<G4Track*>(sec)->SetUserInformation(info);
+                            continue;
+                        }
+                    }
 
+                    //So decays and PKAs should be set here
                     const G4ThreeVector& position = sec->GetPosition();
                     const G4ThreeVector& momentumDirection = sec->GetMomentumDirection();
                     G4double energy = sec->GetKineticEnergy();
                     G4double NRTime = sec->GetGlobalTime();
             
-                    G4int mtCode = -1;
+                    G4int type = -1;
+                    G4int subtype = -1;
                     if (proc) {
-                        G4int type = proc->GetProcessType();
-                        G4int subtype = proc->GetProcessSubType();
-                        mtCode = MapProcessToMT(type, subtype);
+                        type = proc->GetProcessType();
+                        subtype = proc->GetProcessSubType();
                     }
                     
                     fOutputManager.PushRecoilVolumeNumber(vol->volumeNumber);
@@ -286,7 +304,8 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
                     fOutputManager.PushRecoilEventParentPDG(parentPdg);
                     fOutputManager.PushRecoilEventEnergy(energy);
                     fOutputManager.PushRecoilEventTime(NRTime);
-                    fOutputManager.PushRecoilEventCode(mtCode);
+                    fOutputManager.PushRecoilEventProcessType(type);
+                    fOutputManager.PushRecoilEventProcessSubType(subtype);
                     fOutputManager.PushRecoilEventX(position.x());
                     fOutputManager.PushRecoilEventY(position.y());
                     fOutputManager.PushRecoilEventZ(position.z());
@@ -304,30 +323,4 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
         }
     }
     prevVolume = preStepPoint->GetPhysicalVolume();
-}
-
-//Maps G4 processes to MT codes. Needs checking
-G4int PaleoSimSteppingAction::MapProcessToMT(G4int processType, G4int processSubType)
-{
-    if (processType == 1) { // Transportation
-        return -1;
-    }
-    else if (processType == 2) { // Electromagnetic
-        if (processSubType == 2) return 501;
-        if (processSubType == 3) return 5;
-        if (processSubType == 4) return 502;
-        if (processSubType == 5) return 504;
-        if (processSubType == 10) return 601;
-    }
-    else if (processType == 4) { // Hadronic
-        if (processSubType == 111) return 2;
-        if (processSubType == 121) return 4;
-        if (processSubType == 131) return 102;
-        if (processSubType == 151) return 18;
-    }
-    else if (processType == 6) { // Decay
-        return 0;
-    }
-
-    return -1;
 }
