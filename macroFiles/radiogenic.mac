@@ -1,0 +1,21 @@
+#Geometry commands
+/geom/setGeometry /macroFiles/geometry/radiogenic.geo
+
+#Source commands
+/generator/setSourceType radiogenicSource
+/generator/setNPS 10000
+/generator/radiogenicSource/setRadiogenicSourceFilename /home/pspranav/paleo-rg-gen/decayChainGenerator/outputFiles/u238_1mil.root
+/generator/radiogenicSource/setRadiogenicSourceVolumeName Crystal
+/generator/radiogenicSource/setRadiogenicSourceAgeYrs 10000000
+
+#Output commands
+/output/setPrimariesTreeStatus true
+/output/setRecoilTreeVolumes Crystal
+/output/setVRMLOutputStatus false
+/output/setOutputFormat root
+
+#Verbosity settings
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0

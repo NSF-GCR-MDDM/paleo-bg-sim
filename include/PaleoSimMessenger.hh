@@ -205,8 +205,8 @@ private:
           "CRYGenerator", //Samples root file containing list of events
           "SCTGenerator", //Samples root file containing secondaryCaptureTree
           "volumetricSource", //Samples particles from a flat Volumetric with supplied direction and spectrum 
-          "diskSource",
-          "radiogenicSource" //Reads in particles from file containing decay product information
+          "radiogenicSource", //Reads in particles from file containing decay product information
+          "diskSource"
       };
     
     G4String fSourceType = "meiHimeMuonGenerator";

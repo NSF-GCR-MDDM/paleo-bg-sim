@@ -97,6 +97,7 @@ public:
     void PushRecoilEventProcessSubType(double val) { fRecoilEventProcessSubType.push_back(val); };
     void IncrementNRecoils() { fNRecoils++; };
     void PushRecoilVolumeNumber(int val) { fRecoilVolumeNumbers.push_back(val); };
+    void PushRecoilClusterSize(int val) { fRecoilClusterSize = val; };
 
     //Writing output
     void WriteVRMLGeometry(const G4String& vrmlFilename);
@@ -175,6 +176,7 @@ private:
     //Recoil scalar column IDs
     G4int fRecoilEventIDCol = -1;
     G4int fRecoilNRecoilsCol = -1;
+    G4int fRecoilClusterSizeCol = -1;
 
     //Geometry ntuple buffers
     std::vector<double> fGeomXs;
@@ -231,6 +233,7 @@ private:
     std::vector<double> fRecoilEventProcessType;
     std::vector<double> fRecoilEventProcessSubType;
     std::vector<int> fRecoilVolumeNumbers;
+    int fRecoilClusterSize = 0;
 };
 
 #endif

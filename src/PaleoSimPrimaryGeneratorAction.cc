@@ -47,7 +47,6 @@ PaleoSimPrimaryGeneratorAction::PaleoSimPrimaryGeneratorAction(PaleoSimMessenger
     fCrySource = new PaleoSimCrySource(fMessenger);
     fCrySource->InitializeSource();
   }
-  
   else if (sourceType == "SCTGenerator") {
     fSCTSource = new PaleoSimSCTSource(fMessenger);
     fSCTSource->InitializeSource();
@@ -60,6 +59,10 @@ PaleoSimPrimaryGeneratorAction::PaleoSimPrimaryGeneratorAction(PaleoSimMessenger
     fDiskSource = new PaleoSimDiskSource(fMessenger);
     fDiskSource->InitializeSource();
   }
+  else if (sourceType == "radiogenicSource") {
+    fRadiogenicSource = new PaleoSimRadiogenicSource(fMessenger);
+    fRadiogenicSource->InitializeSource();
+  }
   else {
     G4Exception("PaleoSimPrimaryGeneratorAction::PaleoSimPrimaryGeneratorAction", "001", FatalException,
                 ("Source not valid: " + sourceType).c_str());
@@ -68,10 +71,12 @@ PaleoSimPrimaryGeneratorAction::PaleoSimPrimaryGeneratorAction(PaleoSimMessenger
 
 PaleoSimPrimaryGeneratorAction::~PaleoSimPrimaryGeneratorAction() {
     delete fMeiHimeSource;
+    delete fMuteSource;
     delete fVolumetricSource;
     delete fDiskSource;
     delete fCrySource;
     delete fSCTSource;
+    delete fRadiogenicSource;
 }
 
 void PaleoSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
@@ -102,6 +107,10 @@ void PaleoSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
   //Disk source
   else if (sourceType == "diskSource") {  
     fDiskSource->GeneratePrimaries(anEvent);
+  }
+  //Radiogenic Source
+  else if (sourceType == "radiogenicSource") {
+    fRadiogenicSource->GeneratePrimaries(anEvent);
   }
   else {
     G4Exception("PaleoSimPrimaryGeneratorAction::GeneratePrimaries", "GeneratePrimaries001", FatalException,

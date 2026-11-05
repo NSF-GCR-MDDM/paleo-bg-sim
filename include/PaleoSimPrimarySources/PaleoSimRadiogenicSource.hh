@@ -18,27 +18,30 @@ class PaleoSimRadiogenicSource : public PaleoSimPrimarySource {
         TFile* decayChainFile = nullptr;
         bool decayChainFileLoaded = false;
         TTree* decayTree = nullptr;
-        int crystalTime = 0;
-        int nDecayChainEntries = 0;
-        int decayChainEventIdx = 0;
+        double crystalAge = 0;
+        Long64_t currentTreeEntry = 0;
+        Long64_t nDecayChainEntries = 0;
+        int recoilsInCluster = 0;
     
-        std::vector<int>* product_pdgcode = nullptr;
-        std::vector<float>* product_energy = nullptr;
-        std::vector<float>* product_u = nullptr;
-        std::vector<float>* product_v = nullptr;
-        std::vector<float>* product_w = nullptr;
-        std::vector<float>* product_t = nullptr;
-        std::vector<float>* cry_y = nullptr;
-        
-        std::vector<std::vector<int>> all_cry_pdgcodes;
-        std::vector<std::vector<float>> all_cry_energy;
-        std::vector<std::vector<float>> all_cry_u;
-        std::vector<std::vector<float>> all_cry_v;
-        std::vector<std::vector<float>> all_cry_w;
-        std::vector<std::vector<float>> all_cry_x;
-        std::vector<std::vector<float>> all_cry_y;  
-    
-        double overburden_z=0;
+        // ROOT Tree Branch scalar buffers 
+        Int_t b_event_id = 0;
+        Int_t b_pdg = 0;
+        Double_t b_KE_MeV = 0.0;
+        Double_t b_u = 0.0;
+        Double_t b_v = 0.0;
+        Double_t b_w = 0.0;
+        Double_t b_time_sec = 0.0;
+
+        // Local struct to assemble one complete decay cascade
+        struct DecayParticle {
+            Int_t pdg;
+            Double_t KE_MeV;
+            Double_t u, v, w;
+            Double_t time_sec;
+        };
+
+        PaleoSimVolumeDefinition* fSourceVolumeDefinition = nullptr;
+
     };
     
 #endif

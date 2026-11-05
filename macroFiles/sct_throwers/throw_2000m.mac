@@ -5,12 +5,11 @@
 /generator/setSourceType SCTGenerator
 /generator/SCTGenerator/setSCTFilename /data/pspranav/tosvtad/SCT/2000m_StandardRock_26x26.root
 /generator/SCTGenerator/setSCTBootstrap standard
-/generator/setNPS 2000000000
+/generator/setNPS 100000000
 
 #Output commands
 /output/setPrimariesTreeStatus false
 /output/setRecoilTreeVolumes Crystal
-/output/setElectronRecoilTracking false
 /output/setVRMLOutputStatus false
 
 #Verbosity settings

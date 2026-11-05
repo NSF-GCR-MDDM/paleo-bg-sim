@@ -171,10 +171,12 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
                 // Get volume names and check if we need to capture this particle
                 const G4String& prevVolName = preStepVolume->GetName();
                 const G4String& curVolName = postStepVolume->GetName();
+                G4ThreeVector momentumDirection = preStepPoint->GetMomentumDirection();
 
                 // TODO: Currently using two volumes to define boundary, need to modify to accommodate capturing at the top surface of any volume
                 if ((std::find(captureVolumes.begin(), captureVolumes.end(), prevVolName) != captureVolumes.end()) &&
-                    (std::find(captureVolumes.begin(), captureVolumes.end(), curVolName) != captureVolumes.end())) {
+                    (std::find(captureVolumes.begin(), captureVolumes.end(), curVolName) != captureVolumes.end()) &&
+                    (momentumDirection.z() < 0)) {
                         // Push eventID
                         fOutputManager.PushSecondaryCaptureEventID(eventID);
                         fOutputManager.PushSecondaryCaptureEventEntryPDG(particlePDG);
@@ -187,7 +189,6 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
                         fOutputManager.PushSecondaryCaptureEventEntryY(position.y());
                         fOutputManager.PushSecondaryCaptureEventEntryZ(position.z());
 
-                        G4ThreeVector momentumDirection = preStepPoint->GetMomentumDirection();
                         fOutputManager.PushSecondaryCaptureEventEntryU(momentumDirection.x());
                         fOutputManager.PushSecondaryCaptureEventEntryV(momentumDirection.y());
                         fOutputManager.PushSecondaryCaptureEventEntryW(momentumDirection.z());
@@ -289,6 +290,10 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
                     const G4ThreeVector& momentumDirection = sec->GetMomentumDirection();
                     G4double energy = sec->GetKineticEnergy();
                     G4double NRTime = sec->GetGlobalTime();
+                    G4int recoilClusterSize = 1;
+                    if (fMessenger.GetSourceType() == "radiogenicSource" && info) {
+                        recoilClusterSize = info->recoilsInCluster;
+                    }
             
                     G4int type = -1;
                     G4int subtype = -1;
@@ -313,6 +318,7 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
                     fOutputManager.PushRecoilEventV(momentumDirection.y());
                     fOutputManager.PushRecoilEventW(momentumDirection.z());
                     fOutputManager.IncrementNRecoils();
+                    fOutputManager.PushRecoilClusterSize(recoilClusterSize);
 
                     // Mark this recoil as handed to external transporter
                     auto* info = new PaleoSimTrackInformation();

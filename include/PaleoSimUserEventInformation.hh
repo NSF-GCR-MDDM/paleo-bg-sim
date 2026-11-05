@@ -26,6 +26,9 @@ class PaleoSimUserEventInformation : public G4VUserEventInformation {
       G4ThreeVector CRYCorePosition;
       G4double CRYCoreTheta,CRYCorePhi;
       G4double CRYTotalEnergy;
+      //
+      // Radiogenic Source
+      G4int recoilsInCluster;
       
       void Print() const override {};
   };

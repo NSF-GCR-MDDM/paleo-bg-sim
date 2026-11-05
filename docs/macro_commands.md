@@ -2,7 +2,7 @@
 
 Automatically generated from PaleoSimMessenger.hh and PaleoSimMessenger.cc with genMacroDoc.py
 
-Last generated on: 2026-06-25 17:13
+Last generated on: 2026-10-25 21:58
 
 ## /geom/
 
@@ -13,7 +13,7 @@ Last generated on: 2026-06-25 17:13
 ## /output/
 
 - **/output/setOutputFormat** (optional) — `fOutputFormat`
-  - Description: Set output format: 'root' or 'h5'
+  - Description: Set output format: 'root'
   - Default: `fmt`
 
 - **/output/setPrimariesTreeStatus** (optional) — `fPrimariesTreeStatus`
@@ -162,4 +162,16 @@ Last generated on: 2026-06-25 17:13
 - **/generator/diskSource/setDiskSourceDirection** (required) — ``
   - Description: Set direction of particles emergying from the disk
   - Default: `val;}`
+
+- **/generator/radiogenicSource/setRadiogenicSourceFilename** (optional) — `fRadiogenicSourceFilename`
+  - Description: Input name of root file containing decayTree
+  - Default: `""`
+
+- **/generator/radiogenicSource/setRadiogenicSourceVolumeName** (optional) — `fRadiogenicSourceVolumeName`
+  - Description: Set volume to generate particles in, must be defined in geometry file
+  - Default: `val; }`
+
+- **/generator/radiogenicSource/setRadiogenicSourceAgeYrs** (optional) — `fRadiogenicSourceAgeYrs`
+  - Description: Set age of source volume in years
+  - Default: `val; }`
 

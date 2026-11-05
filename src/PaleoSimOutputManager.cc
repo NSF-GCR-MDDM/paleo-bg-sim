@@ -257,6 +257,7 @@ void PaleoSimOutputManager::BookRecoil() {
   analysisManager->CreateNtupleDColumn(fRecoilID, "processSubType", fRecoilEventProcessSubType);
   fRecoilNRecoilsCol = analysisManager->CreateNtupleIColumn(fRecoilID, "nRecoils");
   analysisManager->CreateNtupleIColumn(fRecoilID, "volumeNumbers", fRecoilVolumeNumbers);
+  fRecoilClusterSizeCol = analysisManager->CreateNtupleIColumn(fRecoilID, "clusterSize");
 
   analysisManager->FinishNtuple(fRecoilID);
 }
@@ -394,6 +395,7 @@ void PaleoSimOutputManager::FillRecoilTreeEvent() {
 
   analysisManager->FillNtupleIColumn(fRecoilID, fRecoilEventIDCol, fRecoilEventID);
   analysisManager->FillNtupleIColumn(fRecoilID, fRecoilNRecoilsCol, fNRecoils);
+  analysisManager->FillNtupleIColumn(fRecoilID, fRecoilClusterSizeCol, fRecoilClusterSize);
 
   analysisManager->AddNtupleRow(fRecoilID);
 }

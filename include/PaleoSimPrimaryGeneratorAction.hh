@@ -23,6 +23,7 @@
 #include "PaleoSimPrimarySources/PaleoSimCrySource.hh"
 #include "PaleoSimPrimarySources/PaleoSimSCTSource.hh"
 #include "PaleoSimPrimarySources/PaleoSimMuteSource.hh"
+#include "PaleoSimPrimarySources/PaleoSimRadiogenicSource.hh"
 
 class PaleoSimPrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction {
 public:
@@ -50,6 +51,7 @@ private:
     PaleoSimCrySource* fCrySource = nullptr;
     PaleoSimSCTSource* fSCTSource = nullptr;
     PaleoSimMuteSource* fMuteSource = nullptr;
+    PaleoSimRadiogenicSource* fRadiogenicSource = nullptr;
 };
 
 #endif
