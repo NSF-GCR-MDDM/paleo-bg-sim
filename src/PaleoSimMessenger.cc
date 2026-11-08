@@ -232,6 +232,16 @@ PaleoSimMessenger::PaleoSimMessenger() {
     fSetRadiogenicSourceAgeYrsCmd->SetParameterName("fRadiogenicSourceAgeYrs", true);
     fSetRadiogenicSourceAgeYrsCmd->SetDefaultValue(fRadiogenicSourceAgeYrs);
 
+    //Radioactive Parent Source
+    fSetRadioactiveParentSourceVolumeNameCmd = new G4UIcmdWithAString("/generator/radioactiveParentSource/setRadioactiveParentSourceVolumeName", this);
+    fSetRadioactiveParentSourceVolumeNameCmd->SetGuidance("Set volume to inject particles into, must be defined in geometry file");
+    fSetRadioactiveParentSourceVolumeNameCmd->SetParameterName("fRadioactiveParentSourceVolumeName", true);
+    fSetRadioactiveParentSourceVolumeNameCmd->SetDefaultValue(fRadioactiveParentSourceVolumeName);
+    fSetRadioactiveParentSourceIsotopeCmd = new G4UIcmdWithAString("/generator/radioactiveParentSource/setRadioactiveParentSourceIsotope", this);
+    fSetRadioactiveParentSourceIsotopeCmd->SetGuidance("Input the atomic mass of the isotope appended to the chemical symbol");
+    fSetRadioactiveParentSourceIsotopeCmd->SetParameterName("fRadioactiveParentSourceIsotope", true);
+    fSetRadioactiveParentSourceIsotopeCmd->SetDefaultValue(fRadioactiveParentSourceIsotope);
+
 }
 
 PaleoSimMessenger::~PaleoSimMessenger() {
@@ -302,6 +312,11 @@ PaleoSimMessenger::~PaleoSimMessenger() {
     delete fSetRadiogenicSourceAgeYrsCmd;
     delete fSetRadiogenicSourceFilenameCmd;
     delete fSetRadiogenicSourceVolumeNameCmd;
+    //
+    //Radioactive Parent Source
+    delete fRadioactiveParentSourceDirectory;
+    delete fSetRadioactiveParentSourceVolumeNameCmd;
+    delete fSetRadioactiveParentSourceIsotopeCmd;
 }
 
 void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
@@ -555,6 +570,15 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
     else if (command == fSetRadiogenicSourceAgeYrsCmd) {
         fRadiogenicSourceAgeYrs = fSetRadiogenicSourceAgeYrsCmd->GetNewDoubleValue(newValue);
         G4cout << "Radiogenic source age set in macro to: " << newValue << " years" << G4endl;
+    }
+    // Radioactive Parent Source
+    else if (command == fSetRadioactiveParentSourceVolumeNameCmd) {
+        fRadioactiveParentSourceVolumeName = newValue;
+        G4cout << "Radioactive Parent source volume set in macro to: " << newValue << G4endl;
+    }
+    else if (command == fSetRadioactiveParentSourceIsotopeCmd) {
+        fRadioactiveParentSourceIsotope = newValue;
+        G4cout << "Radioactive Parent isotope set in macro to : " << newValue << G4endl;
     }
 }
 

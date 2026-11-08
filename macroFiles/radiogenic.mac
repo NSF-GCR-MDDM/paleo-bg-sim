@@ -6,7 +6,7 @@
 /generator/setNPS 10000
 /generator/radiogenicSource/setRadiogenicSourceFilename /home/pspranav/paleo-rg-gen/decayChainGenerator/outputFiles/u238_1mil.root
 /generator/radiogenicSource/setRadiogenicSourceVolumeName Crystal
-/generator/radiogenicSource/setRadiogenicSourceAgeYrs 10000000
+/generator/radiogenicSource/setRadiogenicSourceAgeYrs 100000000
 
 #Output commands
 /output/setPrimariesTreeStatus true

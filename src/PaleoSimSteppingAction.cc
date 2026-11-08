@@ -250,6 +250,44 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
             /////////////////
             //NOTE: WARNING: NR recoil is KE of NR, NOT DEPOSITED. These are different if the ion ranges out, but we 
             //are using TRIM or some other track-based code for simulating actual tracks and handling ranging out.
+            //Record primaries as recoiling daughters if radiogenicSource is used
+            if (fMessenger.GetSourceType() == "radiogenicSource") {
+                G4int parentPdg = track->GetParticleDefinition()->GetPDGEncoding();
+                
+                // We only need to record the first injected primary
+                if (track->GetParentID() == 0 && track->GetCurrentStepNumber() == 1 && parentPdg >= 1000010010) {
+                    G4String trackVolumeName = track->GetVolume()->GetName();
+                    PaleoSimVolumeDefinition* vol = fMessenger.GetVolumeByName(trackVolumeName); 
+
+                    const G4ThreeVector& position = preStepPoint->GetPosition();
+                    const G4ThreeVector& momentumDirection = preStepPoint->GetMomentumDirection();
+                    G4double energy = preStepPoint->GetKineticEnergy();
+                    G4double NRTime = preStepPoint->GetGlobalTime();
+                    G4int recoilClusterSize = info->recoilsInCluster;
+
+                    fOutputManager.PushRecoilVolumeNumber(vol->volumeNumber);
+                    fOutputManager.PushRecoilEventID(eventID);
+                    fOutputManager.PushRecoilEventPDG(parentPdg);
+                    fOutputManager.PushRecoilEventParentPDG(0);
+                    fOutputManager.PushRecoilEventEnergy(energy);
+                    fOutputManager.PushRecoilEventTime(NRTime);
+                    fOutputManager.PushRecoilEventX(position.x());
+                    fOutputManager.PushRecoilEventY(position.y());
+                    fOutputManager.PushRecoilEventZ(position.z());
+                    fOutputManager.PushRecoilEventU(momentumDirection.x());
+                    fOutputManager.PushRecoilEventV(momentumDirection.y());
+                    fOutputManager.PushRecoilEventW(momentumDirection.z());
+                    fOutputManager.IncrementNRecoils();
+                    fOutputManager.PushRecoilClusterSize(recoilClusterSize);
+
+                    // Mark this recoil as handed to external transporter
+                    auto* info = new PaleoSimTrackInformation();
+                    info->externallyTransported = true;
+                    const_cast<G4Track*>(track)->SetUserInformation(info);
+                }
+
+            }
+
             //Get the secondaries
             auto secondaries = step->GetSecondaryInCurrentStep();
             if (secondaries) {

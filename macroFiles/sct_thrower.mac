@@ -3,7 +3,7 @@
 
 #Source commands
 /generator/setSourceType SCTGenerator
-/generator/SCTGenerator/setSCTFilename /data/pspranav/tosvtad/SCT/10000m_StandardRock_26x26.root
+/generator/SCTGenerator/setSCTFilename /data/pspranav/tosvtad/SCT/8000m_StandardRock_26x26.root
 /generator/SCTGenerator/setSCTBootstrap standard
 /generator/setNPS 10000
 

@@ -123,6 +123,12 @@ public:
     void SetRadiogenicSourceVolumeName(G4String val) { fRadiogenicSourceVolumeName = val; }; 
     G4double GetRadiogenicSourceAgeYrs() const { return fRadiogenicSourceAgeYrs; };
     void SetRadiogenicSourceAgeYrs(double val) { fRadiogenicSourceAgeYrs = val; };
+    // Radioactive Parent Source
+    G4String GetRadioactiveParentSourceVolumeName() const { return fRadioactiveParentSourceVolumeName; };
+    G4String GetRadioactiveParentSourceIsotope() const { return fRadioactiveParentSourceIsotope; };
+    void SetRadioactiveParentSourceVolumeName(G4String val) { fRadioactiveParentSourceVolumeName = val; };
+    void SetRadioactiveParentSourceIsotope(G4String val) { fRadioactiveParentSourceIsotope = val; };
+    
     
     //Geometric calculations
     void ComputeCoordinates();
@@ -206,6 +212,7 @@ private:
           "SCTGenerator", //Samples root file containing secondaryCaptureTree
           "volumetricSource", //Samples particles from a flat Volumetric with supplied direction and spectrum 
           "radiogenicSource", //Reads in particles from file containing decay product information
+          "radioactiveParentSource", //Injects 0 KE parents into a volume and handles decays
           "diskSource"
       };
     
@@ -295,6 +302,13 @@ private:
     G4String fRadiogenicSourceFilename = "";
     G4String fRadiogenicSourceVolumeName = "";
     G4double fRadiogenicSourceAgeYrs = 1.*year;
+    //
+    // Radioactive Parent Source
+    G4UIdirectory* fRadioactiveParentSourceDirectory = nullptr;
+    G4UIcmdWithAString* fSetRadioactiveParentSourceVolumeNameCmd = nullptr;
+    G4UIcmdWithAString* fSetRadioactiveParentSourceIsotopeCmd = nullptr;
+    G4String fRadioactiveParentSourceVolumeName = "";
+    G4String fRadioactiveParentSourceIsotope = "u238";
 
 };
 

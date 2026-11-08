@@ -63,6 +63,10 @@ PaleoSimPrimaryGeneratorAction::PaleoSimPrimaryGeneratorAction(PaleoSimMessenger
     fRadiogenicSource = new PaleoSimRadiogenicSource(fMessenger);
     fRadiogenicSource->InitializeSource();
   }
+  else if (sourceType == "radioactiveParentSource") {
+    fRadioactiveParentSource = new PaleoSimRadioactiveParentSource(fMessenger);
+    fRadioactiveParentSource->InitializeSource();
+  }
   else {
     G4Exception("PaleoSimPrimaryGeneratorAction::PaleoSimPrimaryGeneratorAction", "001", FatalException,
                 ("Source not valid: " + sourceType).c_str());
@@ -77,6 +81,7 @@ PaleoSimPrimaryGeneratorAction::~PaleoSimPrimaryGeneratorAction() {
     delete fCrySource;
     delete fSCTSource;
     delete fRadiogenicSource;
+    delete fRadioactiveParentSource;
 }
 
 void PaleoSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
@@ -111,6 +116,10 @@ void PaleoSimPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
   //Radiogenic Source
   else if (sourceType == "radiogenicSource") {
     fRadiogenicSource->GeneratePrimaries(anEvent);
+  }
+  //Radioactive Parent Source
+  else if (sourceType == "radioactiveParentSource") {
+    fRadioactiveParentSource->GeneratePrimaries(anEvent);
   }
   else {
     G4Exception("PaleoSimPrimaryGeneratorAction::GeneratePrimaries", "GeneratePrimaries001", FatalException,
