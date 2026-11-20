@@ -32,7 +32,6 @@ To-do before v1.0 release
   - Add run time display at least to end of run, if not estimate of sim time updated every 100(?) events
   - ~PaleoSimPrimaryGeneratorAction doesn't delete fMuteSource; GenerateRandomPointInside gives false fatal
     error if 1000th try succeeds
-  - Check G4 codes, anything more informative to write?
   - Add option for loading CRY file into memory
   - Remove H5 stuff from CMake or figure out how to reimplement with parallel. I think an external converter is better
     The main reason I wanted h5 support was to READ h5 CRY files if we want random sampling, but we scrapped that.
@@ -41,6 +40,7 @@ To-do before v1.0 release
   - Could have a 'cellNum' argument for volumes, and then potentially track multiple cells with recoils, tallies, etc.,
     or store cellNum -> volumeName map in header tree
   - Check MUTE code
+  - Tagged release!
 Low-priority projects
   - Energy deposition tree
   - Do we care about mu- vs. mu+ in meiHime & mute?

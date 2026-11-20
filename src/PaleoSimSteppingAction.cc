@@ -265,8 +265,9 @@ void PaleoSimSteppingAction::UserSteppingAction(const G4Step* step) {
                 //Loop through secondaries
                 for (const auto& sec : *secondaries) {
 
-                    //Get the PDG code of the secondary. If it's lighter than a neutron, skip it. 
+                    //Get the PDG code of the secondary. If it's abs. value is less than/equal to a neutron, skip it. 
                     G4int pdgCode = sec->GetParticleDefinition()->GetPDGEncoding(); //NR target nucleus
+
                     if (std::abs(pdgCode) <= 2112) continue; 
 
                     //If we handed the parent of this particle to an external recoil code, we won't store the secondaries.
