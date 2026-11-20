@@ -52,13 +52,13 @@ void PaleoSimMeiHimeSource::GeneratePrimaries(G4Event* anEvent) {
 
   G4ParticleDefinition* muonDef = G4ParticleTable::GetParticleTable()->FindParticle("mu-");
 
-  G4double theta = fMuonThetaDist->GetRandom(&fRootRNG)
+  G4double theta = fMuonThetaDist->GetRandom(&fRootRNG);
   G4double phi = (2.0 * M_PI - 0.001) * G4UniformRand();
 
   G4double h_km = h0_km / std::cos(theta);
   fMuonEnergyDist->SetParameter(1, h_km);
 
-  G4double E_GeV = fMuonEnergyDist->GetRandom(&fRootRNG)
+  G4double E_GeV = fMuonEnergyDist->GetRandom(&fRootRNG);
   G4double Ekin = E_GeV * GeV;
   G4double mass = muonDef->GetPDGMass();
   G4double Etot = Ekin + mass;
