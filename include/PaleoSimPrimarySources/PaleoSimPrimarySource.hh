@@ -4,7 +4,7 @@
 #include "G4ThreeVector.hh"
 #include "Randomize.hh"
 #include "G4PhysicalConstants.hh"
-
+#include "TRandom3.h"
 #include "PaleoSimMessenger.hh"
 
 class G4Event;
@@ -25,6 +25,10 @@ protected:
   G4bool IsWithinTopSurface(const G4ThreeVector& point);
   void RandomReflectionRotation(G4double& X, G4double& Y, int randNum);
   void LocalSquareSmear(G4double& X, G4double& Y, const int nps);
+
+  //Thread-safe random sampling
+  void ReseedRootRNG();
+  TRandom3 fRootRNG;
 };
 
 #endif

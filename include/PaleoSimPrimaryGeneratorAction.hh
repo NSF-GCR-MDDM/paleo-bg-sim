@@ -17,12 +17,12 @@
 #include "PaleoSimMessenger.hh"
 #include "PaleoSimOutputManager.hh"
 #include "PaleoSimVolumeDefinition.hh"
-#include "PaleoSimPrimarySources/PaleoSimDiskSource.hh"
 #include "PaleoSimPrimarySources/PaleoSimVolumetricSource.hh"
 #include "PaleoSimPrimarySources/PaleoSimMeiHimeSource.hh"
 #include "PaleoSimPrimarySources/PaleoSimCrySource.hh"
 #include "PaleoSimPrimarySources/PaleoSimSCTSource.hh"
 #include "PaleoSimPrimarySources/PaleoSimMuteSource.hh"
+#include "PaleoSimPrimarySources/PaleoSimBeamSource.hh"
 
 class PaleoSimPrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction {
 public:
@@ -37,14 +37,7 @@ private:
     PaleoSimMessenger& fMessenger;
     PaleoSimOutputManager& fManager;
 
-    //Mute generator
-    //
-    //CRY generator
-    //
-    //Captured Particle(secondaryCaptureTree) Generator
-    //
-    //Volumetric source generator
-    PaleoSimDiskSource* fDiskSource = nullptr;
+    PaleoSimBeamSource* fBeamSource = nullptr;
     PaleoSimVolumetricSource* fVolumetricSource = nullptr;
     PaleoSimMeiHimeSource* fMeiHimeSource = nullptr;
     PaleoSimCrySource* fCrySource = nullptr;

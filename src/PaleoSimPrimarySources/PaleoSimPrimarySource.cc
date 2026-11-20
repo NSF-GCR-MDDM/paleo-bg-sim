@@ -19,8 +19,16 @@ void PaleoSimPrimarySource::InitializeSource() {
 void PaleoSimPrimarySource::GeneratePrimaries(G4Event*) {
 }
 
+// Reseed the per-thread ROOT RNG from Geant4's random number generator. 
+// Call at the start of each GeneratePrimaries()
+// so ROOT sampling is thread-safe and reproducible from the Geant4 seed.
+void PaleoSimPrimarySource::ReseedRootRNG() {
+  UInt_t seed = static_cast<UInt_t>(G4UniformRand() * (std::pow(2.,32) - 2.)) + 1;
+  fRootRNG.SetSeed(seed);
+}
 
-//Sample point on disk via MC.
+
+//Sample point on disk.
 G4ThreeVector PaleoSimPrimarySource::SamplePointOnDisk(double radius, const G4ThreeVector& center, const G4ThreeVector& axis) {
     G4ThreeVector n = axis.unit();
     //If almost completely oriented along z-axis, use z-axis

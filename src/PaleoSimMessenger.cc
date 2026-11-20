@@ -172,51 +172,52 @@ PaleoSimMessenger::PaleoSimMessenger() {
     fSetVolumetricSourceMonoEnergyCmd->SetDefaultUnit("MeV");
     fSetVolumetricSourceMonoEnergyCmd->SetDefaultValue(fVolumetricSourceMonoEnergy);
 
-    //Disk Source Generator
-    fDiskSourceGeneratorDirectory = new G4UIdirectory("/generator/diskSource/");
-    fDiskSourceGeneratorDirectory->SetGuidance("Controls for Disk Source Generator");
+    //Beam Source Generator
+    fBeamSourceGeneratorDirectory = new G4UIdirectory("/generator/beamSource/");
+    fBeamSourceGeneratorDirectory->SetGuidance("Controls for Beam Source Generator");
     //
-    fSetDiskSourcePDGCodeCmd = new G4UIcmdWithAnInteger("/generator/diskSource/pdgCode",this);
-    fSetDiskSourcePDGCodeCmd->SetGuidance("Input PDG code of particle to throw");
-    fSetDiskSourcePDGCodeCmd->SetParameterName("fDiskSourcePDGCode", true);
-    fSetDiskSourcePDGCodeCmd->SetDefaultValue(fDiskSourcePDGCode);
-    fSetDiskSourceTypeCmd = new G4UIcmdWithAString("/generator/diskSource/setDiskSourceType",this);
-    fSetDiskSourceTypeCmd->SetGuidance("Set disk source type: 'mono' or 'hist'");
-    fSetDiskSourceTypeCmd->SetParameterName("fDiskSourceType", true);
-    fSetDiskSourceTypeCmd->SetDefaultValue(fDiskSourceType);
+    fSetBeamSourcePDGCodeCmd = new G4UIcmdWithAnInteger("/generator/beamSource/setPDGCode",this);
+    fSetBeamSourcePDGCodeCmd->SetGuidance("Input PDG code of particle to throw");
+    fSetBeamSourcePDGCodeCmd->SetParameterName("fBeamSourcePDGCode", true);
+    fSetBeamSourcePDGCodeCmd->SetDefaultValue(fBeamSourcePDGCode);
+    fSetBeamSourceTypeCmd = new G4UIcmdWithAString("/generator/beamSource/setSpectrumType",this);
+    fSetBeamSourceTypeCmd->SetGuidance("Set beam source spectrum type: 'mono' or 'hist' (must be 'hist' for hist2D direction type)");
+    fSetBeamSourceTypeCmd->SetParameterName("fBeamSourceType", true);
+    fSetBeamSourceTypeCmd->SetDefaultValue(fBeamSourceType);
+    fSetBeamSourceDirectionTypeCmd = new G4UIcmdWithAString("/generator/beamSource/setDirectionType",this);
+    fSetBeamSourceDirectionTypeCmd->SetGuidance("Set direction sampling: 'fixed', 'isotropic', 'cosine', or 'hist2D'");
+    fSetBeamSourceDirectionTypeCmd->SetParameterName("fBeamSourceDirectionType", true);
+    fSetBeamSourceDirectionTypeCmd->SetDefaultValue(fBeamSourceDirectionType);
     //Root 'hist'
-    fSetDiskSourceSpectrumFilenameCmd = new G4UIcmdWithAString("/generator/diskSource/setDiskSourceSpectrumFilename",this);
-    fSetDiskSourceSpectrumFilenameCmd->SetGuidance("Input name of root file with spectrum TH1D or TH1F and energy in MeV");
-    fSetDiskSourceSpectrumFilenameCmd->SetParameterName("fDiskSourceSpectrumFilename", true);
-    fSetDiskSourceSpectrumFilenameCmd->SetDefaultValue(fDiskSourceSpectrumFilename);
-    fSetDiskSourceSpectrumHistNameCmd = new G4UIcmdWithAString("/generator/diskSource/setDiskSourceSpectrumHistName",this);
-    fSetDiskSourceSpectrumHistNameCmd->SetGuidance("Input name of TH1D or TH1F with energy in MeV!");
-    fSetDiskSourceSpectrumHistNameCmd->SetParameterName("fDiskSourceSpectrumHistName", true);
-    fSetDiskSourceSpectrumHistNameCmd->SetDefaultValue(fDiskSourceSpectrumHistName);
+    fSetBeamSourceSpectrumFilenameCmd = new G4UIcmdWithAString("/generator/beamSource/setSpectrumFilename",this);
+    fSetBeamSourceSpectrumFilenameCmd->SetGuidance("Input name of root file with TH1 (energy in MeV) or TH2 (x = cos(theta), y = energy in MeV)");
+    fSetBeamSourceSpectrumFilenameCmd->SetParameterName("fBeamSourceSpectrumFilename", true);
+    fSetBeamSourceSpectrumFilenameCmd->SetDefaultValue(fBeamSourceSpectrumFilename);
+    fSetBeamSourceSpectrumHistNameCmd = new G4UIcmdWithAString("/generator/beamSource/setSpectrumHistName",this);
+    fSetBeamSourceSpectrumHistNameCmd->SetGuidance("Input name of TH1 or TH2 in the spectrum file");
+    fSetBeamSourceSpectrumHistNameCmd->SetParameterName("fBeamSourceSpectrumHistName", true);
+    fSetBeamSourceSpectrumHistNameCmd->SetDefaultValue(fBeamSourceSpectrumHistName);
     //'mono'
-    fSetDiskSourceMonoEnergyCmd = new G4UIcmdWithADoubleAndUnit("/generator/diskSource/setDiskSourceMonoEnergy", this);
-    fSetDiskSourceMonoEnergyCmd->SetGuidance("Set energy and unit of particles");
-    fSetDiskSourceMonoEnergyCmd->SetParameterName("fDiskSourceMonoEnergy", true);
-    fSetDiskSourceMonoEnergyCmd->SetRange("fDiskSourceMonoEnergy >= 0.");
-    fSetDiskSourceMonoEnergyCmd->SetDefaultUnit("MeV");
-    fSetDiskSourceMonoEnergyCmd->SetDefaultValue(fDiskSourceMonoEnergy);
+    fSetBeamSourceMonoEnergyCmd = new G4UIcmdWithADoubleAndUnit("/generator/beamSource/setMonoEnergy", this);
+    fSetBeamSourceMonoEnergyCmd->SetGuidance("Set energy and unit of particles");
+    fSetBeamSourceMonoEnergyCmd->SetParameterName("fBeamSourceMonoEnergy", true);
+    fSetBeamSourceMonoEnergyCmd->SetRange("fBeamSourceMonoEnergy > 0.");
+    fSetBeamSourceMonoEnergyCmd->SetDefaultUnit("MeV");
+    fSetBeamSourceMonoEnergyCmd->SetDefaultValue(fBeamSourceMonoEnergy);
     //Geometric properties
-    fSetDiskSourceRadiusCmd = new G4UIcmdWithADoubleAndUnit("/generator/diskSource/setDiskSourceRadius", this);
-    fSetDiskSourceRadiusCmd->SetGuidance("Set radius of disk");
-    fSetDiskSourceRadiusCmd->SetParameterName("fDiskSourceRadius", true);
-    fSetDiskSourceRadiusCmd->SetRange("fDiskSourceRadius >= 0.");
-    fSetDiskSourceRadiusCmd->SetDefaultUnit("cm");
-    fSetDiskSourceRadiusCmd->SetDefaultValue(fDiskSourceRadius);
-    fSetDiskSourcePositionCmd = new G4UIcmdWith3VectorAndUnit("/generator/diskSource/setDiskSourcePositionCmd", this);
-    fSetDiskSourcePositionCmd->SetGuidance("Set position of center of disk");
-    fSetDiskSourcePositionCmd->SetDefaultUnit("cm");
-    fSetDiskSourcePositionCmd->SetDefaultValue(fDiskSourcePosition);
-    fSetDiskSourceAxisCmd = new G4UIcmdWith3Vector("/generator/diskSource/setDiskSourceAxis", this);
-    fSetDiskSourceAxisCmd->SetGuidance("Set axis of the disk.");
-    fSetDiskSourceAxisCmd->SetDefaultValue(fDiskSourceAxis);
-    fSetDiskSourceDirectionCmd = new G4UIcmdWith3Vector("/generator/diskSource/setDiskSourceDirection", this);
-    fSetDiskSourceDirectionCmd->SetGuidance("Set direction of particles emergying from the disk");
-    fSetDiskSourceDirectionCmd->SetDefaultValue(fDiskSourceDirection);
+    fSetBeamSourceRadiusCmd = new G4UIcmdWithADoubleAndUnit("/generator/beamSource/setRadius", this);
+    fSetBeamSourceRadiusCmd->SetGuidance("Set radius of the emission disk");
+    fSetBeamSourceRadiusCmd->SetParameterName("fBeamSourceRadius", true);
+    fSetBeamSourceRadiusCmd->SetRange("fBeamSourceRadius >= 0.");
+    fSetBeamSourceRadiusCmd->SetDefaultUnit("cm");
+    fSetBeamSourceRadiusCmd->SetDefaultValue(fBeamSourceRadius);
+    fSetBeamSourcePositionCmd = new G4UIcmdWith3VectorAndUnit("/generator/beamSource/setPosition", this);
+    fSetBeamSourcePositionCmd->SetGuidance("Set position of center of the emission disk");
+    fSetBeamSourcePositionCmd->SetDefaultUnit("cm");
+    fSetBeamSourcePositionCmd->SetDefaultValue(fBeamSourcePosition);
+    fSetBeamSourceAxisCmd = new G4UIcmdWith3Vector("/generator/beamSource/setAxis", this);
+    fSetBeamSourceAxisCmd->SetGuidance("Set beam axis: disk normal, 'fixed' direction, and reference axis for 'cosine' and 'hist2D'");
+    fSetBeamSourceAxisCmd->SetDefaultValue(fBeamSourceAxis);
 }
 
 PaleoSimMessenger::~PaleoSimMessenger() {
@@ -269,17 +270,17 @@ PaleoSimMessenger::~PaleoSimMessenger() {
     delete fSetVolumetricSourceSpectrumHistNameCmd;
     delete fSetVolumetricSourceMonoEnergyCmd;
     //
-    //Disk source
-    delete fDiskSourceGeneratorDirectory;
-    delete fSetDiskSourcePDGCodeCmd;
-    delete fSetDiskSourceTypeCmd;
-    delete fSetDiskSourceSpectrumFilenameCmd;
-    delete fSetDiskSourceSpectrumHistNameCmd;
-    delete fSetDiskSourceMonoEnergyCmd;
-    delete fSetDiskSourceRadiusCmd;
-    delete fSetDiskSourcePositionCmd;
-    delete fSetDiskSourceAxisCmd;
-    delete fSetDiskSourceDirectionCmd;
+    //Beam source
+    delete fBeamSourceGeneratorDirectory;
+    delete fSetBeamSourcePDGCodeCmd;
+    delete fSetBeamSourceTypeCmd;
+    delete fSetBeamSourceDirectionTypeCmd;
+    delete fSetBeamSourceSpectrumFilenameCmd;
+    delete fSetBeamSourceSpectrumHistNameCmd;
+    delete fSetBeamSourceMonoEnergyCmd;
+    delete fSetBeamSourceRadiusCmd;
+    delete fSetBeamSourcePositionCmd;
+    delete fSetBeamSourceAxisCmd;
     delete fSetOutputFormatCmd;
 }
 
@@ -359,6 +360,7 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
         fSourceType = newValue;
         G4cout << "Generator set in macro to: " << newValue << G4endl;
     }
+
     //CUSTOM_GENERATOR_HOOK
     //Set custom parameters for generators from messenger here
     //
@@ -468,55 +470,64 @@ void PaleoSimMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
         fVolumetricSourceMonoEnergy = fSetVolumetricSourceMonoEnergyCmd->GetNewDoubleValue(newValue);
         G4cout << "Volumetric source energy set in macro to: " << newValue << G4endl;
     }
-    //Disk source
-    else if (command == fSetDiskSourcePDGCodeCmd) {
-        fDiskSourcePDGCode = fSetDiskSourcePDGCodeCmd->GetNewIntValue(newValue);
-        G4cout << "Disk source PDG code set in macro to: " << newValue << G4endl;
+
+    //Beam source
+    else if (command == fSetBeamSourcePDGCodeCmd) {
+        fBeamSourcePDGCode = fSetBeamSourcePDGCodeCmd->GetNewIntValue(newValue);
+        G4cout << "Beam source PDG code set in macro to: " << newValue << G4endl;
     }
-    else if (command == fSetDiskSourceTypeCmd) {
-        fDiskSourceType = newValue;
-        if (fDiskSourceType.empty()) {
-            G4Exception("SetNewValue", "EmptyDiskSourceCmd", FatalException,
-                        "/generator/diskSource/setDiskSourceType needs an argument ('mono' or 'hist')");
+    else if (command == fSetBeamSourceTypeCmd) {
+        fBeamSourceType = newValue;
+        if (fBeamSourceType!="mono" && fBeamSourceType!="hist") {
+            G4Exception("SetNewValue", "BadBeamSourceType", FatalException,
+                        "/generator/beamSource/setSpectrumType acceptable values are 'mono' or 'hist'");
         }
-        if (fDiskSourceType!="mono" && fDiskSourceType!="hist") {
-            G4Exception("SetNewValue", "BadDiskSourceType", FatalException,
-                        "/generator/diskSource/setDiskSourceType acceptable commands are 'mono' or 'hist'");
+        G4cout << "Beam source spectrum type set in macro to: " << newValue << G4endl;
+    }
+    else if (command == fSetBeamSourceDirectionTypeCmd) {
+        fBeamSourceDirectionType = newValue;
+        if (fBeamSourceDirectionType!="fixed" && fBeamSourceDirectionType!="isotropic" &&
+            fBeamSourceDirectionType!="cosine" && fBeamSourceDirectionType!="hist2D") {
+            G4Exception("SetNewValue", "BadBeamSourceDirectionType", FatalException,
+                        "/generator/beamSource/setDirectionType acceptable values are 'fixed', 'isotropic', 'cosine', or 'hist2D'");
         }
-        G4cout << "Disk source type set in macro to: " << newValue << G4endl;
+        G4cout << "Beam source direction type set in macro to: " << newValue << G4endl;
     }
-    else if (command == fSetDiskSourceSpectrumFilenameCmd) {
-        fDiskSourceSpectrumFilename = newValue;
-        if (fDiskSourceSpectrumFilename.empty()) {
-            G4Exception("SetNewValue", "EmtpyDiskSourceFilename", FatalException,
-                        "/generator/diskSource/setDiskSourceFilename needs an argument");
+    else if (command == fSetBeamSourceSpectrumFilenameCmd) {
+        fBeamSourceSpectrumFilename = newValue;
+        if (fBeamSourceSpectrumFilename.empty()) {
+            G4Exception("SetNewValue", "EmptyBeamSourceFilename", FatalException,
+                        "/generator/beamSource/setSpectrumFilename needs an argument");
         }
-        G4cout << "Disk source filename set in macro to: " << newValue << G4endl;
+        G4cout << "Beam source spectrum filename set in macro to: " << newValue << G4endl;
     }
-    else if (command == fSetDiskSourceSpectrumHistNameCmd) {
-        fDiskSourceSpectrumHistName = newValue;
-        if (fDiskSourceSpectrumHistName.empty()) {
-            G4Exception("SetNewValue", "EmtpyDiskSourceHistName", FatalException,
-                        "/generator/diskSource/setDiskSourceHistName needs an argument");
+    else if (command == fSetBeamSourceSpectrumHistNameCmd) {
+        fBeamSourceSpectrumHistName = newValue;
+        if (fBeamSourceSpectrumHistName.empty()) {
+            G4Exception("SetNewValue", "EmptyBeamSourceHistName", FatalException,
+                        "/generator/beamSource/setSpectrumHistName needs an argument");
         }
-        G4cout << "Disk source hist name set in macro to: " << newValue << G4endl;
+        G4cout << "Beam source hist name set in macro to: " << newValue << G4endl;
     }
-    else if (command == fSetDiskSourceMonoEnergyCmd) {
-        fDiskSourceMonoEnergy = fSetDiskSourceMonoEnergyCmd->GetNewDoubleValue(newValue);
-        G4cout << "Disk source energy set in macro to: " << newValue << G4endl;
+    else if (command == fSetBeamSourceMonoEnergyCmd) {
+        fBeamSourceMonoEnergy = fSetBeamSourceMonoEnergyCmd->GetNewDoubleValue(newValue);
+        G4cout << "Beam source energy set in macro to: " << newValue << G4endl;
     }
-    else if (command == fSetDiskSourceRadiusCmd) {
-        fDiskSourceRadius = fSetDiskSourceRadiusCmd->GetNewDoubleValue(newValue);
-        G4cout << "Disk source radius set in macro to: " << newValue << G4endl;
+    else if (command == fSetBeamSourceRadiusCmd) {
+        fBeamSourceRadius = fSetBeamSourceRadiusCmd->GetNewDoubleValue(newValue);
+        G4cout << "Beam source radius set in macro to: " << newValue << G4endl;
     }
-    else if (command == fSetDiskSourcePositionCmd) {
-        fDiskSourcePosition = fSetDiskSourcePositionCmd->GetNew3VectorValue(newValue);
+    else if (command == fSetBeamSourcePositionCmd) {
+        fBeamSourcePosition = fSetBeamSourcePositionCmd->GetNew3VectorValue(newValue);
+        G4cout << "Beam source position set in macro to: " << newValue << G4endl;
     }
-    else if (command == fSetDiskSourceAxisCmd) {
-        fDiskSourceAxis = fSetDiskSourceAxisCmd->GetNew3VectorValue(newValue);
-    }
-    else if (command == fSetDiskSourceDirectionCmd) {
-        fDiskSourceDirection = fSetDiskSourceDirectionCmd->GetNew3VectorValue(newValue);
+    else if (command == fSetBeamSourceAxisCmd) {
+        fBeamSourceAxis = fSetBeamSourceAxisCmd->GetNew3VectorValue(newValue);
+        if (fBeamSourceAxis.mag2() == 0.) {
+            G4Exception("SetNewValue", "ZeroBeamSourceAxis", FatalException,
+                        "/generator/beamSource/setAxis cannot be the zero vector");
+        }
+        G4cout << "Beam source axis set in macro to: " << newValue << G4endl;
     }
 }
 
@@ -559,6 +570,19 @@ void PaleoSimMessenger::CheckForMacroErrors() {
     }
     if (fRecoilTreeVolumes.size()>0) {
         fRecoilTreeStatus = true;
+    }
+
+    //Beam source: settings that depend on each other
+    if (fSourceType == "beamSource") {
+        if (fBeamSourceDirectionType == "hist2D" && fBeamSourceType != "hist") {
+            G4Exception("PaleoSimMessenger", "BadBeamSourceSettings", FatalException,
+                        "Beam source direction type 'hist2D' requires spectrum type 'hist'");
+        }
+        if (fBeamSourceType == "hist" &&
+            (fBeamSourceSpectrumFilename.empty() || fBeamSourceSpectrumHistName.empty())) {
+            G4Exception("PaleoSimMessenger", "BadBeamSourceSettings", FatalException,
+                        "Beam source spectrum type 'hist' requires setSpectrumFilename and setSpectrumHistName");
+        }
     }
 
     //Make sure we have at least one volume

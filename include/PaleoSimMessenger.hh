@@ -48,27 +48,26 @@ public:
     const std::vector<G4String>& GetRecoilTreeVolumes() const { return fRecoilTreeVolumes; };
     bool GetVRMLStatus() const { return fVRMLStatus; };
 
-    //Generator
+    //Generators
     std::vector<G4String> GetValidSourceTypes() const { return fValidSourceTypes; };
     G4String GetSourceType() const {return fSourceType;};
-    long long GetNPS() const { return fNPS; };
+    long long GetNPS() const { return fNPS;};
 
-    //Add your own generator commands here
     //CUSTOM_GENERATOR_HOOK
+    //Source-specific getters and setters here
     //
     //Mei & Hime muon generator
     G4double GetMeiHimeMuonEffectiveDepth() const { return fMeiHimeMuonDepth;};
     void SetMeiHimeFluxNormalization(double val) { fMeiHimeFluxNormalization = val;};
     G4double GetMeiHimeFluxNormalization() const { return fMeiHimeFluxNormalization;};
-    //
+
     //Mute generator
     G4String GetMuteHistFilename() const { return fMuteHistFilename;};
     G4String GetMuteOverburdenType() const { return fMuteOverburdenType;};
     G4String GetMuteMountainProfileFilename() const { return fMuteMountainProfileFilename;};
     G4double GetMuteFluxDepth() const { return fMuteFluxDepth;};
     G4double GetMuteFluxNormalization() const { return fMuteFluxNormalization;};
- 
-    //
+
     //CRY generator
     G4String GetCRYFilename() const { return fCRYFilename; };
     void SetCRYAltitude(double val) { fCRYAltitude = val;};
@@ -77,7 +76,7 @@ public:
     G4double GetCRYAltitude() const { return fCRYAltitude;};  
     G4double GetCRYLatitude() const { return fCRYLatitude;};
     G4double GetCRYNorm() const { return fCRYNorm;};
-    //
+    
     //SCT generator
     G4String GetSCTFilename() const { return fSCTFilename; };
     G4String GetSCTBootstrap() const { return fSCTBootstrap; };
@@ -85,7 +84,7 @@ public:
     G4double GetSCTNorm() const { return fSCTNorm; };
     void SetSCTCapturedParticles(int val) { fSCTCapturedParticles = val; };
     G4int GetSCTCapturedParticles() const { return fSCTCapturedParticles; };
-    //
+    
     //Volumetric source generator
     G4String GetVolumetricSourceVolumeName() const { return fVolumetricSourceVolumeName; };
     G4int GetVolumetricSourcePDGCode() const { return fVolumetricSourcePDGCode; };
@@ -99,25 +98,26 @@ public:
     void SetVolumetricSourceSpectrumFilename(G4String val) { fVolumetricSourceSpectrumFilename = val; };
     void SetVolumetricSourceSpectrumHistName(G4String val) { fVolumetricSourceSpectrumHistName = val; };
     void SetVolumetricSourceMonoEnergy(double val) { fVolumetricSourceMonoEnergy = val;};
-    //Flat disk source generator
-    G4int GetDiskSourcePDGCode() const { return fDiskSourcePDGCode; };
-    G4String GetDiskSourceType() const { return fDiskSourceType; };
-    G4String GetDiskSourceSpectrumFilename() const { return fDiskSourceSpectrumFilename; };
-    G4String GetDiskSourceSpectrumHistName() const { return fDiskSourceSpectrumHistName; };
-    G4double GetDiskSourceMonoEnergy() const { return fDiskSourceMonoEnergy; };
-    G4double GetDiskSourceRadius() const { return fDiskSourceRadius; };
-    G4ThreeVector GetDiskSourcePosition() const { return fDiskSourcePosition; };
-    G4ThreeVector GetDiskSourceAxis() const { return fDiskSourceAxis; };
-    G4ThreeVector GetDiskSourceDirection() const { return fDiskSourceDirection; };
-    void SetDiskSourcePDGCode(int val) { fDiskSourcePDGCode = val; };
-    void SetDiskSourceType(G4String val) { fDiskSourceType = val; };
-    void SetDiskSourceSpectrumFilename(G4String val) { fDiskSourceSpectrumFilename = val; };
-    void SetDiskSourceSpectrumHistName(G4String val) { fDiskSourceSpectrumHistName = val; };
-    void SetDiskSourceMonoEnergy(double val) { fDiskSourceMonoEnergy = val;};
-    void SetDiskSourceRadius(double val) { fDiskSourceRadius = val;};
-    void SetDiskSourcePosition(G4ThreeVector val) { fDiskSourcePosition = val;};
-    void SetDiskSourceAxis(G4ThreeVector val) { fDiskSourceAxis = val;};
-    void SetDiskSourceDirection(G4ThreeVector val) { fDiskSourceDirection = val;};
+
+    //Beam source generator
+    G4int GetBeamSourcePDGCode() const { return fBeamSourcePDGCode; };
+    G4String GetBeamSourceType() const { return fBeamSourceType; };
+    G4String GetBeamSourceDirectionType() const { return fBeamSourceDirectionType; };
+    G4String GetBeamSourceSpectrumFilename() const { return fBeamSourceSpectrumFilename; };
+    G4String GetBeamSourceSpectrumHistName() const { return fBeamSourceSpectrumHistName; };
+    G4double GetBeamSourceMonoEnergy() const { return fBeamSourceMonoEnergy; };
+    G4double GetBeamSourceRadius() const { return fBeamSourceRadius; };
+    G4ThreeVector GetBeamSourcePosition() const { return fBeamSourcePosition; };
+    G4ThreeVector GetBeamSourceAxis() const { return fBeamSourceAxis; };
+    void SetBeamSourcePDGCode(int val) { fBeamSourcePDGCode = val; };
+    void SetBeamSourceType(G4String val) { fBeamSourceType = val; };
+    void SetBeamSourceDirectionType(G4String val) { fBeamSourceDirectionType = val; };
+    void SetBeamSourceSpectrumFilename(G4String val) { fBeamSourceSpectrumFilename = val; };
+    void SetBeamSourceSpectrumHistName(G4String val) { fBeamSourceSpectrumHistName = val;};
+    void SetBeamSourceMonoEnergy(double val) { fBeamSourceMonoEnergy = val;};
+    void SetBeamSourceRadius(double val) { fBeamSourceRadius = val;};
+    void SetBeamSourcePosition(G4ThreeVector val) { fBeamSourcePosition = val;};
+    void SetBeamSourceAxis(G4ThreeVector val) { fBeamSourceAxis = val;};
     
     //Geometric calculations
     void ComputeCoordinates();
@@ -200,7 +200,7 @@ private:
           "CRYGenerator", //Samples root file containing list of events
           "SCTGenerator", //Samples root file containing secondaryCaptureTree
           "volumetricSource", //Samples particles from a flat Volumetric with supplied direction and spectrum 
-          "diskSource"
+          "beamSource"
       };
     
     G4String fSourceType = "meiHimeMuonGenerator";
@@ -259,28 +259,27 @@ private:
     G4String fVolumetricSourceSpectrumFilename = "";
     G4String fVolumetricSourceSpectrumHistName = "";
     G4double fVolumetricSourceMonoEnergy = 1.*MeV;
-    //
-    //Disk source
-    G4UIdirectory* fDiskSourceGeneratorDirectory = nullptr;
-    G4UIcmdWithAnInteger* fSetDiskSourcePDGCodeCmd = nullptr;
-    G4UIcmdWithAString* fSetDiskSourceTypeCmd = nullptr;
-    G4UIcmdWithAString* fSetDiskSourceSpectrumFilenameCmd = nullptr;
-    G4UIcmdWithAString* fSetDiskSourceSpectrumHistNameCmd = nullptr;
-    G4UIcmdWithADoubleAndUnit* fSetDiskSourceMonoEnergyCmd = nullptr;
-    G4UIcmdWithADoubleAndUnit* fSetDiskSourceRadiusCmd = nullptr;
-    G4UIcmdWith3VectorAndUnit* fSetDiskSourcePositionCmd = nullptr;
-    G4UIcmdWith3Vector* fSetDiskSourceAxisCmd = nullptr;
-    G4UIcmdWith3Vector* fSetDiskSourceDirectionCmd = nullptr;
-    G4int fDiskSourcePDGCode = 2112;
-    G4String fDiskSourceType = "mono";
-    G4String fDiskSourceSpectrumFilename = "";
-    G4String fDiskSourceSpectrumHistName = "";
-    G4double fDiskSourceMonoEnergy = 1.*MeV;
-    G4double fDiskSourceRadius = 1.*m;
-    G4ThreeVector fDiskSourcePosition = G4ThreeVector(0,0,0);
-    G4ThreeVector fDiskSourceAxis = G4ThreeVector(0,0,1);
-    G4ThreeVector fDiskSourceDirection = G4ThreeVector(0,0,1);
-
+    
+    //Beam source
+    G4UIdirectory* fBeamSourceGeneratorDirectory = nullptr;
+    G4UIcmdWithAnInteger* fSetBeamSourcePDGCodeCmd = nullptr;
+    G4UIcmdWithAString* fSetBeamSourceTypeCmd = nullptr;
+    G4UIcmdWithAString* fSetBeamSourceDirectionTypeCmd = nullptr;
+    G4UIcmdWithAString* fSetBeamSourceSpectrumFilenameCmd = nullptr;
+    G4UIcmdWithAString* fSetBeamSourceSpectrumHistNameCmd = nullptr;
+    G4UIcmdWithADoubleAndUnit* fSetBeamSourceMonoEnergyCmd = nullptr;
+    G4UIcmdWithADoubleAndUnit* fSetBeamSourceRadiusCmd = nullptr;
+    G4UIcmdWith3VectorAndUnit* fSetBeamSourcePositionCmd = nullptr;
+    G4UIcmdWith3Vector* fSetBeamSourceAxisCmd = nullptr;
+    G4int fBeamSourcePDGCode = 2112;
+    G4String fBeamSourceType = "mono";
+    G4String fBeamSourceDirectionType = "fixed";
+    G4String fBeamSourceSpectrumFilename = "";
+    G4String fBeamSourceSpectrumHistName = "";
+    G4double fBeamSourceMonoEnergy = 1.*MeV;
+    G4double fBeamSourceRadius = 1.*cm;
+    G4ThreeVector fBeamSourcePosition = G4ThreeVector(0,0,0);
+    G4ThreeVector fBeamSourceAxis = G4ThreeVector(0,0,1);
 };
 
 #endif
