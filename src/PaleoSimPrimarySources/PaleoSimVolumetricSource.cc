@@ -52,6 +52,7 @@ void PaleoSimVolumetricSource::InitializeSource() {
 
 
 void PaleoSimVolumetricSource::GeneratePrimaries(G4Event* anEvent) {
+  ReseedRootRNG();
 
   // Set particle type
   int pdgCode = fMessenger.GetVolumetricSourcePDGCode();
@@ -80,7 +81,7 @@ void PaleoSimVolumetricSource::GeneratePrimaries(G4Event* anEvent) {
   // Set energy
   double energy = 0;
   if (fMessenger.GetVolumetricSourceType() == "hist") {
-    energy = fVolumetricSourceSpectrumHist->GetRandom() * MeV;
+    energy = fVolumetricSourceSpectrumHist->GetRandom(&fRootRNG) * MeV;
   } else {
     energy = fMessenger.GetVolumetricSourceMonoEnergy();
   }

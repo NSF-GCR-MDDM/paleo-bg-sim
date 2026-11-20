@@ -20,18 +20,13 @@
 
 /*
 To-do before v1.0 release
-  - Make ROOT random sampling consistent with Multithreadung codes:
-    ROOT GetRandom() calls use global gRandom (MeiHime TF1, Disk/Volumetric TH1, MUTE TH3): data race with >1 thread
-    and not reproducible from G4 seed. Avoid gRandom; make ROOT sampling use an event-local RNG derived from the
-    Geant4 event RNG (e.g. per-event TRandom3 seeded from G4UniformRand(), passed to GetRandom(&rng))
   - Some source write to shared messenger from every worker: SetMeiHimeFluxNormalization, SetCRYAltitude/Latitude/Norm
     (SCT covered below). Restrict writes to one thread (e.g. IsMetadataThread helper)
   - GeometryMessenger ComputeMissingCoordinates (lines 409, 412): absolute <-> relative position ignores parent
     rotation; wrong for off-center children of rotated volumes (affects point sampling, IsPointInside, geometry tree)
   - headerTree needs updating - include seed, more macro args
   - Add run time display at least to end of run, if not estimate of sim time updated every 100(?) events
-  - ~PaleoSimPrimaryGeneratorAction doesn't delete fMuteSource; GenerateRandomPointInside gives false fatal
-    error if 1000th try succeeds
+  - GenerateRandomPointInside gives false fatal error if 1000th try succeeds
   - Add option for loading CRY file into memory
   - Remove H5 stuff from CMake or figure out how to reimplement with parallel. I think an external converter is better
     The main reason I wanted h5 support was to READ h5 CRY files if we want random sampling, but we scrapped that.
@@ -83,7 +78,6 @@ int main(int argc, char** argv) {
     G4long seed = std::stol(parsedArgs["--seed"]);
     std::cout<<"Random seed is "<<seed<<std::endl;
     G4Random::setTheSeed(seed);
-    gRandom->SetSeed(seed);
   }
   else{
     G4Random::setTheEngine(new CLHEP::RanecuEngine);
@@ -92,7 +86,6 @@ int main(int argc, char** argv) {
     G4long seed = (systime << 16) ^ pid;    
     std::cout<<"Random seed is "<<seed<<std::endl;
     G4Random::setTheSeed(seed);
-    gRandom->SetSeed(seed);
   }
   
   //Threading

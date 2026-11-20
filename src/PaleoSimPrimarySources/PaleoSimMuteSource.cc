@@ -76,6 +76,7 @@ void PaleoSimMuteSource::InitializeSource() {
 }
 
 void PaleoSimMuteSource::GeneratePrimaries(G4Event* anEvent) {
+  ReseedRootRNG();
   G4double fluxDepth = fMessenger.GetMuteFluxDepth();
   G4String overburdenType = fMessenger.GetMuteOverburdenType();
   G4ParticleDefinition* muonDef = G4ParticleTable::GetParticleTable()->FindParticle("mu-");
@@ -83,7 +84,7 @@ void PaleoSimMuteSource::GeneratePrimaries(G4Event* anEvent) {
   double E_GeV = -1, surfaceTheta = -1, slant_kmwe = -1, theta = -1, phi = -1;
   if (overburdenType == "flat") {
     //Get random energy, theta from fMuteHist
-    muteHist->GetRandom3(slant_kmwe, E_GeV, surfaceTheta);
+    muteHist->GetRandom3(slant_kmwe, E_GeV, surfaceTheta, &fRootRNG);
     theta = std::acos(fluxDepth/slant_kmwe);  
 
     //Get random phi
@@ -92,8 +93,8 @@ void PaleoSimMuteSource::GeneratePrimaries(G4Event* anEvent) {
 
   if (overburdenType == "mountain") {
     //Get random energy, theta, slant depth from fMuteHist
-    muteHist->GetRandom3(slant_kmwe, E_GeV, theta);
-
+    muteHist->GetRandom3(slant_kmwe, E_GeV, theta, &fRootRNG);
+    
     //Find/sample corresponding phi
     phi = mountainProfile.FindOrSampleAzimuthal(theta*180/M_PI, slant_kmwe);
 
